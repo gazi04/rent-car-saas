@@ -41,10 +41,18 @@ class User extends Authenticatable implements FilamentUser, PasskeyUser
 
     /**
      * Panel access boundaries:
-     * - admin: central Super Admins only (role = admin, no tenant).
+     * - admin:    central Super Admins only (role = admin, no tenant).
+     * - operator: only the current tenant's operator (role = operator AND
+     *             tenant_id matches the resolved subdomain). Blocks cross-tenant login.
      */
     public function canAccessPanel(Panel $panel): bool
     {
+        if ($panel->getId() === 'operator') {
+            return $this->role === 'operator'
+                && tenancy()->initialized
+                && $this->tenant_id === tenant('id');
+        }
+
         if ($panel->getId() === 'admin') {
             return $this->role === 'admin' && $this->tenant_id === null;
         }

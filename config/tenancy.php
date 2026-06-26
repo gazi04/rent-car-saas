@@ -45,6 +45,13 @@ return [
     'admin_domain' => env('ADMIN_PANEL_DOMAIN', 'admin.localhost'),
 
     /**
+     * Canonical central (marketing) host. Central web routes that share a URI with
+     * a tenant panel — e.g. the starter "/dashboard" vs the operator panel at
+     * "/dashboard" on subdomains — are pinned to this host so they don't collide.
+     */
+    'central_domain' => env('CENTRAL_DOMAIN', 'localhost'),
+
+    /**
      * Tenancy bootstrappers are executed when tenancy is initialized.
      * Their responsibility is making Laravel features tenant-aware.
      *

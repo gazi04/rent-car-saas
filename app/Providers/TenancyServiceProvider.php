@@ -8,6 +8,7 @@ use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 use Stancl\JobPipeline\JobPipeline;
 use Stancl\Tenancy\Events;
 use Stancl\Tenancy\Listeners;
@@ -90,6 +91,24 @@ class TenancyServiceProvider extends ServiceProvider
         $this->mapRoutes();
 
         $this->makeTenancyMiddlewareHighestPriority();
+        $this->makeLivewireUpdateRouteTenancyAware();
+    }
+
+    /**
+     * Livewire's update endpoint is a single global route shared by every panel and
+     * page. By default it carries no tenancy middleware, so AJAX requests on an
+     * operator subdomain (e.g. the Filament login form) run with tenancy uninitialized,
+     * which breaks tenant-scoped logic such as the operator panel access gate.
+     *
+     * Re-register it as a "universal" route: tenancy is initialized on tenant domains
+     * and skipped on central domains (admin panel, central pages), so all three keep working.
+     */
+    protected function makeLivewireUpdateRouteTenancyAware(): void
+    {
+        Livewire::setUpdateRoute(function ($handle, string $path) {
+            return Route::post($path, $handle)
+                ->middleware(['web', 'universal', Middleware\InitializeTenancyByDomain::class]);
+        });
     }
 
     protected function bootEvents(): void
