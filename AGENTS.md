@@ -1,3 +1,64 @@
+# AGENTS.md
+
+Guidance for AI coding agents working in this repository. Kept in sync with `CLAUDE.md`.
+
+## Project Overview
+
+`rent-car-saas` (product name **RentACar SaaS**) is a **multi-tenant, white-label car-rental SaaS** for the Kosovo / Western Balkans market. Car-rental businesses ("operators") subscribe to get their own branded booking website on a subdomain (`operatorname.yourdomain.com`); their customers book cars there with no account required. The platform owner ("Super Admin") onboards operators, charges a monthly subscription, and never touches the money that flows between operators and their customers.
+
+The full spec lives in **`docs/RentACar_Application_Plan.pdf`** (17 pages) — read it before any domain work. Key facts and stack guidance below.
+
+**Status:** Currently the **Laravel Livewire starter kit** scaffolding only (auth, settings, profile, passkeys, 2FA). The rent-car domain (tenants, vehicles, bookings, billing) is **not yet implemented** — build it per the plan.
+
+> **Ignore the PDF's stack versions — use the latest.** The plan PDF names Laravel 11 / Livewire 3 / Filament 3, but those are stale — use **Filament 4**, not 3. Always build on the **latest stable version** of each technology; the installed versions in this repo (Laravel 13 / Livewire 4 / Flux UI — see Boost foundational context below) are the source of truth. Use the PDF only for *domain and feature* intent, never for stack/version decisions. Filament, Cashier, a tenancy package, dompdf, Intervention Image, Flatpickr, and Resend are **planned but not yet installed** — when adding them, pull the latest stable release, and get approval before adding any dependency.
+
+## Commands
+
+```bash
+composer dev          # Run full dev stack: serve + queue:listen + pail logs + vite (concurrently)
+composer setup        # First-time setup: install, .env, key:gen, migrate, npm install + build
+npm run dev           # Vite dev server only
+npm run build         # Build frontend assets (run if UI changes don't appear)
+
+composer test         # Full CI gate: config:clear + pint --test + phpstan + artisan test
+php artisan test --compact                          # Run tests
+php artisan test --compact --filter=testName        # Run a single test by name
+php artisan test --compact tests/Feature/Auth/AuthenticationTest.php  # Single file
+
+composer lint         # Fix code style (pint --parallel)
+vendor/bin/pint --dirty --format agent              # Format only changed files (run before finalizing)
+composer types:check  # Static analysis (phpstan/larastan, level in phpstan.neon)
+```
+
+Tests use SQLite `:memory:` (see `phpunit.xml`); the dev DB is SQLite (`database/database.sqlite`).
+
+## Product / Domain Model
+
+**Three roles:** Super Admin (platform owner, `admin.yourdomain.com`, separate auth guard, `users.tenant_id = NULL`, `role = admin`) · Operator (subscribing rental business, `operatorname.yourdomain.com/dashboard`) · Customer (renter, public subdomain, no login).
+
+**Five modules:**
+1. **Public Booking Website** — white-label per operator (logo/colors/font/footer via `tenant_settings` key-value table → CSS variables injected in Blade layout). Vehicle listing + filters, 3-step booking flow (dates → details → review), no account. Bookings created as `pending`. Bilingual (Albanian/English).
+2. **Operator Dashboard** — fleet management (vehicle CRUD, photos→WebP, custom JSONB fields, soft deletes), availability calendar, booking management (confirm/reject/active/complete/cancel), pricing (hourly/daily/weekly/monthly + promo codes + discounts), rental-agreement PDF per booking, dashboard notifications, reports + CSV export.
+3. **Admin Dashboard** (planned Filament 4) — tenant management, approve/reject/suspend/impersonate operators, MRR & revenue overview, platform health.
+4. **Billing & Subscriptions** (planned Laravel Cashier + Stripe) — operator subscriptions (Trial/Basic €15/Standard €29/Pro €49), webhook-driven status, 30-day trial → grace → suspension via scheduled command. **Two strictly separate payment flows:** B2B (operator→platform, automated via Stripe) and B2C (customer→operator, cash/bank transfer, platform never touches it).
+5. **Notifications & Emails** (planned Resend) — queued Blade-template Mailables, bilingual, per-operator branding on customer-facing emails.
+
+**Multi-tenancy:** Single shared database, single codebase. `tenant_id` on every tenant-scoped table; middleware resolves tenant from subdomain and an Eloquent **global scope** auto-filters all queries. Availability conflict checks **must** run server-side inside a DB transaction with a row-level lock on the vehicle (double-booking destroys operator trust). Planned core tables: `tenants`, `tenant_settings`, `vehicles`, `vehicle_photos`, `bookings`, `blocked_dates`, `contracts`, `promo_codes` (+ Laravel `notifications`/`jobs`/`failed_jobs`).
+
+## Architecture
+
+- **Routing is Livewire-first.** Pages are registered with `Route::livewire('path', 'pages::dir.name')` in `routes/web.php` and `routes/settings.php`, not via controllers. There is effectively one real controller (`app/Http/Controllers/Controller.php`, base only).
+- **Livewire 4 single-file components (SFC).** Page components live in `resources/views/pages/**`. Files prefixed with `⚡` (e.g. `⚡profile.blade.php`, `⚡security.blade.php`) are Livewire SFCs — PHP class + Blade markup in one `.blade.php` file. The `pages::` route namespace maps to this directory. Auth pages (`pages/auth/*`) and settings pages (`pages/settings/*`) follow this convention.
+- **Authentication via Fortify**, customized through action classes in `app/Actions/Fortify/` (`CreateNewUser`, `ResetUserPassword`) and `app/Providers/FortifyServiceProvider.php`. Validation rules are shared via traits in `app/Concerns/` (`PasswordValidationRules`, `ProfileValidationRules`). Logout is a Livewire action: `app/Livewire/Actions/Logout.php`.
+- **2FA + Passkeys (WebAuthn).** Two-factor columns added to `users` table; passkeys stored in `passkeys` table. Frontend passkey logic in `resources/js/passkeys.js` (uses `@laravel/passkeys`). `.well-known/passkey-endpoints` route exposes enroll/manage URLs.
+- **UI is Flux UI (free tier)** + Tailwind v4. Custom Flux overrides and icons live in `resources/views/flux/`. Layouts in `resources/views/layouts/` (app shell with sidebar/header, plus auth card/simple/split variants).
+
+## Skills
+
+Domain skills live under `**/skills/**` and the project mandates activating the relevant one before working in that domain (Livewire, Flux UI, Fortify, Pest, Tailwind, Laravel best practices).
+
+---
+
 <laravel-boost-guidelines>
 === foundation rules ===
 
@@ -10,6 +71,7 @@ The Laravel Boost guidelines are specifically curated by Laravel maintainers for
 This application is a Laravel application and its main Laravel ecosystems package & versions are below. You are an expert with them all. Ensure you abide by these specific packages & versions.
 
 - php - 8.5
+- filament/filament (FILAMENT) - v5
 - laravel/fortify (FORTIFY) - v1
 - laravel/framework (LARAVEL) - v13
 - laravel/prompts (PROMPTS) - v0
