@@ -13,7 +13,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Marker group for stancl/tenancy "universal" routes — routes that must work
+        // on both central and tenant domains (e.g. the shared Livewire update endpoint).
+        // The group itself is empty; its presence is what UniversalRoutes detects.
+        $middleware->group('universal', []);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
