@@ -37,6 +37,17 @@ class UserFactory extends Factory
     }
 
     /**
+     * Indicate the user is a central Super Admin (no tenant, admin role).
+     */
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'tenant_id' => null,
+            'role' => 'admin',
+        ]);
+    }
+
+    /**
      * Indicate that the model's email address should be unverified.
      */
     public function unverified(): static
