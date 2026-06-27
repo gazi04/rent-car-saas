@@ -10,6 +10,7 @@ use Database\Factories\VehicleFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -60,5 +61,17 @@ class Vehicle extends Model implements HasMedia
     {
         $this->addMediaConversion('web')->format('webp')->quality(80);
         $this->addMediaConversion('thumb')->format('webp')->width(400);
+    }
+
+    /** @return HasMany<Booking, $this> */
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+    /** @return HasMany<BlockedDate, $this> */
+    public function blockedDates(): HasMany
+    {
+        return $this->hasMany(BlockedDate::class);
     }
 }
