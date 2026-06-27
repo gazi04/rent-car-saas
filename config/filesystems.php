@@ -47,6 +47,17 @@ return [
             'report' => false,
         ],
 
+        // Shared, central buffer for Livewire temporary uploads. Intentionally
+        // NOT listed in config/tenancy.php → filesystem.disks, so it is never
+        // tenant-suffixed: the upload POST (tenancy off) and the read-back
+        // (tenancy on) resolve to the same folder.
+        'livewire_tmp' => [
+            'driver' => 'local',
+            'root' => storage_path('app/livewire-tmp'),
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
