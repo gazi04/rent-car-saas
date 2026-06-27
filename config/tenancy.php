@@ -136,7 +136,9 @@ return [
         'suffix_base' => 'tenant',
         'disks' => [
             'local',
-            'public',
+            // 'public' intentionally excluded: media library uses the central public disk
+            // so that storage:link + standard /storage URLs work across all tenant subdomains.
+            // Tenant isolation for media is enforced by tenant_id on the media table.
             // 's3',
         ],
 
@@ -148,7 +150,6 @@ return [
         'root_override' => [
             // Disks whose roots should be overridden after storage_path() is suffixed.
             'local' => '%storage_path%/app/',
-            'public' => '%storage_path%/app/public/',
         ],
 
         /**

@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+use App\Enums\BookingStatus;
+use App\Http\Controllers\CancelBookingController;
+use App\Models\Booking;
+use App\Models\Vehicle;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
@@ -14,22 +19,46 @@ use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 | Routes that only resolve on a tenant (operator) subdomain. The middleware
 | stack resolves the tenant from the host and aborts on central domains.
 |
-| NOTE: These routes must not share a URI with a central route in web.php.
-| Laravel keys routes by method+URI (the domain is ignored when not set), so
-| the later-registered route silently overrides the earlier one. The real
-| public booking page (tenant "/") is added in the Public-Site step, where
-| central vs tenant "/" is separated by subdomain routing.
-|
 */
 
 Route::middleware([
     'web',
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
+    'set-locale',
 ])->group(function () {
-    // Temporary smoke-test endpoint proving tenant resolution works.
-    // Replaced by the public booking website in a later step.
-    Route::get('/_tenancy-check', function () {
-        return 'tenant:'.tenant('id');
-    })->name('tenancy.check');
+    // ── Public booking site ──────────────────────────────────────────────
+    Route::livewire('/', 'pages::public.vehicle-listing')->name('public.home');
+
+    Route::livewire('/vehicles/{vehicle}', 'pages::public.vehicle-booking')
+        ->name('public.vehicle');
+
+    Route::livewire('/booking/{booking:reference}/confirmation', 'pages::public.booking-confirmation')
+        ->name('public.booking.confirmation');
+
+    // Signed 24-hour cancellation link — no auth required.
+    Route::get('/booking/{booking}/cancel', CancelBookingController::class)
+        ->name('public.booking.cancel')
+        ->middleware('signed');
+
+    // Session locale toggle — POST, redirect back.
+    Route::post('/language', function (Request $request) {
+        $locale = $request->input('locale');
+        if (in_array($locale, ['sq', 'en'], strict: true)) {
+            session(['locale' => $locale]);
+        }
+
+        return back();
+    })->name('public.language');
+
+    // Availability JSON endpoint — feeds Flatpickr disabled ranges.
+    // Route-model-bound and tenant-scoped (global scope); no cross-tenant leakage.
+    Route::get('/vehicles/{vehicle}/availability', function (Vehicle $vehicle) {
+        return response()->json([
+            'unavailable' => $vehicle->bookings()
+                ->whereIn('status', BookingStatus::blocking())
+                ->get(['start_date', 'end_date']),
+            'blocked' => $vehicle->blockedDates()->get(['start_date', 'end_date']),
+        ]);
+    })->name('vehicle.availability');
 });
