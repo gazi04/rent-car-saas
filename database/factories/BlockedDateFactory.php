@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\BlockedDate;
 use App\Models\Vehicle;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,8 +19,8 @@ class BlockedDateFactory extends Factory
      */
     public function definition(): array
     {
-        $start = fake()->dateTimeBetween('now', '+14 days');
-        $end = fake()->dateTimeBetween($start, '+7 days');
+        $start = Carbon::instance(fake()->dateTimeBetween('now', '+7 days'));
+        $end = $start->copy()->addDays(fake()->numberBetween(1, 7));
 
         return [
             'vehicle_id' => Vehicle::factory(),
