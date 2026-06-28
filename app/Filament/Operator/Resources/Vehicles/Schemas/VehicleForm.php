@@ -86,6 +86,7 @@ class VehicleForm
                     ->components([
                         SpatieMediaLibraryFileUpload::make('photos')
                             ->collection('vehicle_photos')
+                            ->disk('public')
                             ->multiple()
                             ->maxFiles(8)
                             ->reorderable()
