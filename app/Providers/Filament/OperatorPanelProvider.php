@@ -37,6 +37,8 @@ class OperatorPanelProvider extends PanelProvider
                 'primary' => Color::Indigo,
             ])
             ->plugin(FilamentFullCalendarPlugin::make())
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('30s')
             ->discoverResources(in: app_path('Filament/Operator/Resources'), for: 'App\Filament\Operator\Resources')
             ->discoverPages(in: app_path('Filament/Operator/Pages'), for: 'App\Filament\Operator\Pages')
             ->pages([
