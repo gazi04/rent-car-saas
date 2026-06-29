@@ -3,7 +3,10 @@
 namespace App\Services;
 
 use App\Enums\BookingStatus;
+use App\Events\BookingCancelled;
+use App\Events\BookingConfirmed;
 use App\Events\BookingCreated;
+use App\Events\BookingRejected;
 use App\Exceptions\VehicleNotAvailableException;
 use App\Models\Booking;
 use App\Models\Vehicle;
@@ -84,13 +87,13 @@ class BookingService
     public function confirm(Booking $booking): void
     {
         $this->transition($booking, BookingStatus::Pending, BookingStatus::Confirmed);
-        // TODO (Notifications step): dispatch BookingConfirmed event.
+        BookingConfirmed::dispatch($booking);
     }
 
     public function reject(Booking $booking): void
     {
         $this->transition($booking, BookingStatus::Pending, BookingStatus::Cancelled);
-        // TODO (Notifications step): dispatch BookingRejected event.
+        BookingRejected::dispatch($booking);
     }
 
     public function markActive(Booking $booking, ?Carbon $startedAt = null, ?int $startOdometer = null): void
@@ -111,13 +114,13 @@ class BookingService
         ]);
     }
 
-    public function cancel(Booking $booking): void
+    public function cancel(Booking $booking, string $cancelledBy = 'operator'): void
     {
         if ($booking->status === BookingStatus::Completed) {
             throw new \InvalidArgumentException('Completed bookings cannot be cancelled.');
         }
         $booking->update(['status' => BookingStatus::Cancelled]);
-        // TODO (Notifications step): dispatch BookingCancelled event.
+        BookingCancelled::dispatch($booking, $cancelledBy);
     }
 
     /**

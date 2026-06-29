@@ -19,7 +19,7 @@ class CancelBookingController extends Controller
             ]);
         }
 
-        $bookingService->cancel($booking);
+        $bookingService->cancel($booking, cancelledBy: 'customer');
 
         return view('public.cancel-result', [
             'alreadyDone' => false,
