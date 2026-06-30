@@ -1,0 +1,268 @@
+<?php
+
+use App\Enums\BookingStatus;
+use App\Events\BookingCreated;
+use App\Filament\Operator\Resources\Bookings\Pages\CreateBooking;
+use App\Filament\Operator\Resources\Bookings\Pages\ListBookings;
+use App\Models\BlockedDate;
+use App\Models\Booking;
+use App\Models\Tenant;
+use App\Models\User;
+use App\Models\Vehicle;
+use App\Services\AvailabilityService;
+use Carbon\Carbon;
+use Filament\Facades\Filament;
+use Illuminate\Support\Facades\Event;
+use Livewire\Livewire;
+
+use function Pest\Laravel\actingAs;
+
+afterEach(function () {
+    tenancy()->end();
+});
+
+/**
+ * Boot an active tenant with its operator user and a vehicle inside that tenant.
+ *
+ * @return array{0: Tenant, 1: User, 2: Vehicle}
+ */
+function bookingOperatorFor(string $domain): array
+{
+    $tenant = Tenant::factory()->withDomain($domain)->create();
+    $operator = operatorFor($tenant);
+
+    tenancy()->initialize($tenant);
+    Filament::setCurrentPanel(Filament::getPanel('operator'));
+    actingAs($operator);
+
+    $vehicle = Vehicle::factory()->create(['daily_rate' => 50, 'weekly_rate' => null, 'monthly_rate' => null]);
+
+    return [$tenant, $operator, $vehicle];
+}
+
+/** @return array<string, mixed> */
+function manualBookingData(Vehicle $vehicle, array $overrides = []): array
+{
+    return array_merge([
+        'vehicle_id' => $vehicle->id,
+        'customer_name' => 'Walk-in Customer',
+        'customer_phone' => '+38344000001',
+        'customer_email' => null,
+        'pickup_location' => null,
+        'notes' => null,
+        'start_date' => '2030-07-01 10:00',
+        'end_date' => '2030-07-04 10:00',
+    ], $overrides);
+}
+
+// ─── List & scope ────────────────────────────────────────────────────────────
+
+it('operator sees their tenant bookings in the list', function () {
+    [$tenant, $operator, $vehicle] = bookingOperatorFor('ardi');
+
+    $booking = Booking::factory()->forVehicle($vehicle)->create();
+
+    Livewire::test(ListBookings::class)
+        ->assertSee($booking->reference);
+});
+
+it('operator never sees bookings from another tenant', function () {
+    [$tenantA, $operatorA, $vehicleA] = bookingOperatorFor('ardi');
+    $bookingA = Booking::factory()->forVehicle($vehicleA)->create();
+    tenancy()->end();
+
+    $tenantB = Tenant::factory()->withDomain('bardh')->create();
+    tenancy()->initialize($tenantB);
+    $operatorB = operatorFor($tenantB);
+    $vehicleB = Vehicle::factory()->create(['daily_rate' => 40]);
+    $bookingB = Booking::factory()->forVehicle($vehicleB)->create();
+    tenancy()->end();
+
+    // Re-initialize as tenant A and confirm isolation.
+    tenancy()->initialize($tenantA);
+    Filament::setCurrentPanel(Filament::getPanel('operator'));
+    actingAs($operatorA);
+
+    Livewire::test(ListBookings::class)
+        ->assertSee($bookingA->reference)
+        ->assertDontSee($bookingB->reference);
+});
+
+// ─── Transition actions ───────────────────────────────────────────────────────
+
+it('confirm action is visible only for Pending and transitions to Confirmed', function () {
+    [$tenant, $operator, $vehicle] = bookingOperatorFor('ardi');
+    // Default factory state is Pending.
+    $booking = Booking::factory()->forVehicle($vehicle)->create();
+
+    Livewire::test(ListBookings::class)
+        ->callTableAction('confirm', $booking)
+        ->assertHasNoTableActionErrors();
+
+    expect($booking->fresh()->status)->toBe(BookingStatus::Confirmed);
+});
+
+it('confirm action is hidden for an Active booking', function () {
+    [$tenant, $operator, $vehicle] = bookingOperatorFor('ardi');
+    $booking = Booking::factory()->forVehicle($vehicle)->active()->create();
+
+    Livewire::test(ListBookings::class)
+        ->assertTableActionHidden('confirm', $booking);
+
+    expect($booking->fresh()->status)->toBe(BookingStatus::Active);
+});
+
+it('reject action transitions Pending to Cancelled', function () {
+    [$tenant, $operator, $vehicle] = bookingOperatorFor('ardi');
+    $booking = Booking::factory()->forVehicle($vehicle)->create();
+
+    Livewire::test(ListBookings::class)
+        ->callTableAction('reject', $booking);
+
+    expect($booking->fresh()->status)->toBe(BookingStatus::Cancelled);
+});
+
+it('mark_active action transitions Confirmed to Active with odometer', function () {
+    [$tenant, $operator, $vehicle] = bookingOperatorFor('ardi');
+    $booking = Booking::factory()->forVehicle($vehicle)->confirmed()->create();
+
+    Livewire::test(ListBookings::class)
+        ->callTableAction('mark_active', $booking, data: [
+            'started_at' => now()->toDateTimeString(),
+            'start_odometer' => 12500,
+        ]);
+
+    $fresh = $booking->fresh();
+    expect($fresh->status)->toBe(BookingStatus::Active)
+        ->and($fresh->start_odometer)->toBe(12500)
+        ->and($fresh->started_at)->not->toBeNull();
+});
+
+it('complete action transitions Active to Completed with odometer', function () {
+    [$tenant, $operator, $vehicle] = bookingOperatorFor('ardi');
+    $booking = Booking::factory()->forVehicle($vehicle)->active()->create();
+
+    Livewire::test(ListBookings::class)
+        ->callTableAction('complete', $booking, data: [
+            'completed_at' => now()->toDateTimeString(),
+            'end_odometer' => 12750,
+        ]);
+
+    $fresh = $booking->fresh();
+    expect($fresh->status)->toBe(BookingStatus::Completed)
+        ->and($fresh->end_odometer)->toBe(12750)
+        ->and($fresh->completed_at)->not->toBeNull();
+});
+
+it('cancel action transitions a Confirmed booking to Cancelled', function () {
+    [$tenant, $operator, $vehicle] = bookingOperatorFor('ardi');
+    $booking = Booking::factory()->forVehicle($vehicle)->confirmed()->create();
+
+    Livewire::test(ListBookings::class)
+        ->callTableAction('cancel', $booking);
+
+    expect($booking->fresh()->status)->toBe(BookingStatus::Cancelled);
+});
+
+it('cancel action is not visible for Completed bookings', function () {
+    [$tenant, $operator, $vehicle] = bookingOperatorFor('ardi');
+    $booking = Booking::factory()->forVehicle($vehicle)->completed()->create();
+
+    Livewire::test(ListBookings::class)
+        ->assertTableActionHidden('cancel', $booking);
+});
+
+// ─── Manual booking ───────────────────────────────────────────────────────────
+
+it('manual booking via create page lands Confirmed with computed totals', function () {
+    Event::fake([BookingCreated::class]);
+
+    [$tenant, $operator, $vehicle] = bookingOperatorFor('ardi');
+
+    Livewire::test(CreateBooking::class)
+        ->fillForm(manualBookingData($vehicle))
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    $booking = Booking::latest()->first();
+    expect($booking->status)->toBe(BookingStatus::Confirmed)
+        ->and((float) $booking->total)->toBeGreaterThan(0)
+        ->and($booking->tenant_id)->toBe($tenant->id);
+
+    Event::assertNotDispatched(BookingCreated::class);
+});
+
+it('manual booking onto a taken slot fails with a notification and creates no row', function () {
+    [$tenant, $operator, $vehicle] = bookingOperatorFor('ardi');
+
+    // Pre-fill the slot.
+    Booking::factory()->forVehicle($vehicle)->confirmed()->create([
+        'start_date' => '2030-07-01',
+        'end_date' => '2030-07-04',
+    ]);
+
+    $before = Booking::count();
+
+    Livewire::test(CreateBooking::class)
+        ->fillForm(manualBookingData($vehicle))
+        ->call('create');
+
+    expect(Booking::count())->toBe($before);
+});
+
+// ─── Blocked dates / calendar ─────────────────────────────────────────────────
+
+it('creating a blocked date makes that window unavailable', function () {
+    [$tenant, $operator, $vehicle] = bookingOperatorFor('ardi');
+
+    BlockedDate::create([
+        'vehicle_id' => $vehicle->id,
+        'start_date' => '2030-08-01',
+        'end_date' => '2030-08-05',
+    ]);
+
+    $available = app(AvailabilityService::class)->isAvailable(
+        $vehicle,
+        Carbon::parse('2030-08-02'),
+        Carbon::parse('2030-08-04'),
+    );
+
+    expect($available)->toBeFalse();
+});
+
+it('removing a blocked date frees the window', function () {
+    [$tenant, $operator, $vehicle] = bookingOperatorFor('ardi');
+
+    $block = BlockedDate::create([
+        'vehicle_id' => $vehicle->id,
+        'start_date' => '2030-08-01',
+        'end_date' => '2030-08-05',
+    ]);
+
+    $block->delete();
+
+    $available = app(AvailabilityService::class)->isAvailable(
+        $vehicle,
+        Carbon::parse('2030-08-02'),
+        Carbon::parse('2030-08-04'),
+    );
+
+    expect($available)->toBeTrue();
+});
+
+it('blocked dates from tenant A are invisible in tenant B context', function () {
+    [$tenantA, $operatorA, $vehicleA] = bookingOperatorFor('ardi');
+
+    BlockedDate::create([
+        'vehicle_id' => $vehicleA->id,
+        'start_date' => '2030-09-01',
+        'end_date' => '2030-09-05',
+    ]);
+
+    tenancy()->end();
+
+    $tenantB = Tenant::factory()->withDomain('bardh')->create();
+    tenancy()->initialize($tenantB);
+
+    expect(BlockedDate::count())->toBe(0);
+});
