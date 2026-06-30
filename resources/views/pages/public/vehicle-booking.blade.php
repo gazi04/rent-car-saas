@@ -173,7 +173,7 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
             <div class="flex items-center gap-2">
                 <div @class([
                     'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold',
-                    'bg-blue-600 text-white' => $step >= $n,
+                    'bg-primary text-white' => $step >= $n,
                     'bg-gray-200 text-gray-500' => $step < $n,
                 ])>{{ $n }}</div>
                 <span @class(['text-sm', 'font-medium text-gray-900' => $step === $n, 'text-gray-400' => $step !== $n])>{{ $label }}</span>
@@ -194,15 +194,15 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
                        type="text"
                        placeholder="{{ __('booking.date_placeholder') }}"
                        data-availability-url="{{ route('vehicle.availability', $vehicle) }}"
-                       class="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                       class="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
                 @error('startDate') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 @error('endDate') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
             </div>
 
             {{-- Price preview --}}
             @if ($priceBreakdown)
-                <div class="rounded-lg bg-blue-50 border border-blue-100 p-4 mb-6">
-                    <h3 class="text-sm font-semibold text-blue-900 mb-3">{{ __('booking.price_preview') }}</h3>
+                <div class="rounded-lg bg-primary/10 border border-primary/20 p-4 mb-6">
+                    <h3 class="text-sm font-semibold text-primary mb-3">{{ __('booking.price_preview') }}</h3>
                     <dl class="space-y-1 text-sm">
                         <div class="flex justify-between">
                             <dt class="text-gray-600">{{ __('booking.rate_type') }}</dt>
@@ -218,7 +218,7 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
                                 <dd>-€{{ number_format($priceBreakdown['discount'], 2) }}</dd>
                             </div>
                         @endif
-                        <div class="flex justify-between font-bold text-blue-900 pt-1 border-t border-blue-200">
+                        <div class="flex justify-between font-bold text-primary pt-1 border-t border-primary/30">
                             <dt>{{ __('booking.total') }}</dt>
                             <dd>€{{ number_format($priceBreakdown['total'], 2) }}</dd>
                         </div>
@@ -233,7 +233,7 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
             @endif
 
             <button wire:click="nextStep"
-                    class="w-full rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors">
+                    class="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-secondary transition-colors">
                 {{ __('booking.next') }}
             </button>
         </div>
@@ -252,34 +252,34 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('booking.customer_name') }} *</label>
                     <input wire:model="customerName" type="text" autocomplete="name"
-                           class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                           class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary">
                     @error('customerName') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('booking.customer_phone') }} *</label>
                     <input wire:model="customerPhone" type="tel" autocomplete="tel"
-                           class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                           class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary">
                     @error('customerPhone') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('booking.customer_email') }}</label>
                     <input wire:model="customerEmail" type="email" autocomplete="email"
-                           class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                           class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary">
                     @error('customerEmail') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('booking.pickup_location') }}</label>
                     <input wire:model="pickupLocation" type="text"
-                           class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
+                           class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary">
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('booking.notes') }}</label>
                     <textarea wire:model="notes" rows="3"
-                              class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500"></textarea>
+                              class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary"></textarea>
                 </div>
             </div>
 
@@ -289,7 +289,7 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
                     {{ __('booking.back') }}
                 </button>
                 <button wire:click="nextStep"
-                        class="flex-1 rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors">
+                        class="flex-1 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-secondary transition-colors">
                     {{ __('booking.next') }}
                 </button>
             </div>
@@ -344,7 +344,7 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
                 @endif
                 <div class="py-3 flex justify-between">
                     <dt class="font-medium text-gray-500">{{ __('booking.payment_note') }}</dt>
-                    <dd class="text-gray-900 text-right max-w-xs">{{ __('booking.payment_note_value') }}</dd>
+                    <dd class="text-gray-900 text-right max-w-xs">{{ tenant()?->setting('payment_instructions', __('booking.payment_note_value')) }}</dd>
                 </div>
             </dl>
 
@@ -358,7 +358,7 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
                     {{ __('booking.back') }}
                 </button>
                 <button wire:click="submit" wire:loading.attr="disabled"
-                        class="flex-1 rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors disabled:opacity-60">
+                        class="flex-1 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-secondary transition-colors disabled:opacity-60">
                     <span wire:loading.remove>{{ __('booking.confirm_booking') }}</span>
                     <span wire:loading>…</span>
                 </button>

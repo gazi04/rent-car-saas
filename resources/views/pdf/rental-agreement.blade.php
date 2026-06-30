@@ -36,8 +36,17 @@
 
     {{-- Header --}}
     <div class="header">
-        @php $tenant = \App\Models\Tenant::find($booking->tenant_id); @endphp
+        @php
+            $tenant = \App\Models\Tenant::find($booking->tenant_id);
+            $logoPath = $tenant?->getFirstMediaPath('logo', 'thumb');
+        @endphp
+        @if($logoPath && file_exists($logoPath))
+        <div style="margin-bottom:8px;">
+            <img src="{{ $logoPath }}" alt="{{ $tenant->name }}" style="max-height:50px;max-width:180px;">
+        </div>
+        @else
         <div class="operator-name">{{ $tenant?->name ?? config('app.name') }}</div>
+        @endif
         <h1>{{ __('contract.title') }}</h1>
         <div class="meta">
             {{ __('contract.reference') }}: <strong>{{ $booking->reference }}</strong>

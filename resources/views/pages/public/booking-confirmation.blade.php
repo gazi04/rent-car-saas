@@ -55,7 +55,7 @@ new #[Layout('layouts.public')] #[Title('Booking Received')] class extends Compo
 
         <div class="flex flex-col gap-3">
             <a href="{{ route('public.home') }}"
-               class="rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors text-center">
+               class="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-secondary transition-colors text-center">
                 {{ __('booking.back_to_fleet') }}
             </a>
 

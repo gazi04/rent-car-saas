@@ -1,5 +1,17 @@
 <x-mail::message>
-# {{ $booking->vehicle->tenant->name ?? config('app.name') }}
+@php
+    $tenant = $booking->vehicle->tenant ?? null;
+    $logoUrl = $tenant?->logoUrl();
+    $paymentInstructions = $tenant?->setting('payment_instructions');
+@endphp
+
+@if($logoUrl)
+<div style="text-align:center;margin-bottom:16px;">
+<img src="{{ $logoUrl }}" alt="{{ $tenant->name }}" style="max-height:60px;max-width:200px;">
+</div>
+@endif
+
+# {{ $tenant->name ?? config('app.name') }}
 
 {{ __('emails.booking_confirmed.greeting', ['name' => $booking->customer_name]) }}
 
@@ -12,7 +24,7 @@
 | **{{ __('emails.booking_confirmed.dates_label') }}** | {{ $booking->start_date->format('d M Y') }} – {{ $booking->end_date->format('d M Y') }} |
 | **{{ __('emails.booking_confirmed.total_label') }}** | €{{ number_format($booking->total, 2) }} |
 
-{{ __('emails.booking_confirmed.payment_note') }}
+{{ $paymentInstructions ?? __('emails.booking_confirmed.payment_note') }}
 
 @if(!empty($agreementUrl))
 <x-mail::button :url="$agreementUrl" color="primary">
@@ -20,5 +32,5 @@
 </x-mail::button>
 @endif
 
-{{ __('emails.booking_confirmed.outro', ['operator' => $booking->vehicle->tenant->name ?? config('app.name')]) }}
+{{ __('emails.booking_confirmed.outro', ['operator' => $tenant->name ?? config('app.name')]) }}
 </x-mail::message>

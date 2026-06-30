@@ -111,7 +111,7 @@ new #[Layout('layouts.public')] #[Title('Browse Fleet')] class extends Component
 
         @if ($category || $transmission || $minPrice !== '' || $maxPrice !== '')
             <div class="mt-3 text-right">
-                <button wire:click="resetFilters" class="text-sm text-blue-600 hover:underline">
+                <button wire:click="resetFilters" class="text-sm text-primary hover:underline">
                     {{ __('booking.filters_reset') }}
                 </button>
             </div>
@@ -144,7 +144,7 @@ new #[Layout('layouts.public')] #[Title('Browse Fleet')] class extends Component
                     <div class="p-4">
                         <div class="flex items-start justify-between mb-2">
                             <h2 class="font-semibold text-gray-900 text-sm leading-tight">{{ $vehicle->name }}</h2>
-                            <span class="ml-2 inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 shrink-0">
+                            <span class="ml-2 inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-secondary shrink-0">
                                 {{ $vehicle->category->getLabel() }}
                             </span>
                         </div>
@@ -161,7 +161,7 @@ new #[Layout('layouts.public')] #[Title('Browse Fleet')] class extends Component
                                 <span class="text-xs text-gray-500 ml-1">{{ __('booking.per_day') }}</span>
                             </div>
                             <a href="{{ route('public.vehicle', $vehicle) }}"
-                               class="inline-flex items-center rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors">
+                               class="inline-flex items-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-secondary transition-colors">
                                 {{ __('booking.book_now') }}
                             </a>
                         </div>
