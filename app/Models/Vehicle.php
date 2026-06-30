@@ -23,6 +23,8 @@ class Vehicle extends Model implements HasMedia
     /** @use HasFactory<VehicleFactory> */
     use BelongsToTenant, HasFactory, InteractsWithMedia, SoftDeletes;
 
+    protected $keyType = 'string';
+
     /**
      * @var array<string, mixed>
      */
