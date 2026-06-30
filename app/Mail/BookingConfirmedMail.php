@@ -16,7 +16,10 @@ class BookingConfirmedMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public readonly Booking $booking) {}
+    public function __construct(
+        public readonly Booking $booking,
+        public readonly ?string $agreementUrl = null,
+    ) {}
 
     public function envelope(): Envelope
     {
@@ -32,7 +35,10 @@ class BookingConfirmedMail extends Mailable implements ShouldQueue
     {
         return new Content(
             markdown: 'emails.booking-confirmed',
-            with: ['booking' => $this->booking],
+            with: [
+                'booking' => $this->booking,
+                'agreementUrl' => $this->agreementUrl,
+            ],
         );
     }
 }

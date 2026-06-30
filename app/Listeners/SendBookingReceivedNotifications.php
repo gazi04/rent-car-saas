@@ -20,7 +20,7 @@ class SendBookingReceivedNotifications implements ShouldQueue
         if ($booking->customer_email) {
             Mail::to($booking->customer_email)
                 ->locale($booking->locale)
-                ->queue(new BookingReceivedMail($booking));
+                ->queue(BookingReceivedMail::forTenantDomain($booking));
         }
 
         $vehicleDisplay = $booking->vehicle->name;
