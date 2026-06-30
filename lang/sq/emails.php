@@ -39,6 +39,7 @@ return [
         'dates_label' => 'Datat',
         'total_label' => 'Totali',
         'payment_note' => 'Pagesa bëhet gjatë marrjes — ju lutemi rregullojeni me operatorin.',
+        'agreement_button' => 'Shkarko Kontratën',
         'outro' => 'Faleminderit që rezervuat me :operator.',
     ],
 

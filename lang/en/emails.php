@@ -39,6 +39,7 @@ return [
         'dates_label' => 'Dates',
         'total_label' => 'Total',
         'payment_note' => 'Payment is due on pickup — please arrange this with the operator.',
+        'agreement_button' => 'Download Agreement',
         'outro' => 'Thank you for booking with :operator.',
     ],
 

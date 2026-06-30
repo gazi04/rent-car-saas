@@ -12,8 +12,8 @@
 | **{{ __('emails.booking_received.dates_label') }}** | {{ $booking->start_date->format('d M Y') }} – {{ $booking->end_date->format('d M Y') }} |
 | **{{ __('emails.booking_received.total_label') }}** | €{{ number_format($booking->total, 2) }} |
 
-@if($booking->customer_email)
-<x-mail::button :url="url()->temporarySignedRoute('public.booking.cancel', now()->addDay(), ['booking' => $booking->id])">
+@if(!empty($cancelUrl))
+<x-mail::button :url="$cancelUrl">
 {{ __('emails.booking_received.cancel_action') }}
 </x-mail::button>
 
