@@ -5,6 +5,7 @@ namespace App\Filament\Operator\Resources\Bookings\Tables;
 use App\Enums\BookingStatus;
 use App\Models\Booking;
 use App\Services\BookingService;
+use App\Services\RentalAgreementService;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
@@ -17,6 +18,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Storage;
 
 class BookingsTable
 {
@@ -79,6 +81,7 @@ class BookingsTable
                 self::markActiveAction(),
                 self::completeAction(),
                 self::cancelAction(),
+                self::downloadAgreementAction(),
                 ViewAction::make(),
             ]);
     }
@@ -169,6 +172,24 @@ class BookingsTable
                     filled($data['completed_at']) ? Carbon::parse($data['completed_at']) : null,
                     filled($data['end_odometer']) ? (int) $data['end_odometer'] : null,
                 );
+            });
+    }
+
+    protected static function downloadAgreementAction(): Action
+    {
+        return Action::make('agreement')
+            ->label('Download agreement')
+            ->icon(Heroicon::OutlinedDocumentText)
+            ->color('gray')
+            ->visible(fn (Booking $record): bool => in_array($record->status, [
+                BookingStatus::Confirmed,
+                BookingStatus::Active,
+                BookingStatus::Completed,
+            ], true))
+            ->action(function (Booking $record): mixed {
+                $contract = app(RentalAgreementService::class)->generate($record);
+
+                return Storage::download($contract->path, "agreement-{$record->reference}.pdf");
             });
     }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\BookingStatus;
 use App\Http\Controllers\CancelBookingController;
+use App\Http\Controllers\DownloadAgreementController;
 use App\Models\Booking;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
@@ -39,6 +40,11 @@ Route::middleware([
     // Signed 24-hour cancellation link — no auth required.
     Route::get('/booking/{booking}/cancel', CancelBookingController::class)
         ->name('public.booking.cancel')
+        ->middleware('signed');
+
+    // Signed 7-day rental-agreement download link — no auth required.
+    Route::get('/booking/{booking:reference}/agreement', DownloadAgreementController::class)
+        ->name('agreement.download')
         ->middleware('signed');
 
     // Session locale toggle — POST, redirect back.
