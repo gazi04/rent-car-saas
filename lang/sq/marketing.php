@@ -1,0 +1,74 @@
+<?php
+
+return [
+
+    'language_toggle' => 'English',
+
+    // Header
+    'nav_features' => 'Veçoritë',
+    'nav_pricing' => 'Çmimet',
+    'nav_start_trial' => 'Fillo provën falas',
+
+    // Hero
+    'hero_heading' => 'Faqja juaj e brendshme e rezervimeve për makina, gati brenda minutash',
+    'hero_subheading' => 'RentACar SaaS i jep çdo biznesi rent-a-car në Ballkan një faqe rezervimesh me markën tuaj, një panel për flotën dhe rezervimet, dhe email-e automatike për klientët — pa zhvillues.',
+    'hero_cta_primary' => 'Fillo provën tënde falas',
+    'hero_cta_secondary' => 'Shiko çmimet',
+    'hero_note' => 'Nuk kërkohet kartë krediti. Miratim nga administratori, pastaj jeni online.',
+
+    // Features
+    'features_heading' => 'Gjithçka që i duhet biznesit tuaj rent-a-car',
+    'features_subheading' => 'Një abonim, një panel, subdomeni juaj.',
+
+    'feature_storefront_title' => 'Faqja juaj e rezervimeve me markën tuaj',
+    'feature_storefront_body' => 'Klientët rezervojnë makinat tuaja në subdomenin tuaj — logoja, ngjyrat dhe fonti juaj, pa llogari. Dygjuhëshe që në fillim (shqip dhe anglisht).',
+
+    'feature_fleet_title' => 'Menaxhimi i flotës dhe rezervimeve',
+    'feature_fleet_body' => 'Menaxhoni automjetet, fotot, çmimet dhe kalendarin e disponueshmërisë. Konfirmoni, refuzoni ose përfundoni rezervime me mbrojtje kundër dyfishimit të rezervimeve.',
+
+    'feature_automation_title' => 'Email-e dhe kontrata automatike',
+    'feature_automation_body' => 'Konfirmimet e rezervimeve, anulimet dhe kontratat PDF gjenerohen dhe dërgohen automatikisht — në gjuhën e klientit.',
+
+    'feature_dashboard_title' => 'Një panel, pa telashe konfigurimi',
+    'feature_dashboard_body' => 'Regjistrohuni, merrni miratimin dhe menaxhoni të gjithë biznesin tuaj rent-a-car nga një panel i vetëm — pa hosting, pa mirëmbajtje.',
+
+    // Pricing
+    'pricing_heading' => 'Çmime të thjeshta dhe transparente',
+    'pricing_subheading' => 'Çdo plan përfshin faqen tuaj të rezervimeve me markën tuaj. Filloni me provë falas, përmirësoni kur të doni.',
+
+    'plan_trial_name' => 'Provë',
+    'plan_trial_price' => 'Falas',
+    'plan_trial_period' => 'për 30 ditë',
+    'plan_trial_tagline' => 'Provoni platformën e plotë, pa kartë krediti.',
+
+    'plan_basic_name' => 'Basic',
+    'plan_basic_period' => '/ muaj',
+    'plan_basic_tagline' => 'Për biznese të vogla rent-a-car që sapo fillojnë online.',
+
+    'plan_standard_name' => 'Standard',
+    'plan_standard_period' => '/ muaj',
+    'plan_standard_tagline' => 'Për flota në rritje që kanë nevojë për më shumë hapësirë.',
+    'plan_standard_badge' => 'Më i popullarizuari',
+
+    'plan_pro_name' => 'Pro',
+    'plan_pro_period' => '/ muaj',
+    'plan_pro_tagline' => 'Për operatorë të konsoliduar me flota më të mëdha.',
+
+    'plan_feature_storefront' => 'Faqe rezervimesh me markën tuaj',
+    'plan_feature_dashboard' => 'Panel operatori & menaxhim rezervimesh',
+    'plan_feature_agreements' => 'Email-e dhe kontrata automatike',
+    'plan_feature_bilingual' => 'Faqe dygjuhëshe (shqip dhe anglisht)',
+    'plan_feature_support_email' => 'Mbështetje me email',
+    'plan_feature_support_priority' => 'Mbështetje prioritare',
+
+    'plan_cta' => 'Fillo provën falas',
+
+    // CTA band
+    'cta_heading' => 'Gati ta vini faqen tuaj të rezervimeve online?',
+    'cta_subheading' => 'Regjistroni biznesin tuaj, merrni miratimin dhe filloni të pranoni rezervime.',
+    'cta_button' => 'Fillo provën tënde falas',
+
+    // Footer
+    'footer_tagline' => 'Softuer rezervimesh rent-a-car me markë të bardhë për Ballkanin.',
+
+];
