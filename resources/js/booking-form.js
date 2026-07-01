@@ -31,7 +31,12 @@ function initBookingPicker() {
                 disable: disableRanges,
                 onChange(selectedDates) {
                     if (selectedDates.length === 2) {
-                        const fmt = (d) => d.toISOString().slice(0, 10);
+                        const fmt = (d) => {
+                            const year = d.getFullYear();
+                            const month = String(d.getMonth() + 1).padStart(2, '0');
+                            const day = String(d.getDate()).padStart(2, '0');
+                            return `${year}-${month}-${day}`;
+                        };
                         Livewire.dispatch('dates-selected', {
                             start: fmt(selectedDates[0]),
                             end: fmt(selectedDates[1]),
