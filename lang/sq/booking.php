@@ -68,4 +68,5 @@ return [
     'booking_cancelled' => 'Rezervimi u anulua',
     'cancellation_confirmed' => 'Rezervimi juaj është anuluar me sukses.',
     'booking_already_cancelled' => 'Ky rezervim është anuluar ose kompletuar tashmë.',
+    'booking_not_cancellable' => 'Ky rezervim është konfirmuar tashmë. Ju lutemi kontaktoni operatorin drejtpërdrejt për ta anuluar ose ndryshuar.',
 ];

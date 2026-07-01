@@ -26,6 +26,13 @@
                         </svg>
                     </div>
                     <h1 class="text-xl font-bold text-gray-900 mb-2">{{ __('booking.booking_already_cancelled') }}</h1>
+                @elseif ($notCancellable)
+                    <div class="w-14 h-14 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-7 h-7 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <h1 class="text-xl font-bold text-gray-900 mb-2">{{ __('booking.booking_not_cancellable') }}</h1>
                 @else
                     <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
                         <svg class="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

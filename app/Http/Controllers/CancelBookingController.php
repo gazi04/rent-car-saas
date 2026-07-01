@@ -15,6 +15,15 @@ class CancelBookingController extends Controller
         if ($booking->status === BookingStatus::Completed || $booking->status === BookingStatus::Cancelled) {
             return view('public.cancel-result', [
                 'alreadyDone' => true,
+                'notCancellable' => false,
+                'booking' => $booking,
+            ]);
+        }
+
+        if ($booking->status !== BookingStatus::Pending) {
+            return view('public.cancel-result', [
+                'alreadyDone' => false,
+                'notCancellable' => true,
                 'booking' => $booking,
             ]);
         }
@@ -23,6 +32,7 @@ class CancelBookingController extends Controller
 
         return view('public.cancel-result', [
             'alreadyDone' => false,
+            'notCancellable' => false,
             'booking' => $booking,
         ]);
     }

@@ -68,4 +68,5 @@ return [
     'booking_cancelled' => 'Booking Cancelled',
     'cancellation_confirmed' => 'Your booking has been cancelled successfully.',
     'booking_already_cancelled' => 'This booking has already been cancelled or completed.',
+    'booking_not_cancellable' => 'This bookin is already confirmed. Please contact the operator directly to cancle or change it.',
 ];
