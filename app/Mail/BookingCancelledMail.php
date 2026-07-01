@@ -24,7 +24,7 @@ class BookingCancelledMail extends Mailable implements ShouldQueue
 
         return new Envelope(
             from: new Address($tenant->email, $tenant->name),
-            subject: __('emails.booking_cancelled.subject'),
+            subject: __('emails.booking_cancelled.subject', ['reference' => $this->booking->reference]),
         );
     }
 

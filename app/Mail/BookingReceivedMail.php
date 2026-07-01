@@ -52,7 +52,7 @@ class BookingReceivedMail extends Mailable implements ShouldQueue
 
         return new Envelope(
             from: new Address($tenant->email, $tenant->name),
-            subject: __('emails.booking_received.subject'),
+            subject: __('emails.booking_received.subject', ['reference' => $this->booking->reference]),
         );
     }
 

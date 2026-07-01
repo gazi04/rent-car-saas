@@ -18,7 +18,9 @@ class NewBookingAlertMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: __('emails.new_booking_alert.subject'));
+        return new Envelope(
+            subject: __('emails.new_booking_alert.subject', ['reference' => $this->booking->reference]),
+        );
     }
 
     public function content(): Content

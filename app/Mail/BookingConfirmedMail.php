@@ -27,7 +27,7 @@ class BookingConfirmedMail extends Mailable implements ShouldQueue
 
         return new Envelope(
             from: new Address($tenant->email, $tenant->name),
-            subject: __('emails.booking_confirmed.subject'),
+            subject: __('emails.booking_confirmed.subject', ['reference' => $this->booking->reference]),
         );
     }
 

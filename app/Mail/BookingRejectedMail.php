@@ -24,7 +24,7 @@ class BookingRejectedMail extends Mailable implements ShouldQueue
 
         return new Envelope(
             from: new Address($tenant->email, $tenant->name),
-            subject: __('emails.booking_rejected.subject'),
+            subject: __('emails.booking_rejected.subject', ['reference' => $this->booking->reference]),
         );
     }
 
