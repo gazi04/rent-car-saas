@@ -2,6 +2,9 @@
 @php
     $tenant = $booking->vehicle->tenant ?? null;
     $logoUrl = $tenant?->logoUrl();
+    if ($logoUrl) {
+        $logoUrl = rtrim(config('app.url'), '/').$logoUrl;
+    }
     $paymentInstructions = $tenant?->setting('payment_instructions');
 @endphp
 
