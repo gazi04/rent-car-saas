@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\BookingStatus;
 use App\Http\Controllers\CancelBookingController;
 use App\Http\Controllers\DownloadAgreementController;
+use App\Http\Middleware\EnsureTenantIsActive;
 use App\Models\Booking;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
@@ -26,6 +27,7 @@ Route::middleware([
     'web',
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
+    EnsureTenantIsActive::class,
     'set-locale',
 ])->group(function () {
     // ── Public booking site ──────────────────────────────────────────────
