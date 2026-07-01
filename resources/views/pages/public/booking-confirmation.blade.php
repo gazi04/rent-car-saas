@@ -8,18 +8,14 @@ use Livewire\Component;
 
 new #[Layout('layouts.public')] #[Title('Booking Received')] class extends Component {
     public Booking $booking;
-    public string $cancelUrl = '';
 
     public function mount(Booking $booking): void
     {
         $this->booking = $booking;
-        $this->cancelUrl = URL::temporarySignedRoute(
-            'public.booking.cancel',
-            now()->addDay(),
-            ['booking' => $booking->id],
-        );
     }
-}; ?>
+};
+
+?>
 
 <div class="max-w-lg mx-auto">
     <div class="bg-white rounded-lg border border-gray-200 p-8 text-center">
@@ -59,10 +55,13 @@ new #[Layout('layouts.public')] #[Title('Booking Received')] class extends Compo
                 {{ __('booking.back_to_fleet') }}
             </a>
 
-            <a href="{{ $cancelUrl }}"
-               class="rounded-md border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors text-center">
-                {{ __('booking.cancel_booking') }}
-            </a>
+            <p class="text-sm text-gray-500 text-center">
+                @if ($booking->customer_email)
+                    {{ __('booking.check_email_to_cancel') }}
+                @else
+                    {{ __('booking.contact_to_cancel') }}
+                @endif
+            </p>
         </div>
     </div>
 </div>

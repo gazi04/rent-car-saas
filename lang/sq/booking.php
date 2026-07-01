@@ -60,6 +60,8 @@ return [
     'booking_reference' => 'Referenca juaj',
     'booking_pending_notice' => 'Rezervimi juaj është në pritje. Operatori do ta konfirmojë së shpejti — kontrolloni emailin tuaj.',
     'cancel_booking' => 'Anulo këtë rezervim',
+    'check_email_to_cancel' => 'Duhet të anuloni? Përdorni lidhjen e anulimit që ju dërguam me email.',
+    'contact_to_cancel' => 'Duhet të anuloni? Kontaktoni operatorin drejtpërdrejt.',
     'back_to_fleet' => 'Kthehu tek flota',
 
     // Cancellation

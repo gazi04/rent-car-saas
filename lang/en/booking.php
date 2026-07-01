@@ -60,6 +60,8 @@ return [
     'booking_reference' => 'Your reference',
     'booking_pending_notice' => 'Your booking is pending. The operator will confirm it shortly — check your email for updates.',
     'cancel_booking' => 'Cancel this booking',
+    'check_email_to_cancel' => 'Need to cancel? Use the cancellation link we emailed you.',
+    'contact_to_cancel' => 'Need to cancel? Contact the operator directly.',
     'back_to_fleet' => 'Back to fleet',
 
     // Cancellation
