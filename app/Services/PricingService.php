@@ -52,10 +52,12 @@ class PricingService
 
     private function applyDiscount(Vehicle $vehicle, float $subtotal): float
     {
-        return match ($vehicle->discount_type) {
+        $discount = match ($vehicle->discount_type) {
             'percentage' => $subtotal * ((float) $vehicle->discount_value / 100),
             'fixed' => (float) $vehicle->discount_value,
             default => 0.0,
         };
+
+        return min($discount, $subtotal);
     }
 }
