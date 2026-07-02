@@ -6,6 +6,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Stancl\Tenancy\Exceptions\TenantCouldNotBeIdentifiedOnDomainException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -31,5 +32,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // An unknown subdomain is a missing resource, not a server error.
         $exceptions->render(
             fn (TenantCouldNotBeIdentifiedOnDomainException $e) => abort(404),
+        );
+
+        // Never leak a 403 to the browser (e.g. wrong-tenant Filament panel access,
+        // tampered/expired signed URLs): a resource you're not allowed to see should
+        // look the same as one that doesn't exist.
+        $exceptions->render(
+            fn (HttpExceptionInterface $e) => $e->getStatusCode() === 403 ? abort(404) : null,
         );
     })->create();
