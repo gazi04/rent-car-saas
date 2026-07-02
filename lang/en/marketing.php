@@ -68,7 +68,32 @@ return [
     'cta_subheading' => 'Register your business, get approved, and start taking bookings.',
     'cta_button' => 'Start your free trial',
 
+    // How it works
+    'nav_how_it_works' => 'How it works',
+    'how_heading' => 'Live in three simple steps',
+    'how_subheading' => 'From registration to your first booking — no technical skills needed.',
+    'how_step_1_title' => 'Register your business',
+    'how_step_1_body' => 'Pick your subdomain, add your business details, and submit your registration in minutes.',
+    'how_step_2_title' => 'Brand your site & add your fleet',
+    'how_step_2_body' => 'Upload your logo, choose your colors and layout, and add vehicles with photos and pricing.',
+    'how_step_3_title' => 'Start taking bookings',
+    'how_step_3_body' => 'Share your link — customers book online, you confirm from your dashboard, emails go out automatically.',
+
+    // Hero extras
+    'hero_badge' => 'Built for car-rental businesses in the Balkans',
+    'hero_mock_url' => 'yourbusiness.rentacar.com',
+
+    // Stats strip
+    'stat_setup_value' => 'Minutes',
+    'stat_setup_label' => 'to set up — not weeks',
+    'stat_languages_value' => '2 languages',
+    'stat_languages_label' => 'Albanian & English, built in',
+    'stat_commission_value' => '0% commission',
+    'stat_commission_label' => 'your bookings, your money',
+
     // Footer
     'footer_tagline' => 'White-label car-rental booking software for the Balkans.',
+    'footer_product' => 'Product',
+    'footer_get_started' => 'Get started',
 
 ];

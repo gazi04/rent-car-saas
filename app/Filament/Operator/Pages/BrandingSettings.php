@@ -10,6 +10,8 @@ use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 
@@ -49,71 +51,159 @@ class BrandingSettings extends Page
             ->statePath('data')
             ->model(tenant())
             ->components([
-                Section::make(__('branding.section_logo'))
-                    ->components([
-                        SpatieMediaLibraryFileUpload::make('logo')
-                            ->label(__('branding.logo'))
-                            ->collection('logo')
-                            ->disk('public')
-                            ->image()
-                            ->maxSize(2048)
-                            ->helperText(__('branding.logo_hint')),
-                    ]),
+                Tabs::make('branding')
+                    ->tabs([
+                        Tab::make(__('branding.tab_brand'))
+                            ->components([
+                                Section::make(__('branding.section_logo'))
+                                    ->components([
+                                        SpatieMediaLibraryFileUpload::make('logo')
+                                            ->label(__('branding.logo'))
+                                            ->collection('logo')
+                                            ->disk('public')
+                                            ->image()
+                                            ->maxSize(2048)
+                                            ->helperText(__('branding.logo_hint')),
+                                    ]),
 
-                Section::make(__('branding.section_colors'))
-                    ->columns(2)
-                    ->components([
-                        ColorPicker::make('color_primary')
-                            ->label(__('branding.color_primary'))
-                            ->rule('regex:/^#[0-9a-fA-F]{6}$/'),
-                        ColorPicker::make('color_secondary')
-                            ->label(__('branding.color_secondary'))
-                            ->rule('regex:/^#[0-9a-fA-F]{6}$/'),
-                    ]),
+                                Section::make(__('branding.section_colors'))
+                                    ->columns(2)
+                                    ->components([
+                                        ColorPicker::make('color_primary')
+                                            ->label(__('branding.color_primary'))
+                                            ->rule('regex:/^#[0-9a-fA-F]{6}$/'),
+                                        ColorPicker::make('color_secondary')
+                                            ->label(__('branding.color_secondary'))
+                                            ->rule('regex:/^#[0-9a-fA-F]{6}$/'),
+                                    ]),
 
-                Section::make(__('branding.section_font'))
-                    ->components([
-                        Select::make('font_family')
-                            ->label(__('branding.font_family'))
-                            ->options($fontOptions)
-                            ->native(false),
-                    ]),
+                                Section::make(__('branding.section_font'))
+                                    ->components([
+                                        Select::make('font_family')
+                                            ->label(__('branding.font_family'))
+                                            ->options($fontOptions)
+                                            ->native(false),
+                                    ]),
+                            ]),
 
-                Section::make(__('branding.section_contact'))
-                    ->columns(2)
-                    ->components([
-                        TextInput::make('contact_phone')
-                            ->label(__('branding.contact_phone'))
-                            ->tel()
-                            ->maxLength(30),
-                        TextInput::make('contact_email')
-                            ->label(__('branding.contact_email'))
-                            ->email()
-                            ->maxLength(100),
-                        Textarea::make('contact_address')
-                            ->label(__('branding.contact_address'))
-                            ->rows(2)
-                            ->maxLength(300)
-                            ->columnSpanFull(),
-                    ]),
+                        Tab::make(__('branding.tab_content'))
+                            ->components([
+                                Section::make(__('branding.section_hero'))
+                                    ->description(__('branding.content_hint'))
+                                    ->components([
+                                        TextInput::make('home_hero_heading')
+                                            ->label(__('branding.home_hero_heading'))
+                                            ->maxLength(120),
+                                        Textarea::make('home_hero_subheading')
+                                            ->label(__('branding.home_hero_subheading'))
+                                            ->rows(2)
+                                            ->maxLength(300),
+                                        TextInput::make('home_hero_cta_label')
+                                            ->label(__('branding.home_hero_cta_label'))
+                                            ->maxLength(40),
+                                    ]),
 
-                Section::make(__('branding.section_footer'))
-                    ->components([
-                        Textarea::make('footer_text')
-                            ->label(__('branding.footer_text'))
-                            ->rows(2)
-                            ->maxLength(500),
-                        TextInput::make('social_facebook')
-                            ->label(__('branding.social_facebook'))
-                            ->url()
-                            ->maxLength(255),
-                        TextInput::make('social_instagram')
-                            ->label(__('branding.social_instagram'))
-                            ->url()
-                            ->maxLength(255),
-                    ]),
+                                Section::make(__('branding.section_about'))
+                                    ->components([
+                                        TextInput::make('home_about_title')
+                                            ->label(__('branding.home_about_title'))
+                                            ->maxLength(120),
+                                        Textarea::make('home_about_text')
+                                            ->label(__('branding.home_about_text'))
+                                            ->rows(4)
+                                            ->maxLength(2000),
+                                    ]),
 
+                                ...collect([1, 2, 3])->map(
+                                    fn (int $i): Section => Section::make(__("branding.section_service_{$i}"))
+                                        ->columns(2)
+                                        ->components([
+                                            TextInput::make("home_service_{$i}_title")
+                                                ->label(__('branding.service_title'))
+                                                ->maxLength(80),
+                                            Textarea::make("home_service_{$i}_text")
+                                                ->label(__('branding.service_text'))
+                                                ->rows(2)
+                                                ->maxLength(300),
+                                        ]),
+                                )->all(),
+                            ]),
+
+                        Tab::make(__('branding.tab_layout'))
+                            ->components([
+                                Section::make(__('branding.section_layouts'))
+                                    ->description(__('branding.layouts_hint'))
+                                    ->components([
+                                        Select::make('layout_home')
+                                            ->label(__('branding.layout_home'))
+                                            ->options($this->layoutOptions('home'))
+                                            ->native(false),
+                                        Select::make('layout_vehicles')
+                                            ->label(__('branding.layout_vehicles'))
+                                            ->options($this->layoutOptions('vehicles'))
+                                            ->native(false),
+                                        Select::make('layout_vehicle_show')
+                                            ->label(__('branding.layout_vehicle_show'))
+                                            ->options($this->layoutOptions('vehicle_show'))
+                                            ->native(false),
+                                    ]),
+                            ]),
+
+                        Tab::make(__('branding.tab_contact_footer'))
+                            ->components([
+                                Section::make(__('branding.section_contact'))
+                                    ->columns(2)
+                                    ->components([
+                                        TextInput::make('contact_phone')
+                                            ->label(__('branding.contact_phone'))
+                                            ->tel()
+                                            ->maxLength(30),
+                                        TextInput::make('contact_email')
+                                            ->label(__('branding.contact_email'))
+                                            ->email()
+                                            ->maxLength(100),
+                                        Textarea::make('contact_address')
+                                            ->label(__('branding.contact_address'))
+                                            ->rows(2)
+                                            ->maxLength(300)
+                                            ->columnSpanFull(),
+                                    ]),
+
+                                Section::make(__('branding.section_footer'))
+                                    ->components([
+                                        Textarea::make('footer_text')
+                                            ->label(__('branding.footer_text'))
+                                            ->rows(2)
+                                            ->maxLength(500),
+                                        TextInput::make('social_facebook')
+                                            ->label(__('branding.social_facebook'))
+                                            ->url()
+                                            ->maxLength(255),
+                                        TextInput::make('social_instagram')
+                                            ->label(__('branding.social_instagram'))
+                                            ->url()
+                                            ->maxLength(255),
+                                    ]),
+                            ]),
+                    ]),
             ]);
+    }
+
+    /**
+     * Curated layout options for one public page, labeled for the current locale.
+     *
+     * @return array<string, string>
+     */
+    protected function layoutOptions(string $page): array
+    {
+        /** @var array<int, string> $slugs */
+        $slugs = config("branding.layouts.{$page}", []);
+
+        return collect($slugs)
+            ->mapWithKeys(fn (string $slug): array => [
+                $slug => __('branding.layout_'.str_replace('-', '_', $slug)),
+            ])
+            ->all();
     }
 
     public function save(): void
@@ -123,11 +213,25 @@ class BrandingSettings extends Page
         /** @var array<int, string> $allowedKeys */
         $allowedKeys = config('branding.keys', []);
 
+        $layoutPages = [
+            'layout_home' => 'home',
+            'layout_vehicles' => 'vehicles',
+            'layout_vehicle_show' => 'vehicle_show',
+        ];
+
         foreach ($allowedKeys as $key) {
             if ($key === 'font_family' && isset($data[$key])) {
                 /** @var array<string, mixed> $fonts */
                 $fonts = config('branding.fonts', []);
                 if (! array_key_exists($data[$key], $fonts)) {
+                    continue;
+                }
+            }
+
+            if (isset($layoutPages[$key], $data[$key])) {
+                /** @var array<int, string> $allowedLayouts */
+                $allowedLayouts = config('branding.layouts.'.$layoutPages[$key], []);
+                if (! in_array($data[$key], $allowedLayouts, true)) {
                     continue;
                 }
             }

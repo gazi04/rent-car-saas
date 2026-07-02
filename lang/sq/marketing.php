@@ -68,7 +68,32 @@ return [
     'cta_subheading' => 'Regjistroni biznesin tuaj, merrni miratimin dhe filloni të pranoni rezervime.',
     'cta_button' => 'Fillo provën tënde falas',
 
+    // How it works
+    'nav_how_it_works' => 'Si funksionon',
+    'how_heading' => 'Online në tre hapa të thjeshtë',
+    'how_subheading' => 'Nga regjistrimi te rezervimi i parë — pa aftësi teknike.',
+    'how_step_1_title' => 'Regjistroni biznesin tuaj',
+    'how_step_1_body' => 'Zgjidhni subdomenin tuaj, shtoni të dhënat e biznesit dhe dërgoni regjistrimin brenda minutash.',
+    'how_step_2_title' => 'Brendoni faqen & shtoni flotën',
+    'how_step_2_body' => 'Ngarkoni logon, zgjidhni ngjyrat dhe dizajnin, dhe shtoni automjetet me foto e çmime.',
+    'how_step_3_title' => 'Filloni të pranoni rezervime',
+    'how_step_3_body' => 'Shpërndani linkun tuaj — klientët rezervojnë online, ju konfirmoni nga paneli, email-et dërgohen automatikisht.',
+
+    // Hero extras
+    'hero_badge' => 'Ndërtuar për bizneset rent-a-car në Ballkan',
+    'hero_mock_url' => 'biznesijuaj.rentacar.com',
+
+    // Stats strip
+    'stat_setup_value' => 'Minuta',
+    'stat_setup_label' => 'për t\'u konfiguruar — jo javë',
+    'stat_languages_value' => '2 gjuhë',
+    'stat_languages_label' => 'shqip dhe anglisht, të integruara',
+    'stat_commission_value' => '0% komision',
+    'stat_commission_label' => 'rezervimet tuaja, paratë tuaja',
+
     // Footer
     'footer_tagline' => 'Softuer rezervimesh rent-a-car me markë të bardhë për Ballkanin.',
+    'footer_product' => 'Produkti',
+    'footer_get_started' => 'Fillo tani',
 
 ];

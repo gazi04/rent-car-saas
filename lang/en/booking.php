@@ -3,6 +3,43 @@
 return [
     // Nav / header
     'language_toggle' => 'Shqip',
+    'nav_home' => 'Home',
+    'nav_vehicles' => 'Vehicles',
+    'nav_about' => 'About us',
+    'nav_contact' => 'Contact',
+
+    // Tenant home page defaults
+    'home_hero_heading' => 'Rent the perfect car for your journey',
+    'home_hero_subheading' => 'Reliable vehicles, transparent prices and instant booking — no account needed.',
+    'home_hero_cta' => 'Browse vehicles',
+    'home_services_heading' => 'Why choose us',
+    'home_service_1_title' => 'Wide selection',
+    'home_service_1_text' => 'From compact city cars to spacious SUVs — find the right vehicle for any trip.',
+    'home_service_2_title' => 'Easy online booking',
+    'home_service_2_text' => 'Pick your dates, enter your details and get a confirmation — all in a few minutes.',
+    'home_service_3_title' => 'Support that cares',
+    'home_service_3_text' => 'Questions before or during your rental? Our team is a phone call away.',
+    'home_about_title' => 'About us',
+    'home_about_text' => 'We are a local car rental business dedicated to making your travel simple, safe and affordable.',
+    'featured_vehicles' => 'Featured vehicles',
+    'view_all_vehicles' => 'View all vehicles',
+
+    // Vehicle details page
+    'vehicle_details' => 'Vehicle details',
+    'specs_heading' => 'Specifications',
+    'spec_category' => 'Category',
+    'spec_fuel' => 'Fuel',
+    'spec_transmission' => 'Transmission',
+    'spec_seats' => 'Seats',
+    'spec_year' => 'Year',
+    'rates_heading' => 'Rates',
+    'per_hour' => 'per hour',
+    'per_week' => 'per week',
+    'per_month' => 'per month',
+    'description_heading' => 'Description',
+    'photo_previous' => 'Previous photo',
+    'photo_next' => 'Next photo',
+    'photo_show' => 'Show photo :number',
 
     // Listing
     'browse_fleet' => 'Browse Our Fleet',

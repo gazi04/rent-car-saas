@@ -3,6 +3,43 @@
 return [
     // Nav / header
     'language_toggle' => 'English',
+    'nav_home' => 'Ballina',
+    'nav_vehicles' => 'Veturat',
+    'nav_about' => 'Rreth nesh',
+    'nav_contact' => 'Kontakti',
+
+    // Tenant home page defaults
+    'home_hero_heading' => 'Merrni me qira veturën e duhur për udhëtimin tuaj',
+    'home_hero_subheading' => 'Vetura të besueshme, çmime transparente dhe rezervim i menjëhershëm — pa llogari.',
+    'home_hero_cta' => 'Shfleto veturat',
+    'home_services_heading' => 'Pse të na zgjidhni ne',
+    'home_service_1_title' => 'Zgjedhje e gjerë',
+    'home_service_1_text' => 'Nga vetura kompakte urbane deri te SUV të gjera — gjeni veturën e duhur për çdo udhëtim.',
+    'home_service_2_title' => 'Rezervim i lehtë online',
+    'home_service_2_text' => 'Zgjidhni datat, shënoni të dhënat tuaja dhe merrni konfirmimin — gjithçka brenda pak minutash.',
+    'home_service_3_title' => 'Mbështetje e përkushtuar',
+    'home_service_3_text' => 'Pyetje para ose gjatë qirasë? Ekipi ynë është vetëm një telefonatë larg.',
+    'home_about_title' => 'Rreth nesh',
+    'home_about_text' => 'Jemi një biznes lokal i qirasë së veturave, i përkushtuar që udhëtimi juaj të jetë i thjeshtë, i sigurt dhe i përballueshëm.',
+    'featured_vehicles' => 'Vetura të zgjedhura',
+    'view_all_vehicles' => 'Shiko të gjitha veturat',
+
+    // Vehicle details page
+    'vehicle_details' => 'Detajet e veturës',
+    'specs_heading' => 'Specifikat',
+    'spec_category' => 'Kategoria',
+    'spec_fuel' => 'Karburanti',
+    'spec_transmission' => 'Transmisioni',
+    'spec_seats' => 'Ulëset',
+    'spec_year' => 'Viti',
+    'rates_heading' => 'Tarifat',
+    'per_hour' => 'në orë',
+    'per_week' => 'në javë',
+    'per_month' => 'në muaj',
+    'description_heading' => 'Përshkrimi',
+    'photo_previous' => 'Fotoja e mëparshme',
+    'photo_next' => 'Fotoja tjetër',
+    'photo_show' => 'Shfaq foton :number',
 
     // Listing
     'browse_fleet' => 'Shfleto flotën tonë',
