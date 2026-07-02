@@ -98,8 +98,7 @@ class BookingService
 
     public function markActive(Booking $booking, ?Carbon $startedAt = null, ?int $startOdometer = null): void
     {
-        $this->transition($booking, BookingStatus::Confirmed, BookingStatus::Active);
-        $booking->update([
+        $this->transition($booking, BookingStatus::Confirmed, BookingStatus::Active, [
             'started_at' => $startedAt ?? now(),
             ...($startOdometer !== null ? ['start_odometer' => $startOdometer] : []),
         ]);
@@ -107,8 +106,7 @@ class BookingService
 
     public function complete(Booking $booking, ?Carbon $completedAt = null, ?int $endOdometer = null): void
     {
-        $this->transition($booking, BookingStatus::Active, BookingStatus::Completed);
-        $booking->update([
+        $this->transition($booking, BookingStatus::Active, BookingStatus::Completed, [
             'completed_at' => $completedAt ?? now(),
             ...($endOdometer !== null ? ['end_odometer' => $endOdometer] : []),
         ]);
@@ -148,14 +146,34 @@ class BookingService
         return [$vehicle, $start, $end, $price];
     }
 
-    private function transition(Booking $booking, BookingStatus $from, BookingStatus $to): void
+    /**
+     * Race-safe state transition: a single conditional UPDATE guarded by the
+     * expected current status, so two concurrent operators acting on the same
+     * booking can never both succeed (the loser's affected-row count is 0).
+     * Extra attributes ride in the same statement, keeping status + timestamps
+     * atomic.
+     *
+     * @param  array<string, mixed>  $extra
+     */
+    private function transition(Booking $booking, BookingStatus $from, BookingStatus $to, array $extra = []): void
     {
-        if ($booking->status !== $from) {
+        $updated = Booking::whereKey($booking->getKey())
+            ->where('status', $from->value)
+            ->update([
+                'status' => $to->value,
+                'updated_at' => now(),
+                ...$extra,
+            ]);
+
+        if ($updated === 0) {
+            $booking->refresh();
+
             throw new \InvalidArgumentException(
                 "Booking must be {$from->value} to transition to {$to->value}, got {$booking->status->value}."
             );
         }
-        $booking->update(['status' => $to]);
+
+        $booking->refresh();
     }
 
     private function generateReference(): string
