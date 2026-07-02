@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Http\Middleware\ResolveFilamentPanelForSharedRoutes;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
@@ -102,12 +103,22 @@ class TenancyServiceProvider extends ServiceProvider
      *
      * Re-register it as a "universal" route: tenancy is initialized on tenant domains
      * and skipped on central domains (admin panel, central pages), so all three keep working.
+     *
+     * ResolveFilamentPanelForSharedRoutes additionally sets the current Filament panel —
+     * Filament's own SetUpPanel middleware never runs on this shared route, so without it
+     * Filament::getCurrentOrDefaultPanel() silently falls back to the default (admin) panel,
+     * breaking the operator login's canAccessPanel() check.
      */
     protected function makeLivewireUpdateRouteTenancyAware(): void
     {
         Livewire::setUpdateRoute(function ($handle, string $path) {
             return Route::post($path, $handle)
-                ->middleware(['web', 'universal', Middleware\InitializeTenancyByDomain::class]);
+                ->middleware([
+                    'web',
+                    'universal',
+                    Middleware\InitializeTenancyByDomain::class,
+                    ResolveFilamentPanelForSharedRoutes::class,
+                ]);
         });
     }
 
