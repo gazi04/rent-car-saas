@@ -15,8 +15,8 @@ class PricingService
      */
     public function calculate(Vehicle $vehicle, Carbon $start, Carbon $end): array
     {
-        $hours = (int) $start->diffInHours($end);
-        $days = (int) ceil($hours / 24);
+        $hours = (int) ceil($start->diffInMinutes($end) / 60);
+        $days = max(1, (int) ceil($hours / 24));
 
         [$rateType, $subtotal] = $this->selectRate($vehicle, $hours, $days);
 
