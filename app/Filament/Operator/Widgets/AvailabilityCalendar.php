@@ -7,10 +7,12 @@ use App\Models\BlockedDate;
 use App\Models\Booking;
 use App\Models\Vehicle;
 use Filament\Actions\Action;
+use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Component;
+use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Attributes\Reactive;
 use Saade\FilamentFullCalendar\Actions;
@@ -136,6 +138,13 @@ class AvailabilityCalendar extends FullCalendarWidget
                 ->label('Vehicle')
                 ->options(Vehicle::query()->pluck('name', 'id'))
                 ->required(),
+            DatePicker::make('start_date')
+                ->label('From')
+                ->required(),
+            DatePicker::make('end_date')
+                ->label('Until')
+                ->required()
+                ->after('start_date'),
             TextInput::make('reason')
                 ->label('Reason')
                 ->placeholder('maintenance, personal, other…')
@@ -149,11 +158,19 @@ class AvailabilityCalendar extends FullCalendarWidget
         return [
             Actions\CreateAction::make()
                 ->label('Block dates')
+                // Pre-fill the pickers from a calendar drag-select; the header
+                // button opens them empty and the operator picks the range.
+                ->mountUsing(function (Schema $schema, array $arguments): void {
+                    $schema->fill([
+                        'start_date' => $arguments['start'] ?? null,
+                        'end_date' => $arguments['end'] ?? null,
+                    ]);
+                })
                 ->using(function (array $data, string $model): BlockedDate {
                     return $model::create([
                         'vehicle_id' => $data['vehicle_id'],
-                        'start_date' => $data['start'] ?? now(),
-                        'end_date' => $data['end'] ?? now()->addDay(),
+                        'start_date' => $data['start_date'],
+                        'end_date' => $data['end_date'],
                         'reason' => $data['reason'] ?? null,
                     ]);
                 })
