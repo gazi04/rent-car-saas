@@ -31,10 +31,18 @@ Route::middleware([
     'set-locale',
 ])->group(function () {
     // ── Public booking site ──────────────────────────────────────────────
-    Route::livewire('/', 'pages::public.vehicle-listing')->name('public.home');
+    Route::livewire('/', 'pages::public.home')->name('public.home');
 
-    Route::livewire('/vehicles/{vehicle}', 'pages::public.vehicle-booking')
+    Route::livewire('/vehicles', 'pages::public.vehicle-listing')
+        ->name('public.vehicles');
+
+    Route::livewire('/vehicles/{vehicle}', 'pages::public.vehicle-show')
+        ->whereNumber('vehicle')
         ->name('public.vehicle');
+
+    Route::livewire('/vehicles/{vehicle}/book', 'pages::public.vehicle-booking')
+        ->whereNumber('vehicle')
+        ->name('public.vehicle.book');
 
     Route::livewire('/booking/{booking:reference}/confirmation', 'pages::public.booking-confirmation')
         ->name('public.booking.confirmation');
