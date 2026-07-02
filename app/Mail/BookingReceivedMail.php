@@ -26,13 +26,13 @@ class BookingReceivedMail extends Mailable implements ShouldQueue
     {
         $cancelUrl = null;
         $tenant = Tenant::find($booking->tenant_id);
-        $domain = $tenant?->domains()->first()?->domain;
+        $rootUrl = $tenant?->publicRootUrl();
 
-        if ($domain && $booking->customer_email) {
-            $appUrl = config('app.url');
-            $scheme = parse_url($appUrl, PHP_URL_SCHEME) ?? 'http';
-            $port = parse_url($appUrl, PHP_URL_PORT);
-            URL::forceRootUrl($scheme.'://'.$domain.($port ? ':'.$port : ''));
+        if ($rootUrl && $booking->customer_email) {
+            // forceRootUrl alone is not enough: the generator swaps in the current
+            // request's scheme, so an https root would still emit http links.
+            URL::forceScheme(parse_url($rootUrl, PHP_URL_SCHEME) ?: 'http');
+            URL::forceRootUrl($rootUrl);
 
             $cancelUrl = URL::temporarySignedRoute(
                 'public.booking.cancel',
@@ -41,6 +41,7 @@ class BookingReceivedMail extends Mailable implements ShouldQueue
             );
 
             URL::forceRootUrl(null);
+            URL::forceScheme(null);
         }
 
         return new self($booking, $cancelUrl);

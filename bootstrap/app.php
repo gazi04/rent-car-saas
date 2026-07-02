@@ -15,6 +15,13 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Behind a TLS-terminating proxy/load balancer the app sees plain HTTP;
+        // without honoring X-Forwarded-* the signed cancel/agreement links are
+        // validated against the wrong scheme and 403. app.url must still match
+        // the real public origin (signed URLs are generated from it in queue
+        // workers — see Tenant::publicRootUrl()).
+        $middleware->trustProxies(at: '*');
+
         // Marker group for stancl/tenancy "universal" routes — routes that must work
         // on both central and tenant domains (e.g. the shared Livewire update endpoint).
         // The group itself is empty; its presence is what UniversalRoutes detects.

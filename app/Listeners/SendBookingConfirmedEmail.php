@@ -24,13 +24,13 @@ class SendBookingConfirmedEmail implements ShouldQueue
 
         $agreementUrl = null;
         $tenant = Tenant::find($booking->tenant_id);
-        $domain = $tenant?->domains()->first()?->domain;
+        $rootUrl = $tenant?->publicRootUrl();
 
-        if ($domain) {
-            $appUrl = config('app.url');
-            $scheme = parse_url($appUrl, PHP_URL_SCHEME) ?? 'http';
-            $port = parse_url($appUrl, PHP_URL_PORT);
-            URL::forceRootUrl($scheme.'://'.$domain.($port ? ':'.$port : ''));
+        if ($rootUrl) {
+            // forceRootUrl alone is not enough: the generator swaps in the current
+            // request's scheme, so an https root would still emit http links.
+            URL::forceScheme(parse_url($rootUrl, PHP_URL_SCHEME) ?: 'http');
+            URL::forceRootUrl($rootUrl);
 
             $agreementUrl = URL::temporarySignedRoute(
                 'agreement.download',
@@ -39,6 +39,7 @@ class SendBookingConfirmedEmail implements ShouldQueue
             );
 
             URL::forceRootUrl(null);
+            URL::forceScheme(null);
         }
 
         Mail::to($booking->customer_email)

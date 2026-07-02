@@ -118,4 +118,29 @@ class Tenant extends BaseTenant implements HasMedia
 
         return $url !== '' ? $url : null;
     }
+
+    /**
+     * The public origin of this tenant's storefront (scheme + subdomain [+ port]).
+     *
+     * Queue workers have no HTTP request, so signed URLs must be generated against
+     * this root (via URL::forceRootUrl) for the signature to validate when the
+     * customer opens the link on the tenant subdomain. Scheme and port come from
+     * app.url — that config MUST match the real public origin (https behind a
+     * TLS-terminating proxy), or every signed link 403s.
+     */
+    public function publicRootUrl(): ?string
+    {
+        /** @var string|null $domain */
+        $domain = $this->domains()->first()?->domain;
+
+        if ($domain === null) {
+            return null;
+        }
+
+        $appUrl = (string) config('app.url');
+        $scheme = parse_url($appUrl, PHP_URL_SCHEME) ?: 'http';
+        $port = parse_url($appUrl, PHP_URL_PORT);
+
+        return $scheme.'://'.$domain.($port ? ':'.$port : '');
+    }
 }
