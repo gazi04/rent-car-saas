@@ -20,6 +20,7 @@
             --font-family: '{{ $fontFamily }}', system-ui, sans-serif;
         }
         body { font-family: var(--font-family); }
+        [x-cloak] { display: none !important; }
     </style>
 
     @if($fontUrl)
@@ -32,7 +33,7 @@
 <body class="min-h-screen bg-gray-50 text-gray-900">
 
     {{-- Public header --}}
-    <header class="bg-white border-b border-gray-200">
+    <header class="bg-white border-b border-gray-200 sticky top-0 z-40" x-data="{ open: false }">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <a href="{{ route('public.home') }}" class="flex items-center gap-3 text-gray-900 hover:opacity-80 transition-opacity">
@@ -43,16 +44,46 @@
                     @endif
                 </a>
 
-                {{-- Language toggle --}}
-                <form method="POST" action="{{ route('public.language') }}">
-                    @csrf
-                    <input type="hidden" name="locale" value="{{ app()->getLocale() === 'sq' ? 'en' : 'sq' }}">
-                    <button type="submit" class="text-sm text-gray-500 hover:text-gray-900 transition-colors">
-                        {{ __('booking.language_toggle') }}
+                {{-- Desktop nav --}}
+                <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-600">
+                    <a href="{{ route('public.home') }}" class="hover:text-gray-900 transition-colors">{{ __('booking.nav_home') }}</a>
+                    <a href="{{ route('public.vehicles') }}" class="hover:text-gray-900 transition-colors">{{ __('booking.nav_vehicles') }}</a>
+                    <a href="{{ route('public.home') }}#about" class="hover:text-gray-900 transition-colors">{{ __('booking.nav_about') }}</a>
+                    <a href="#contact" class="hover:text-gray-900 transition-colors">{{ __('booking.nav_contact') }}</a>
+                </nav>
+
+                <div class="flex items-center gap-4">
+                    {{-- Language toggle --}}
+                    <form method="POST" action="{{ route('public.language') }}">
+                        @csrf
+                        <input type="hidden" name="locale" value="{{ app()->getLocale() === 'sq' ? 'en' : 'sq' }}">
+                        <button type="submit" class="text-sm text-gray-500 hover:text-gray-900 transition-colors">
+                            {{ __('booking.language_toggle') }}
+                        </button>
+                    </form>
+
+                    {{-- Mobile hamburger --}}
+                    <button type="button" class="md:hidden text-gray-600 hover:text-gray-900" @click="open = !open" aria-label="Menu">
+                        <svg x-show="!open" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/>
+                        </svg>
+                        <svg x-show="open" x-cloak class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
                     </button>
-                </form>
+                </div>
             </div>
         </div>
+
+        {{-- Mobile nav --}}
+        <nav x-show="open" x-cloak class="md:hidden border-t border-gray-100 bg-white">
+            <div class="px-4 py-3 space-y-1 text-sm font-medium text-gray-600">
+                <a href="{{ route('public.home') }}" class="block px-2 py-2 rounded hover:bg-gray-50 hover:text-gray-900">{{ __('booking.nav_home') }}</a>
+                <a href="{{ route('public.vehicles') }}" class="block px-2 py-2 rounded hover:bg-gray-50 hover:text-gray-900">{{ __('booking.nav_vehicles') }}</a>
+                <a href="{{ route('public.home') }}#about" class="block px-2 py-2 rounded hover:bg-gray-50 hover:text-gray-900" @click="open = false">{{ __('booking.nav_about') }}</a>
+                <a href="#contact" class="block px-2 py-2 rounded hover:bg-gray-50 hover:text-gray-900" @click="open = false">{{ __('booking.nav_contact') }}</a>
+            </div>
+        </nav>
     </header>
 
     {{-- Main content --}}
@@ -61,7 +92,7 @@
     </main>
 
     {{-- Footer --}}
-    <footer class="border-t border-gray-200 mt-16">
+    <footer id="contact" class="border-t border-gray-200 mt-16">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             @php
                 $footerText       = tenant()?->setting('footer_text');
