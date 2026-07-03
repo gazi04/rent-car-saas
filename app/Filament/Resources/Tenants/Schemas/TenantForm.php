@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Tenants\Schemas;
 
+use App\Models\Plan;
+use App\Models\Tenant;
 use Closure;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
@@ -52,12 +54,7 @@ class TenantForm
                         'cancelled' => 'Cancelled',
                     ]),
                 Select::make('plan')
-                    ->options([
-                        'trial' => 'Trial',
-                        'basic' => 'Basic',
-                        'standard' => 'Standard',
-                        'pro' => 'Pro',
-                    ]),
+                    ->options(fn (?Tenant $record): array => Plan::options($record?->plan)),
                 DateTimePicker::make('trial_ends_at'),
             ]);
     }

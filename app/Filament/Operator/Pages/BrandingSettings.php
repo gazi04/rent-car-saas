@@ -2,6 +2,7 @@
 
 namespace App\Filament\Operator\Pages;
 
+use App\Enums\PlanFeature;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -25,6 +26,12 @@ class BrandingSettings extends Page
     protected static ?int $navigationSort = 10;
 
     protected string $view = 'filament.operator.pages.branding-settings';
+
+    /** Plan-gated: hides the nav item and blocks the route when the plan disables branding. */
+    public static function canAccess(): bool
+    {
+        return tenant()?->allowsFeature(PlanFeature::Branding) ?? true;
+    }
 
     /** @var array<string, mixed>|null */
     public ?array $data = [];

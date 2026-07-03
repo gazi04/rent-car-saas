@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Enums\PlanFeature;
 use Carbon\CarbonImmutable;
 use Database\Factories\TenantFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -61,6 +63,35 @@ class Tenant extends BaseTenant implements HasMedia
     public function isActive(): bool
     {
         return $this->status === 'active';
+    }
+
+    /**
+     * The plan row behind the tenant's plan slug. Named subscriptionPlan to
+     * avoid colliding with the plan string attribute.
+     *
+     * @return BelongsTo<Plan, $this>
+     */
+    public function subscriptionPlan(): BelongsTo
+    {
+        return $this->belongsTo(Plan::class, 'plan', 'slug');
+    }
+
+    /**
+     * Whether this tenant's plan enables a Toggle-type feature. No matching
+     * plan row (unseeded slug, tests, legacy data) = the permissive default.
+     */
+    public function allowsFeature(PlanFeature $feature): bool
+    {
+        return $this->subscriptionPlan?->allows($feature) ?? (bool) $feature->default();
+    }
+
+    /**
+     * The cap this tenant's plan sets for a Limit-type feature; null = unlimited
+     * (including when no plan row exists).
+     */
+    public function featureLimit(PlanFeature $feature): ?int
+    {
+        return $this->subscriptionPlan?->limit($feature);
     }
 
     /**
