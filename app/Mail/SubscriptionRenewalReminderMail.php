@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Concerns\ThrottlesMailQueue;
 use App\Models\Tenant;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -17,7 +18,7 @@ use Illuminate\Queue\SerializesModels;
  */
 class SubscriptionRenewalReminderMail extends Mailable implements ShouldQueue
 {
-    use Queueable, SerializesModels;
+    use Queueable, SerializesModels, ThrottlesMailQueue;
 
     public function __construct(
         public readonly Tenant $tenant,

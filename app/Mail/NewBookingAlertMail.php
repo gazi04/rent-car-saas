@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Concerns\ThrottlesMailQueue;
 use App\Models\Booking;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -12,7 +13,7 @@ use Illuminate\Queue\SerializesModels;
 
 class NewBookingAlertMail extends Mailable implements ShouldQueue
 {
-    use Queueable, SerializesModels;
+    use Queueable, SerializesModels, ThrottlesMailQueue;
 
     public function __construct(public readonly Booking $booking) {}
 

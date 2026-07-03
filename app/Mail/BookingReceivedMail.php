@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Concerns\ThrottlesMailQueue;
 use App\Models\Booking;
 use App\Models\Tenant;
 use Illuminate\Bus\Queueable;
@@ -15,7 +16,7 @@ use Illuminate\Support\Facades\URL;
 
 class BookingReceivedMail extends Mailable implements ShouldQueue
 {
-    use Queueable, SerializesModels;
+    use Queueable, SerializesModels, ThrottlesMailQueue;
 
     public function __construct(
         public readonly Booking $booking,
