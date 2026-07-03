@@ -48,6 +48,17 @@ class UserFactory extends Factory
     }
 
     /**
+     * Indicate the user is a front-desk staff account under a tenant. Pass the
+     * tenant_id explicitly (User is not tenant-scoped).
+     */
+    public function staff(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'staff',
+        ]);
+    }
+
+    /**
      * Indicate that the model's email address should be unverified.
      */
     public function unverified(): static

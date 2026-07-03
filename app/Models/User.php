@@ -26,13 +26,15 @@ class User extends Authenticatable implements FilamentUser, PasskeyUser
     /**
      * Panel access boundaries:
      * - admin:    central Super Admins only (role = admin, no tenant).
-     * - operator: only the current tenant's operator (role = operator AND
-     *             tenant_id matches the resolved subdomain). Blocks cross-tenant login.
+     * - operator: the current tenant's owner (role = operator) OR staff
+     *             (role = staff), whose tenant_id matches the resolved
+     *             subdomain. Blocks cross-tenant login. Per-page/resource
+     *             restrictions for staff are handled by canAccess() gates.
      */
     public function canAccessPanel(Panel $panel): bool
     {
         if ($panel->getId() === 'operator') {
-            return $this->role === 'operator'
+            return in_array($this->role, ['operator', 'staff'], true)
                 && tenancy()->initialized
                 && $this->tenant_id === tenant('id');
         }
@@ -47,6 +49,18 @@ class User extends Authenticatable implements FilamentUser, PasskeyUser
     public function isAdmin(): bool
     {
         return $this->role === 'admin' && $this->tenant_id === null;
+    }
+
+    /** The tenant's owner account (created at registration; full panel access). */
+    public function isOwner(): bool
+    {
+        return $this->role === 'operator' && $this->tenant_id !== null;
+    }
+
+    /** A front-desk staff account under a tenant (limited, booking-focused access). */
+    public function isStaff(): bool
+    {
+        return $this->role === 'staff';
     }
 
     /**

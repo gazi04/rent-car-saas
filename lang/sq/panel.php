@@ -126,4 +126,14 @@ return [
     'blacklist_hint' => 'Vetëm informacion — nuk e bllokon asnjë rezervim.',
     'total_spend' => 'Shpenzimi total',
     'bookings_count' => 'Rezervime',
+
+    // Nën-llogaritë e stafit
+    'nav_staff' => 'Stafi',
+    'section_staff' => 'Anëtar i stafit',
+    'staff_name' => 'Emri',
+    'staff_email' => 'Email',
+    'staff_password' => 'Fjalëkalimi',
+    'staff_password_hint' => 'Lëreni bosh për të mbajtur fjalëkalimin aktual.',
+    'staff_seat_limit_reached_title' => 'U arrit kufiri i stafit',
+    'staff_seat_limit_reached_body' => 'Plani juaj lejon :limit llogari stafi. Na kontaktoni për të përmirësuar planin dhe për të shtuar më shumë.',
 ];

@@ -32,10 +32,14 @@ class Reports extends Page
 
     protected string $view = 'filament.operator.pages.reports';
 
-    /** Plan-gated: hides the nav item and blocks the route when the plan disables reports. */
+    /**
+     * Owner-only + plan-gated: hidden and 404 for staff accounts, and when the
+     * plan disables reports.
+     */
     public static function canAccess(): bool
     {
-        return tenant()?->allowsFeature(PlanFeature::Reports) ?? true;
+        return (auth()->user()?->isOwner() ?? false)
+            && (tenant()?->allowsFeature(PlanFeature::Reports) ?? true);
     }
 
     /** @var array<string, mixed>|null */

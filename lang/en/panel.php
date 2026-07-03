@@ -126,4 +126,14 @@ return [
     'blacklist_hint' => 'Informational only — this never blocks a booking.',
     'total_spend' => 'Total spend',
     'bookings_count' => 'Bookings',
+
+    // Staff sub-accounts
+    'nav_staff' => 'Staff',
+    'section_staff' => 'Staff member',
+    'staff_name' => 'Name',
+    'staff_email' => 'Email',
+    'staff_password' => 'Password',
+    'staff_password_hint' => 'Leave blank to keep the current password.',
+    'staff_seat_limit_reached_title' => 'Staff limit reached',
+    'staff_seat_limit_reached_body' => 'Your plan allows :limit staff accounts. Contact us to upgrade and add more.',
 ];

@@ -27,10 +27,14 @@ class BrandingSettings extends Page
 
     protected string $view = 'filament.operator.pages.branding-settings';
 
-    /** Plan-gated: hides the nav item and blocks the route when the plan disables branding. */
+    /**
+     * Owner-only + plan-gated: hidden and 404 for staff accounts, and when the
+     * plan disables branding.
+     */
     public static function canAccess(): bool
     {
-        return tenant()?->allowsFeature(PlanFeature::Branding) ?? true;
+        return (auth()->user()?->isOwner() ?? false)
+            && (tenant()?->allowsFeature(PlanFeature::Branding) ?? true);
     }
 
     /** @var array<string, mixed>|null */

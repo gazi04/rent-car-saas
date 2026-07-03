@@ -29,6 +29,12 @@ class VehicleResource extends Resource
         return __('panel.nav_vehicles');
     }
 
+    /** Fleet management is owner-only — hidden and 404 for staff accounts. */
+    public static function canAccess(): bool
+    {
+        return auth()->user()?->isOwner() ?? false;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return VehicleForm::configure($schema);
