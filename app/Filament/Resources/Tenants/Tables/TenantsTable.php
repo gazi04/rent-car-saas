@@ -2,14 +2,23 @@
 
 namespace App\Filament\Resources\Tenants\Tables;
 
+use App\Enums\PaymentMethod;
+use App\Models\Plan;
 use App\Models\Tenant;
+use Carbon\CarbonInterface;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class TenantsTable
 {
@@ -44,6 +53,11 @@ class TenantsTable
                     ->dateTime()
                     ->sortable()
                     ->toggleable(),
+                TextColumn::make('paid_until')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable()
+                    ->placeholder('Not enrolled'),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -60,6 +74,7 @@ class TenantsTable
             ])
             ->recordActions([
                 self::approveAction(),
+                self::recordPaymentAction(),
                 self::suspendAction(),
                 self::reactivateAction(),
                 self::rejectAction(),
@@ -73,10 +88,12 @@ class TenantsTable
     }
 
     /**
-     * Approve a pending operator (pending -> active).
+     * Approve a pending operator (pending -> active) and start its free trial:
+     * paid_until = now() + billing.trial_days puts the tenant into the daily
+     * subscription sweep (reminders -> grace -> suspend). An existing paid_until
+     * is never overwritten (re-approving must not reset a paid period).
      *
      * TODO (Notifications step): send "operator approved" email.
-     * TODO (Billing step): start the trial / subscription on approval.
      */
     protected static function approveAction(): Action
     {
@@ -85,7 +102,87 @@ class TenantsTable
             ->color('success')
             ->requiresConfirmation()
             ->visible(fn (Tenant $record): bool => $record->status === 'pending')
-            ->action(fn (Tenant $record) => $record->update(['status' => 'active']));
+            ->action(fn (Tenant $record) => $record->update([
+                'status' => 'active',
+                'paid_until' => $record->paid_until
+                    ?? now()->addDays((int) config('billing.trial_days'))->endOfDay(),
+            ]));
+    }
+
+    /**
+     * Record a manually received B2B payment (cash / bank transfer — no gateway).
+     *
+     * Advances paid_until by the covered period, updates the plan, and reactivates the
+     * tenant if it was suspended. On-time payments stack onto the existing paid_until
+     * (paying early never costs the operator days); late payments start from today.
+     */
+    protected static function recordPaymentAction(): Action
+    {
+        return Action::make('record_payment')
+            ->label('Record payment')
+            ->icon('heroicon-o-banknotes')
+            ->color('info')
+            ->visible(fn (Tenant $record): bool => in_array($record->status, ['active', 'suspended'], true))
+            ->schema([
+                Select::make('plan')
+                    ->options(fn (Tenant $record): array => Plan::options($record->plan))
+                    ->default(fn (Tenant $record): ?string => $record->plan)
+                    ->required(),
+                Select::make('method')
+                    ->options(PaymentMethod::class)
+                    ->default(PaymentMethod::BankTransfer->value)
+                    ->required(),
+                TextInput::make('amount')
+                    ->numeric()
+                    ->minValue(0)
+                    ->prefix('€')
+                    ->required(),
+                DatePicker::make('period_start')
+                    ->label('Period start')
+                    ->default(fn (Tenant $record): CarbonInterface => self::nextPeriodStart($record))
+                    ->required(),
+                DatePicker::make('period_end')
+                    ->label('Period end')
+                    ->default(fn (Tenant $record): CarbonInterface => self::nextPeriodStart($record)->addMonthNoOverflow())
+                    ->after('period_start')
+                    ->required(),
+                Textarea::make('note')
+                    ->placeholder('e.g. bank transfer ref. #1234')
+                    ->maxLength(500),
+            ])
+            ->action(function (Tenant $record, array $data): void {
+                DB::transaction(function () use ($record, $data): void {
+                    $record->payments()->create([
+                        'plan' => $data['plan'],
+                        'method' => $data['method'],
+                        'amount' => $data['amount'],
+                        'period_start' => $data['period_start'],
+                        'period_end' => $data['period_end'],
+                        'note' => $data['note'] ?? null,
+                        'recorded_by' => auth()->id(),
+                    ]);
+
+                    $record->update([
+                        'plan' => $data['plan'],
+                        'paid_until' => Carbon::parse($data['period_end'])->endOfDay(),
+                        'status' => $record->status === 'suspended' ? 'active' : $record->status,
+                    ]);
+                });
+            });
+    }
+
+    /**
+     * Where the next paid period begins: the current paid_until when the tenant is
+     * paid up (stacking — paying early keeps the remaining days), today when the
+     * previous period already lapsed or none exists yet.
+     */
+    protected static function nextPeriodStart(Tenant $record): CarbonInterface
+    {
+        $paidUntil = $record->paid_until;
+
+        return ($paidUntil !== null && $paidUntil->isFuture())
+            ? $paidUntil->copy()
+            : now();
     }
 
     protected static function suspendAction(): Action

@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Widgets\AtRiskTenants;
 use App\Filament\Widgets\TenantStats;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -42,6 +43,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 AccountWidget::class,
                 TenantStats::class,
+                AtRiskTenants::class,
             ])
             ->middleware([
                 EncryptCookies::class,

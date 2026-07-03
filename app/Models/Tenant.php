@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Database\Factories\TenantFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -13,7 +14,11 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Stancl\Tenancy\Database\Concerns\HasDomains;
 use Stancl\Tenancy\Database\Models\Tenant as BaseTenant;
 
-#[Fillable(['id', 'name', 'email', 'phone', 'status', 'plan', 'trial_ends_at'])]
+/**
+ * @property CarbonImmutable|null $trial_ends_at
+ * @property CarbonImmutable|null $paid_until
+ */
+#[Fillable(['id', 'name', 'email', 'phone', 'status', 'plan', 'trial_ends_at', 'paid_until'])]
 #[Hidden(['stripe_id', 'stripe_subscription_id'])]
 class Tenant extends BaseTenant implements HasMedia
 {
@@ -36,6 +41,7 @@ class Tenant extends BaseTenant implements HasMedia
             'status',
             'plan',
             'trial_ends_at',
+            'paid_until',
             'stripe_id',
             'stripe_subscription_id',
         ];
@@ -48,12 +54,21 @@ class Tenant extends BaseTenant implements HasMedia
     {
         return [
             'trial_ends_at' => 'datetime',
+            'paid_until' => 'datetime',
         ];
     }
 
     public function isActive(): bool
     {
         return $this->status === 'active';
+    }
+
+    /**
+     * @return HasMany<TenantPayment, $this>
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(TenantPayment::class, 'tenant_id');
     }
 
     /**

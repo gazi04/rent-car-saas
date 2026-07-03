@@ -65,4 +65,26 @@ return [
         'dates_label' => 'Dates',
         'outro' => 'If you did not request this cancellation, please contact :operator.',
     ],
+
+    // Subscription renewal reminder (operator, manual B2B billing)
+    'subscription_renewal_reminder' => [
+        'subject' => 'Your subscription renews in :days day(s)',
+        'greeting' => 'Hello :name,',
+        'intro' => 'Your subscription period ends in :days day(s), on :date.',
+        'plan_label' => 'Plan',
+        'paid_until_label' => 'Paid until',
+        'payment_note' => 'To keep your booking site and dashboard active, please arrange the payment by bank transfer or in person before the period ends.',
+        'outro' => 'If you have already paid, you can ignore this message — your payment will be recorded shortly.',
+    ],
+
+    // Trial expiring reminder (operator, first free period)
+    'trial_expiring_reminder' => [
+        'subject' => 'Your free trial ends in :days day(s)',
+        'greeting' => 'Hello :name,',
+        'intro' => 'Your free trial ends in :days day(s), on :date.',
+        'plan_label' => 'Plan',
+        'paid_until_label' => 'Trial ends',
+        'payment_note' => 'To keep your booking site and dashboard active after the trial, please choose a plan and arrange the payment by bank transfer or in person.',
+        'outro' => 'If you have already paid, you can ignore this message — your payment will be recorded shortly.',
+    ],
 ];

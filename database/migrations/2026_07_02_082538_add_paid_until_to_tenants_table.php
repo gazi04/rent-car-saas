@@ -1,0 +1,26 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * The end of the tenant's currently-paid subscription period. Null = not yet enrolled in the automated
+     * payment cycle; the daily subscription sweep skips those tenants entirely.
+     */
+    public function up(): void
+    {
+        Schema::table('tenants', function (Blueprint $table) {
+            $table->timestamp('paid_until')->nullable()->after('trial_ends_at');
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::table('tenants', function (Blueprint $table) {
+            $table->dropColumn('paid_until');
+        });
+    }
+};

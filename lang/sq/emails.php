@@ -65,4 +65,26 @@ return [
         'dates_label' => 'Datat',
         'outro' => 'Nëse nuk e keni kërkuar këtë anulim, ju lutemi kontaktoni :operator.',
     ],
+
+    // Kujtesa e rinovimit të abonimit (operatori, faturim manual B2B)
+    'subscription_renewal_reminder' => [
+        'subject' => 'Abonimi juaj rinovohet pas :days dite(sh)',
+        'greeting' => 'Përshëndetje :name,',
+        'intro' => 'Periudha e abonimit tuaj përfundon pas :days dite(sh), më :date.',
+        'plan_label' => 'Plani',
+        'paid_until_label' => 'Paguar deri më',
+        'payment_note' => 'Për ta mbajtur aktive faqen tuaj të rezervimeve dhe panelin, ju lutemi kryeni pagesën me transfertë bankare ose personalisht para përfundimit të periudhës.',
+        'outro' => 'Nëse tashmë keni paguar, mund ta injoroni këtë mesazh — pagesa juaj do të regjistrohet së shpejti.',
+    ],
+
+    // Kujtesa e përfundimit të provës falas (operatori, periudha e parë falas)
+    'trial_expiring_reminder' => [
+        'subject' => 'Prova juaj falas përfundon pas :days dite(sh)',
+        'greeting' => 'Përshëndetje :name,',
+        'intro' => 'Prova juaj falas përfundon pas :days dite(sh), më :date.',
+        'plan_label' => 'Plani',
+        'paid_until_label' => 'Prova përfundon',
+        'payment_note' => 'Për ta mbajtur aktive faqen tuaj të rezervimeve dhe panelin pas provës, ju lutemi zgjidhni një plan dhe kryeni pagesën me transfertë bankare ose personalisht.',
+        'outro' => 'Nëse tashmë keni paguar, mund ta injoroni këtë mesazh — pagesa juaj do të regjistrohet së shpejti.',
+    ],
 ];

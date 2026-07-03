@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Tenants;
 use App\Filament\Resources\Tenants\Pages\CreateTenant;
 use App\Filament\Resources\Tenants\Pages\EditTenant;
 use App\Filament\Resources\Tenants\Pages\ListTenants;
+use App\Filament\Resources\Tenants\RelationManagers\PaymentsRelationManager;
 use App\Filament\Resources\Tenants\Schemas\TenantForm;
 use App\Filament\Resources\Tenants\Tables\TenantsTable;
 use App\Models\Tenant;
@@ -22,9 +23,9 @@ class TenantResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'name';
 
-    protected static ?string $navigationLabel = 'Operators';
+    protected static ?string $navigationLabel = 'Tenants';
 
-    protected static ?string $modelLabel = 'operator';
+    protected static ?string $modelLabel = 'tenant';
 
     public static function form(Schema $schema): Schema
     {
@@ -39,7 +40,7 @@ class TenantResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            PaymentsRelationManager::class,
         ];
     }
 
