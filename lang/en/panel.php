@@ -99,4 +99,22 @@ return [
     'ai_summary_heading' => 'AI business summary',
     'ai_summary_empty' => 'No summary yet. Click “Generate now” for an overview of your last week.',
     'ai_summary_period' => ':start – :end',
+
+    // Dashboard home
+    'dashboard_todays_pickups' => 'Today’s pickups',
+    'dashboard_todays_returns' => 'Today’s returns',
+    'dashboard_awaiting' => 'Awaiting confirmation',
+    'dashboard_overdue' => 'Overdue returns',
+    'dashboard_todays_movements' => 'Today’s schedule',
+    'dashboard_needs_attention' => 'Needs attention',
+    'dashboard_nothing_today' => 'Nothing scheduled today',
+    'dashboard_all_caught_up' => 'All caught up',
+    'type' => 'Type',
+    'type_pickup' => 'Pickup',
+    'type_return' => 'Return',
+    'time' => 'Time',
+    'issue' => 'Issue',
+    'issue_awaiting' => 'Awaiting confirmation',
+    'issue_overdue' => 'Overdue return',
+    'date' => 'Date',
 ];

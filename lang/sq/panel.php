@@ -99,4 +99,22 @@ return [
     'ai_summary_heading' => 'Përmbledhje biznesi me AI',
     'ai_summary_empty' => 'Ende s’ka përmbledhje. Kliko “Gjenero tani” për një përmbledhje të javës së kaluar.',
     'ai_summary_period' => ':start – :end',
+
+    // Faqja kryesore e panelit
+    'dashboard_todays_pickups' => 'Marrjet e sotme',
+    'dashboard_todays_returns' => 'Kthimet e sotme',
+    'dashboard_awaiting' => 'Në pritje të konfirmimit',
+    'dashboard_overdue' => 'Kthime të vonuara',
+    'dashboard_todays_movements' => 'Orari i sotëm',
+    'dashboard_needs_attention' => 'Kërkon vëmendje',
+    'dashboard_nothing_today' => 'Asgjë e planifikuar sot',
+    'dashboard_all_caught_up' => 'Gjithçka në rregull',
+    'type' => 'Lloji',
+    'type_pickup' => 'Marrje',
+    'type_return' => 'Kthim',
+    'time' => 'Ora',
+    'issue' => 'Çështja',
+    'issue_awaiting' => 'Në pritje të konfirmimit',
+    'issue_overdue' => 'Kthim i vonuar',
+    'date' => 'Data',
 ];
