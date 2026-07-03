@@ -29,44 +29,53 @@ class BookingsTable
         return $table
             ->columns([
                 TextColumn::make('reference')
+                    ->label(__('panel.reference'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('customer_name')
+                    ->label(__('panel.customer_name'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('vehicle.name')
+                    ->label(__('panel.vehicle'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('start_date')
+                    ->label(__('panel.start_date'))
                     ->dateTime()
                     ->sortable(),
                 TextColumn::make('end_date')
+                    ->label(__('panel.end_date'))
                     ->dateTime()
                     ->sortable(),
                 TextColumn::make('total')
+                    ->label(__('panel.total'))
                     ->money('eur')
                     ->sortable(),
                 TextColumn::make('status')
+                    ->label(__('panel.status'))
                     ->badge(),
                 TextColumn::make('created_at')
+                    ->label(__('panel.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('status')
+                    ->label(__('panel.status'))
                     ->options(BookingStatus::class),
                 SelectFilter::make('vehicle_id')
                     ->relationship('vehicle', 'name')
-                    ->label('Vehicle'),
+                    ->label(__('panel.vehicle')),
                 Filter::make('date_range')
-                    ->label('Start date range')
+                    ->label(__('panel.date_range'))
                     ->form([
                         DateTimePicker::make('from')
-                            ->label('From')
+                            ->label(__('panel.from'))
                             ->seconds(false),
                         DateTimePicker::make('until')
-                            ->label('Until')
+                            ->label(__('panel.until'))
                             ->seconds(false),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
@@ -93,6 +102,7 @@ class BookingsTable
     protected static function confirmAction(): Action
     {
         return Action::make('confirm')
+            ->label(__('panel.action_confirm'))
             ->icon(Heroicon::OutlinedCheckCircle)
             ->color('success')
             ->requiresConfirmation()
@@ -109,6 +119,7 @@ class BookingsTable
     protected static function rejectAction(): Action
     {
         return Action::make('reject')
+            ->label(__('panel.action_reject'))
             ->icon(Heroicon::OutlinedXCircle)
             ->color('danger')
             ->requiresConfirmation()
@@ -124,17 +135,17 @@ class BookingsTable
     protected static function markActiveAction(): Action
     {
         return Action::make('mark_active')
-            ->label('Mark active')
+            ->label(__('panel.action_mark_active'))
             ->icon(Heroicon::OutlinedPlayCircle)
             ->color('info')
             ->visible(fn (Booking $record): bool => $record->status === BookingStatus::Confirmed)
             ->schema([
                 DateTimePicker::make('started_at')
-                    ->label('Pickup time')
+                    ->label(__('panel.pickup_time'))
                     ->default(now())
                     ->seconds(false),
                 TextInput::make('start_odometer')
-                    ->label('Odometer at pickup (km)')
+                    ->label(__('panel.start_odometer'))
                     ->numeric()
                     ->minValue(0),
             ])
@@ -153,16 +164,17 @@ class BookingsTable
     protected static function completeAction(): Action
     {
         return Action::make('complete')
+            ->label(__('panel.action_complete'))
             ->icon(Heroicon::OutlinedCheckBadge)
             ->color('success')
             ->visible(fn (Booking $record): bool => $record->status === BookingStatus::Active)
             ->schema([
                 DateTimePicker::make('completed_at')
-                    ->label('Return time')
+                    ->label(__('panel.return_time'))
                     ->default(now())
                     ->seconds(false),
                 TextInput::make('end_odometer')
-                    ->label('Odometer at return (km)')
+                    ->label(__('panel.end_odometer'))
                     ->numeric()
                     ->minValue(0),
             ])
@@ -178,7 +190,7 @@ class BookingsTable
     protected static function downloadAgreementAction(): Action
     {
         return Action::make('agreement')
-            ->label('Download agreement')
+            ->label(__('panel.action_agreement'))
             ->icon(Heroicon::OutlinedDocumentText)
             ->color('gray')
             ->visible(fn (Booking $record): bool => in_array($record->status, [
@@ -200,6 +212,7 @@ class BookingsTable
     protected static function cancelAction(): Action
     {
         return Action::make('cancel')
+            ->label(__('panel.action_cancel'))
             ->icon(Heroicon::OutlinedNoSymbol)
             ->color('gray')
             ->requiresConfirmation()

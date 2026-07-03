@@ -3,10 +3,12 @@
 namespace App\Providers\Filament;
 
 use App\Http\Middleware\EnsureTenantIsActive;
+use App\Http\Middleware\SetUserLocale;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\MenuItem;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -37,6 +39,16 @@ class OperatorPanelProvider extends PanelProvider
                 'primary' => Color::Indigo,
             ])
             ->plugin(FilamentFullCalendarPlugin::make())
+            // Language toggle: shows the *other* language, mirroring the public
+            // site's toggle convention. Persists to users.locale via the route.
+            ->userMenuItems([
+                MenuItem::make()
+                    ->label(fn (): string => app()->getLocale() === 'sq' ? 'English' : 'Shqip')
+                    ->icon('heroicon-o-language')
+                    ->url(fn (): string => route('operator.locale', [
+                        'locale' => app()->getLocale() === 'sq' ? 'en' : 'sq',
+                    ])),
+            ])
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s')
             ->discoverResources(in: app_path('Filament/Operator/Resources'), for: 'App\Filament\Operator\Resources')
@@ -53,6 +65,7 @@ class OperatorPanelProvider extends PanelProvider
                 AddQueuedCookiesToResponse::class,
                 StartSession::class,
                 AuthenticateSession::class,
+                SetUserLocale::class,
                 ShareErrorsFromSession::class,
                 PreventRequestForgery::class,
                 SubstituteBindings::class,

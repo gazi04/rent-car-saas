@@ -95,7 +95,7 @@
     <footer id="contact" class="border-t border-gray-200 mt-16">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             @php
-                $footerText       = tenant()?->setting('footer_text');
+                $footerText       = tenant()?->localizedSetting('footer_text');
                 $socialFacebook   = tenant()?->setting('social_facebook');
                 $socialInstagram  = tenant()?->setting('social_instagram');
                 $contactPhone     = tenant()?->setting('contact_phone');

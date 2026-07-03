@@ -22,6 +22,11 @@ class BookingResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'reference';
 
+    public static function getNavigationLabel(): string
+    {
+        return __('panel.nav_bookings');
+    }
+
     public static function form(Schema $schema): Schema
     {
         return BookingForm::configure($schema);

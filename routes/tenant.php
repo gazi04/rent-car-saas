@@ -67,6 +67,16 @@ Route::middleware([
         return back();
     })->name('public.language');
 
+    // Operator panel language toggle — persists to users.locale so the choice
+    // survives sessions/devices and drives the reminder-email locale.
+    Route::get('/panel-language/{locale}', function (string $locale) {
+        if (in_array($locale, ['sq', 'en'], strict: true)) {
+            auth()->user()->forceFill(['locale' => $locale])->save();
+        }
+
+        return back();
+    })->middleware('auth')->name('operator.locale');
+
     // Availability JSON endpoint — feeds Flatpickr disabled ranges.
     // Route-model-bound and tenant-scoped (global scope); no cross-tenant leakage.
     Route::get('/vehicles/{vehicle}/availability', function (Vehicle $vehicle) {

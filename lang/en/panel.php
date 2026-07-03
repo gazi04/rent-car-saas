@@ -1,0 +1,102 @@
+<?php
+
+// Operator panel labels (Filament auto-generates English from field names,
+// so every operator-facing label is set explicitly to be translatable).
+return [
+    'nav_bookings' => 'Bookings',
+    'nav_vehicles' => 'Vehicles',
+
+    // Booking form
+    'section_vehicle_dates' => 'Vehicle & Dates',
+    'section_customer' => 'Customer',
+    'vehicle' => 'Vehicle',
+    'start_date' => 'Start date',
+    'end_date' => 'End date',
+    'pickup_location' => 'Pickup location',
+    'customer_name' => 'Customer name',
+    'customer_phone' => 'Customer phone',
+    'customer_email' => 'Customer email',
+    'notes' => 'Notes',
+
+    // Booking table
+    'reference' => 'Reference',
+    'total' => 'Total',
+    'status' => 'Status',
+    'created_at' => 'Created at',
+    'date_range' => 'Start date range',
+    'from' => 'From',
+    'until' => 'Until',
+
+    // Booking lifecycle actions
+    'action_confirm' => 'Confirm',
+    'action_reject' => 'Reject',
+    'action_mark_active' => 'Mark active',
+    'action_complete' => 'Complete',
+    'action_cancel' => 'Cancel',
+    'action_agreement' => 'Download agreement',
+    'pickup_time' => 'Pickup time',
+    'start_odometer' => 'Odometer at pickup (km)',
+    'return_time' => 'Return time',
+    'end_odometer' => 'Odometer at return (km)',
+
+    // Vehicle form
+    'section_basics' => 'Basics',
+    'section_pricing' => 'Pricing',
+    'section_photos' => 'Photos',
+    'section_custom_fields' => 'Custom fields',
+    'section_visibility' => 'Visibility',
+    'name' => 'Name',
+    'category' => 'Category',
+    'year' => 'Year',
+    'fuel_type' => 'Fuel type',
+    'transmission' => 'Transmission',
+    'seats' => 'Seats',
+    'daily_rate' => 'Daily rate',
+    'hourly_rate' => 'Hourly rate',
+    'weekly_rate' => 'Weekly rate',
+    'monthly_rate' => 'Monthly rate',
+    'discount_type' => 'Discount type',
+    'discount_value' => 'Discount value',
+    'discount_percentage' => 'Percentage',
+    'discount_fixed' => 'Fixed amount',
+    'mileage_limit' => 'Mileage limit',
+    'deposit' => 'Deposit',
+    'photos' => 'Photos',
+    'photos_hint' => 'The first photo is used as the cover.',
+    'custom_fields' => 'Custom fields',
+    'field_label' => 'Label',
+    'field_value' => 'Value',
+    'add_field' => 'Add field',
+    'is_public' => 'Show on public booking page',
+    'public' => 'Public',
+    'description' => 'Description',
+
+    // Availability calendar
+    'block_dates' => 'Block dates',
+    'reason' => 'Reason',
+    'reason_placeholder' => 'maintenance, personal, other…',
+    'date_block_removed' => 'Date block removed',
+    'remove_block' => 'Remove date block',
+    'all_vehicles' => 'All vehicles',
+    'legend_pending' => 'Pending',
+    'legend_confirmed' => 'Confirmed',
+    'legend_active' => 'Active',
+    'legend_blocked' => 'Blocked',
+    'calendar_hint' => 'Click a booking to open it · click a block to remove it · drag to block dates',
+
+    // Plan limits
+    'vehicle_limit_reached_title' => 'Vehicle limit reached',
+    'vehicle_limit_reached_body' => 'Your plan allows :limit vehicles. Contact us to upgrade and add more.',
+
+    // AI features
+    'ai_generate' => 'Generate with AI',
+    'ai_generated' => 'Generated with AI',
+    'ai_error' => 'The AI request failed. Please try again.',
+    'ai_suggest_price' => 'Suggest a rate with AI',
+    'ai_apply_rate' => 'Apply this rate',
+    'ai_suggested_rate' => 'Suggested daily rate: €:rate',
+    'ai_generate_now' => 'Generate now',
+    'ai_summary_heading' => 'AI business summary',
+    'ai_summary_empty' => 'No summary yet. Click “Generate now” for an overview of your last week.',
+    'ai_summary_period' => ':start – :end',
+];

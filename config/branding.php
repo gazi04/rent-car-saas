@@ -1,36 +1,58 @@
 <?php
 
+/*
+ * Free-text content the operator writes, stored per language as
+ * {key}_sq / {key}_en (the base un-suffixed key is kept on the allow-list
+ * for values saved before the bilingual split — see Tenant::localizedSetting()).
+ */
+$localizedContentKeys = [
+    'footer_text',
+    'home_hero_heading',
+    'home_hero_subheading',
+    'home_hero_cta_label',
+    'home_about_title',
+    'home_about_text',
+    'home_service_1_title',
+    'home_service_1_text',
+    'home_service_2_title',
+    'home_service_2_text',
+    'home_service_3_title',
+    'home_service_3_text',
+];
+
+$localizedVariants = [];
+foreach ($localizedContentKeys as $key) {
+    $localizedVariants[] = "{$key}_sq";
+    $localizedVariants[] = "{$key}_en";
+}
+
 return [
     /*
      * Keys operators may write via setSetting(). Any key NOT in this list
      * is silently rejected — prevents mass-assignment of arbitrary settings.
      */
     'keys' => [
+        ...$localizedContentKeys,
+        ...$localizedVariants,
         'color_primary',
         'color_secondary',
         'font_family',
-        'footer_text',
         'social_facebook',
         'social_instagram',
         'contact_phone',
         'contact_email',
         'contact_address',
         'payment_instructions',
-        'home_hero_heading',
-        'home_hero_subheading',
-        'home_hero_cta_label',
-        'home_about_title',
-        'home_about_text',
-        'home_service_1_title',
-        'home_service_1_text',
-        'home_service_2_title',
-        'home_service_2_text',
-        'home_service_3_title',
-        'home_service_3_text',
         'layout_home',
         'layout_vehicles',
         'layout_vehicle_show',
     ],
+
+    /*
+     * Content keys that exist per language (used by the branding form to
+     * render one field set per locale).
+     */
+    'localized_keys' => $localizedContentKeys,
 
     /*
      * Curated font allow-list.  The key is the canonical name stored in

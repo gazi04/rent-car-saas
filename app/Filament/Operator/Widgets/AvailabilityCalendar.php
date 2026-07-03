@@ -107,7 +107,7 @@ class AvailabilityCalendar extends FullCalendarWidget
         foreach ($blockedQuery->get() as $block) {
             $events[] = EventData::make()
                 ->id('block-'.$block->id)
-                ->title('Blocked'.($block->reason ? ' · '.$block->reason : ''))
+                ->title(__('panel.legend_blocked').($block->reason ? ' · '.$block->reason : ''))
                 ->start($block->start_date)
                 ->end($block->end_date)
                 ->backgroundColor('#9ca3af')
@@ -187,19 +187,19 @@ class AvailabilityCalendar extends FullCalendarWidget
     {
         return [
             Select::make('vehicle_id')
-                ->label('Vehicle')
+                ->label(__('panel.vehicle'))
                 ->options(Vehicle::query()->pluck('name', 'id'))
                 ->required(),
             DatePicker::make('start_date')
-                ->label('From')
+                ->label(__('panel.from'))
                 ->required(),
             DatePicker::make('end_date')
-                ->label('Until')
+                ->label(__('panel.until'))
                 ->required()
                 ->after('start_date'),
             TextInput::make('reason')
-                ->label('Reason')
-                ->placeholder('maintenance, personal, other…')
+                ->label(__('panel.reason'))
+                ->placeholder(__('panel.reason_placeholder'))
                 ->maxLength(100),
         ];
     }
@@ -209,7 +209,7 @@ class AvailabilityCalendar extends FullCalendarWidget
     {
         return [
             Actions\CreateAction::make()
-                ->label('Block dates')
+                ->label(__('panel.block_dates'))
                 // Pre-fill the pickers from a calendar drag-select; the header
                 // button opens them empty and the operator picks the range.
                 ->mountUsing(function (Schema $schema, array $arguments): void {

@@ -32,6 +32,8 @@ return [
 
     'tab_brand' => 'Brendi',
     'tab_content' => 'Përmbajtja e faqes kryesore',
+    'content_lang_sq' => 'Shqip',
+    'content_lang_en' => 'Anglisht',
     'tab_layout' => 'Dizajnet',
     'tab_contact_footer' => 'Kontakti & Footer',
 

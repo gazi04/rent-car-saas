@@ -24,6 +24,11 @@ class VehicleResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'name';
 
+    public static function getNavigationLabel(): string
+    {
+        return __('panel.nav_vehicles');
+    }
+
     public static function form(Schema $schema): Schema
     {
         return VehicleForm::configure($schema);

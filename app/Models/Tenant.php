@@ -82,6 +82,22 @@ class Tenant extends BaseTenant implements HasMedia
     }
 
     /**
+     * A content setting in the current locale. Falls back to the legacy
+     * un-suffixed key (values saved before the bilingual split), then to the
+     * other language (some content beats none), then to $default.
+     */
+    public function localizedSetting(string $key, mixed $default = null): mixed
+    {
+        $locale = app()->getLocale();
+        $other = $locale === 'sq' ? 'en' : 'sq';
+
+        return $this->setting("{$key}_{$locale}")
+            ?? $this->setting($key)
+            ?? $this->setting("{$key}_{$other}")
+            ?? $default;
+    }
+
+    /**
      * Upsert a single setting. Keys not on the allow-list are silently ignored.
      */
     public function setSetting(string $key, mixed $value): void
@@ -117,6 +133,16 @@ class Tenant extends BaseTenant implements HasMedia
         $url = $this->getFirstMediaUrl('logo', 'thumb');
 
         return $url !== '' ? $url : null;
+    }
+
+    /**
+     * The tenant has no locale of its own — use its operator's saved panel
+     * language, falling back to the platform's primary market (sq). Drives
+     * the subscription-reminder emails and the AI business summary.
+     */
+    public function operatorLocale(): string
+    {
+        return User::query()->where('tenant_id', $this->id)->value('locale') ?? 'sq';
     }
 
     /**

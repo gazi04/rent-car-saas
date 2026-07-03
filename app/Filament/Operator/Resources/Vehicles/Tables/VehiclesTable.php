@@ -30,27 +30,34 @@ class VehiclesTable
                     ->limit(1)
                     ->circular(),
                 TextColumn::make('name')
+                    ->label(__('panel.name'))
                     ->searchable()
                     ->sortable(),
                 TextColumn::make('category')
+                    ->label(__('panel.category'))
                     ->badge(),
                 TextColumn::make('status')
+                    ->label(__('panel.status'))
                     ->badge(),
                 TextColumn::make('daily_rate')
+                    ->label(__('panel.daily_rate'))
                     ->money('eur')
                     ->sortable(),
                 IconColumn::make('is_public')
-                    ->label('Public')
+                    ->label(__('panel.public'))
                     ->boolean(),
                 TextColumn::make('created_at')
+                    ->label(__('panel.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('category')
+                    ->label(__('panel.category'))
                     ->options(VehicleCategory::class),
                 SelectFilter::make('status')
+                    ->label(__('panel.status'))
                     ->options(VehicleStatus::class),
                 TrashedFilter::make(),
             ])

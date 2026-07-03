@@ -34,6 +34,18 @@ class BrandingSettings extends Page
         $settings = tenant()->settings();
         $logoMedia = tenant()->getFirstMedia('logo');
 
+        // Content saved before the bilingual split lives under the un-suffixed
+        // key; surface it in the Albanian fields so it isn't invisible here
+        // (the public page falls back to it either way).
+        /** @var array<int, string> $localizedKeys */
+        $localizedKeys = config('branding.localized_keys', []);
+
+        foreach ($localizedKeys as $key) {
+            if (! isset($settings["{$key}_sq"]) && isset($settings[$key])) {
+                $settings["{$key}_sq"] = $settings[$key];
+            }
+        }
+
         $this->form->fill(array_merge($settings, [
             'logo' => $logoMedia ? [$logoMedia->uuid] : [],
         ]));
@@ -88,45 +100,16 @@ class BrandingSettings extends Page
 
                         Tab::make(__('branding.tab_content'))
                             ->components([
-                                Section::make(__('branding.section_hero'))
-                                    ->description(__('branding.content_hint'))
-                                    ->components([
-                                        TextInput::make('home_hero_heading')
-                                            ->label(__('branding.home_hero_heading'))
-                                            ->maxLength(120),
-                                        Textarea::make('home_hero_subheading')
-                                            ->label(__('branding.home_hero_subheading'))
-                                            ->rows(2)
-                                            ->maxLength(300),
-                                        TextInput::make('home_hero_cta_label')
-                                            ->label(__('branding.home_hero_cta_label'))
-                                            ->maxLength(40),
+                                // One field set per public-site language: what the
+                                // operator writes under "Shqip" is what visitors see
+                                // with the site in Albanian, and likewise for English.
+                                Tabs::make('content_locales')
+                                    ->tabs([
+                                        Tab::make(__('branding.content_lang_sq'))
+                                            ->components($this->contentFields('sq')),
+                                        Tab::make(__('branding.content_lang_en'))
+                                            ->components($this->contentFields('en')),
                                     ]),
-
-                                Section::make(__('branding.section_about'))
-                                    ->components([
-                                        TextInput::make('home_about_title')
-                                            ->label(__('branding.home_about_title'))
-                                            ->maxLength(120),
-                                        Textarea::make('home_about_text')
-                                            ->label(__('branding.home_about_text'))
-                                            ->rows(4)
-                                            ->maxLength(2000),
-                                    ]),
-
-                                ...collect([1, 2, 3])->map(
-                                    fn (int $i): Section => Section::make(__("branding.section_service_{$i}"))
-                                        ->columns(2)
-                                        ->components([
-                                            TextInput::make("home_service_{$i}_title")
-                                                ->label(__('branding.service_title'))
-                                                ->maxLength(80),
-                                            Textarea::make("home_service_{$i}_text")
-                                                ->label(__('branding.service_text'))
-                                                ->rows(2)
-                                                ->maxLength(300),
-                                        ]),
-                                )->all(),
                             ]),
 
                         Tab::make(__('branding.tab_layout'))
@@ -171,8 +154,12 @@ class BrandingSettings extends Page
 
                                 Section::make(__('branding.section_footer'))
                                     ->components([
-                                        Textarea::make('footer_text')
-                                            ->label(__('branding.footer_text'))
+                                        Textarea::make('footer_text_sq')
+                                            ->label(__('branding.footer_text').' ('.__('branding.content_lang_sq').')')
+                                            ->rows(2)
+                                            ->maxLength(500),
+                                        Textarea::make('footer_text_en')
+                                            ->label(__('branding.footer_text').' ('.__('branding.content_lang_en').')')
                                             ->rows(2)
                                             ->maxLength(500),
                                         TextInput::make('social_facebook')
@@ -187,6 +174,58 @@ class BrandingSettings extends Page
                             ]),
                     ]),
             ]);
+    }
+
+    /**
+     * The home-page content field set for one public-site language. Field names
+     * are the localized setting keys ({key}_{locale}) so mount()/save() handle
+     * them like any other setting.
+     *
+     * @return array<int, Section>
+     */
+    protected function contentFields(string $locale): array
+    {
+        return [
+            Section::make(__('branding.section_hero'))
+                ->description(__('branding.content_hint'))
+                ->components([
+                    TextInput::make("home_hero_heading_{$locale}")
+                        ->label(__('branding.home_hero_heading'))
+                        ->maxLength(120),
+                    Textarea::make("home_hero_subheading_{$locale}")
+                        ->label(__('branding.home_hero_subheading'))
+                        ->rows(2)
+                        ->maxLength(300),
+                    TextInput::make("home_hero_cta_label_{$locale}")
+                        ->label(__('branding.home_hero_cta_label'))
+                        ->maxLength(40),
+                ]),
+
+            Section::make(__('branding.section_about'))
+                ->components([
+                    TextInput::make("home_about_title_{$locale}")
+                        ->label(__('branding.home_about_title'))
+                        ->maxLength(120),
+                    Textarea::make("home_about_text_{$locale}")
+                        ->label(__('branding.home_about_text'))
+                        ->rows(4)
+                        ->maxLength(2000),
+                ]),
+
+            ...collect([1, 2, 3])->map(
+                fn (int $i): Section => Section::make(__("branding.section_service_{$i}"))
+                    ->columns(2)
+                    ->components([
+                        TextInput::make("home_service_{$i}_title_{$locale}")
+                            ->label(__('branding.service_title'))
+                            ->maxLength(80),
+                        Textarea::make("home_service_{$i}_text_{$locale}")
+                            ->label(__('branding.service_text'))
+                            ->rows(2)
+                            ->maxLength(300),
+                    ]),
+            )->all(),
+        ];
     }
 
     /**

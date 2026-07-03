@@ -1,0 +1,102 @@
+<?php
+
+// Etiketat e panelit të operatorit (Filament i gjeneron automatikisht në anglisht,
+// prandaj çdo etiketë e dukshme për operatorin vendoset shprehimisht që të përkthehet).
+return [
+    'nav_bookings' => 'Rezervimet',
+    'nav_vehicles' => 'Automjetet',
+
+    // Forma e rezervimit
+    'section_vehicle_dates' => 'Automjeti & Datat',
+    'section_customer' => 'Klienti',
+    'vehicle' => 'Automjeti',
+    'start_date' => 'Data e fillimit',
+    'end_date' => 'Data e mbarimit',
+    'pickup_location' => 'Vendi i marrjes',
+    'customer_name' => 'Emri i klientit',
+    'customer_phone' => 'Telefoni i klientit',
+    'customer_email' => 'Email-i i klientit',
+    'notes' => 'Shënime',
+
+    // Tabela e rezervimeve
+    'reference' => 'Referenca',
+    'total' => 'Totali',
+    'status' => 'Statusi',
+    'created_at' => 'Krijuar më',
+    'date_range' => 'Intervali i datës së fillimit',
+    'from' => 'Nga',
+    'until' => 'Deri më',
+
+    // Veprimet e ciklit të rezervimit
+    'action_confirm' => 'Konfirmo',
+    'action_reject' => 'Refuzo',
+    'action_mark_active' => 'Shëno aktiv',
+    'action_complete' => 'Përfundo',
+    'action_cancel' => 'Anulo',
+    'action_agreement' => 'Shkarko kontratën',
+    'pickup_time' => 'Ora e marrjes',
+    'start_odometer' => 'Kilometrazhi në marrje (km)',
+    'return_time' => 'Ora e kthimit',
+    'end_odometer' => 'Kilometrazhi në kthim (km)',
+
+    // Forma e automjetit
+    'section_basics' => 'Të dhënat bazë',
+    'section_pricing' => 'Çmimet',
+    'section_photos' => 'Fotot',
+    'section_custom_fields' => 'Fusha shtesë',
+    'section_visibility' => 'Dukshmëria',
+    'name' => 'Emri',
+    'category' => 'Kategoria',
+    'year' => 'Viti',
+    'fuel_type' => 'Karburanti',
+    'transmission' => 'Transmisioni',
+    'seats' => 'Ulëset',
+    'daily_rate' => 'Çmimi ditor',
+    'hourly_rate' => 'Çmimi për orë',
+    'weekly_rate' => 'Çmimi javor',
+    'monthly_rate' => 'Çmimi mujor',
+    'discount_type' => 'Lloji i zbritjes',
+    'discount_value' => 'Vlera e zbritjes',
+    'discount_percentage' => 'Përqindje',
+    'discount_fixed' => 'Shumë fikse',
+    'mileage_limit' => 'Kufiri i kilometrazhit',
+    'deposit' => 'Depozita',
+    'photos' => 'Fotot',
+    'photos_hint' => 'Fotoja e parë përdoret si kopertinë.',
+    'custom_fields' => 'Fusha shtesë',
+    'field_label' => 'Etiketa',
+    'field_value' => 'Vlera',
+    'add_field' => 'Shto fushë',
+    'is_public' => 'Shfaq në faqen publike të rezervimeve',
+    'public' => 'Publik',
+    'description' => 'Përshkrimi',
+
+    // Kalendari i disponueshmërisë
+    'block_dates' => 'Blloko datat',
+    'reason' => 'Arsyeja',
+    'reason_placeholder' => 'mirëmbajtje, personale, tjetër…',
+    'date_block_removed' => 'Bllokimi i datës u hoq',
+    'remove_block' => 'Hiq bllokimin e datave',
+    'all_vehicles' => 'Të gjitha automjetet',
+    'legend_pending' => 'Në pritje',
+    'legend_confirmed' => 'E konfirmuar',
+    'legend_active' => 'Aktive',
+    'legend_blocked' => 'E bllokuar',
+    'calendar_hint' => 'Kliko një rezervim për ta hapur · kliko një bllokim për ta hequr · zvarrit për të bllokuar data',
+
+    // Kufijtë e planit
+    'vehicle_limit_reached_title' => 'U arrit kufiri i automjeteve',
+    'vehicle_limit_reached_body' => 'Plani juaj lejon :limit automjete. Na kontaktoni për të përmirësuar planin dhe për të shtuar më shumë.',
+
+    // Veçoritë me AI
+    'ai_generate' => 'Gjenero me AI',
+    'ai_generated' => 'U gjenerua me AI',
+    'ai_error' => 'Kërkesa me AI dështoi. Ju lutemi provoni përsëri.',
+    'ai_suggest_price' => 'Sugjero një çmim me AI',
+    'ai_apply_rate' => 'Apliko këtë çmim',
+    'ai_suggested_rate' => 'Çmimi ditor i sugjeruar: €:rate',
+    'ai_generate_now' => 'Gjenero tani',
+    'ai_summary_heading' => 'Përmbledhje biznesi me AI',
+    'ai_summary_empty' => 'Ende s’ka përmbledhje. Kliko “Gjenero tani” për një përmbledhje të javës së kaluar.',
+    'ai_summary_period' => ':start – :end',
+];

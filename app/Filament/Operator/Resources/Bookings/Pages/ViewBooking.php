@@ -20,7 +20,7 @@ class ViewBooking extends ViewRecord
     {
         return [
             Action::make('agreement')
-                ->label('Download agreement')
+                ->label(__('panel.action_agreement'))
                 ->icon(Heroicon::OutlinedDocumentText)
                 ->color('gray')
                 ->visible(fn (): bool => $this->record instanceof Booking && in_array($this->record->status, [

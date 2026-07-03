@@ -32,6 +32,8 @@ return [
 
     'tab_brand' => 'Brand',
     'tab_content' => 'Home page content',
+    'content_lang_sq' => 'Albanian',
+    'content_lang_en' => 'English',
     'tab_layout' => 'Layouts',
     'tab_contact_footer' => 'Contact & Footer',
 

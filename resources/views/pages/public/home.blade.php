@@ -29,14 +29,14 @@ new #[Layout('layouts.public')] #[Title('Home')] class extends Component {
         $tenant = tenant();
 
         return [
-            'hero_heading' => $tenant?->setting('home_hero_heading') ?: __('booking.home_hero_heading'),
-            'hero_subheading' => $tenant?->setting('home_hero_subheading') ?: __('booking.home_hero_subheading'),
-            'hero_cta' => $tenant?->setting('home_hero_cta_label') ?: __('booking.home_hero_cta'),
-            'about_title' => $tenant?->setting('home_about_title') ?: __('booking.home_about_title'),
-            'about_text' => $tenant?->setting('home_about_text') ?: __('booking.home_about_text'),
+            'hero_heading' => $tenant?->localizedSetting('home_hero_heading') ?: __('booking.home_hero_heading'),
+            'hero_subheading' => $tenant?->localizedSetting('home_hero_subheading') ?: __('booking.home_hero_subheading'),
+            'hero_cta' => $tenant?->localizedSetting('home_hero_cta_label') ?: __('booking.home_hero_cta'),
+            'about_title' => $tenant?->localizedSetting('home_about_title') ?: __('booking.home_about_title'),
+            'about_text' => $tenant?->localizedSetting('home_about_text') ?: __('booking.home_about_text'),
             'services' => collect([1, 2, 3])->map(fn (int $i): array => [
-                'title' => $tenant?->setting("home_service_{$i}_title") ?: __("booking.home_service_{$i}_title"),
-                'text' => $tenant?->setting("home_service_{$i}_text") ?: __("booking.home_service_{$i}_text"),
+                'title' => $tenant?->localizedSetting("home_service_{$i}_title") ?: __("booking.home_service_{$i}_title"),
+                'text' => $tenant?->localizedSetting("home_service_{$i}_text") ?: __("booking.home_service_{$i}_text"),
             ])->all(),
         ];
     }
