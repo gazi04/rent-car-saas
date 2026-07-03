@@ -3,126 +3,244 @@
 namespace App\Filament\Operator\Resources\Vehicles\Schemas;
 
 use App\Enums\FuelType;
+use App\Enums\PlanFeature;
 use App\Enums\Transmission;
 use App\Enums\VehicleCategory;
 use App\Enums\VehicleStatus;
+use App\Exceptions\AiRequestFailedException;
+use App\Models\Vehicle;
+use App\Services\Ai\PricingSuggestionService;
+use App\Services\Ai\VehicleListingWriter;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Cache;
 
 class VehicleForm
 {
     public static function configure(Schema $schema): Schema
     {
+
         // tenant_id is never edited here — BelongsToTenant auto-fills it from the
         // current operator's tenant context.
         return $schema
             ->components([
-                Section::make('Basics')
+                Section::make(__('panel.section_basics'))
                     ->columns(2)
                     ->components([
                         TextInput::make('name')
+                            ->label(__('panel.name'))
                             ->required()
                             ->maxLength(255),
                         Select::make('category')
+                            ->label(__('panel.category'))
                             ->options(VehicleCategory::class)
                             ->required(),
                         TextInput::make('year')
+                            ->label(__('panel.year'))
                             ->required()
                             ->numeric()
                             ->minValue(1950)
                             ->maxValue((int) date('Y') + 1),
                         Select::make('fuel_type')
+                            ->label(__('panel.fuel_type'))
                             ->options(FuelType::class)
                             ->required(),
                         Select::make('transmission')
+                            ->label(__('panel.transmission'))
                             ->options(Transmission::class)
                             ->required(),
                         TextInput::make('seats')
+                            ->label(__('panel.seats'))
                             ->required()
                             ->numeric()
                             ->minValue(1)
                             ->maxValue(50),
                     ]),
 
-                Section::make('Pricing')
+                Section::make(__('panel.section_pricing'))
                     ->columns(2)
                     ->components([
                         TextInput::make('daily_rate')
+                            ->label(__('panel.daily_rate'))
                             ->required()
                             ->numeric()
-                            ->prefix('€'),
+                            ->prefix('€')
+                            // Pricing suggestion needs booking history, so it is
+                            // only offered once the vehicle exists (edit form).
+                            ->hintAction(
+                                Action::make('suggestPrice')
+                                    ->label(__('panel.ai_suggest_price'))
+                                    ->icon('heroicon-m-sparkles')
+                                    ->visible(fn (?Vehicle $record): bool => $record !== null
+                                        && (tenant()?->allowsFeature(PlanFeature::AiPricingSuggestions) ?? false))
+                                    ->requiresConfirmation()
+                                    ->modalHeading(__('panel.ai_suggest_price'))
+                                    ->modalSubmitActionLabel(__('panel.ai_apply_rate'))
+                                    ->modalDescription(function (Vehicle $record): string {
+                                        try {
+                                            $suggestion = self::pricingSuggestion($record);
+                                        } catch (AiRequestFailedException) {
+                                            return __('panel.ai_error');
+                                        }
+
+                                        return __('panel.ai_suggested_rate', [
+                                            'rate' => number_format($suggestion['suggested_daily_rate'], 2),
+                                        ])."\n\n".$suggestion['reasoning'];
+                                    })
+                                    ->action(function (Vehicle $record, Set $set): void {
+                                        // Reuse the suggestion the modal computed on mount; the
+                                        // cache bridges the two requests so this never fires a
+                                        // second (possibly divergent) AI call.
+                                        try {
+                                            $suggestion = self::pricingSuggestion($record);
+                                        } catch (AiRequestFailedException) {
+                                            Notification::make()->title(__('panel.ai_error'))->danger()->send();
+
+                                            return;
+                                        }
+
+                                        $set('daily_rate', $suggestion['suggested_daily_rate']);
+                                    })
+                            ),
                         TextInput::make('hourly_rate')
+                            ->label(__('panel.hourly_rate'))
                             ->numeric()
                             ->prefix('€'),
                         TextInput::make('weekly_rate')
+                            ->label(__('panel.weekly_rate'))
                             ->numeric()
                             ->prefix('€'),
                         TextInput::make('monthly_rate')
+                            ->label(__('panel.monthly_rate'))
                             ->numeric()
                             ->prefix('€'),
                         Select::make('discount_type')
+                            ->label(__('panel.discount_type'))
                             ->options([
-                                'percentage' => 'Percentage',
-                                'fixed' => 'Fixed amount',
+                                'percentage' => __('panel.discount_percentage'),
+                                'fixed' => __('panel.discount_fixed'),
                             ])
                             ->native(false),
                         TextInput::make('discount_value')
+                            ->label(__('panel.discount_value'))
                             ->numeric(),
                         TextInput::make('mileage_limit')
+                            ->label(__('panel.mileage_limit'))
                             ->numeric()
                             ->suffix('km/day'),
                         TextInput::make('deposit')
+                            ->label(__('panel.deposit'))
                             ->numeric()
                             ->prefix('€'),
                     ]),
 
-                Section::make('Photos')
+                Section::make(__('panel.section_photos'))
                     ->components([
                         SpatieMediaLibraryFileUpload::make('photos')
+                            ->label(__('panel.photos'))
                             ->collection('vehicle_photos')
                             ->disk('public')
                             ->multiple()
-                            ->maxFiles(8)
+                            // Plan cap; 8 stays the app-wide ceiling for unlimited plans.
+                            ->maxFiles(fn (): int => min(tenant()?->featureLimit(PlanFeature::PhotosPerVehicle) ?? 8, 8))
                             ->reorderable()
                             ->image()
                             ->imageEditor()
-                            ->helperText('The first photo is used as the cover.'),
+                            ->helperText(__('panel.photos_hint')),
                     ]),
 
-                Section::make('Custom fields')
+                Section::make(__('panel.section_custom_fields'))
                     ->components([
                         Repeater::make('custom_fields')
-                            ->label('Custom fields')
+                            ->label(__('panel.custom_fields'))
                             ->schema([
                                 TextInput::make('label')
+                                    ->label(__('panel.field_label'))
                                     ->required(),
                                 TextInput::make('value')
+                                    ->label(__('panel.field_value'))
                                     ->required(),
                             ])
                             ->columns(2)
-                            ->addActionLabel('Add field')
+                            ->addActionLabel(__('panel.add_field'))
                             ->default([]),
                     ]),
 
-                Section::make('Visibility')
+                Section::make(__('panel.section_visibility'))
                     ->columns(2)
                     ->components([
                         Toggle::make('is_public')
-                            ->label('Show on public booking page')
+                            ->label(__('panel.is_public'))
                             ->default(true),
                         Select::make('status')
+                            ->label(__('panel.status'))
                             ->options(VehicleStatus::class)
                             ->default(VehicleStatus::Available->value)
                             ->required(),
                         Textarea::make('description')
-                            ->columnSpanFull(),
+                            ->label(__('panel.description'))
+                            ->columnSpanFull()
+                            ->hintAction(
+                                Action::make('generateDescription')
+                                    ->label(__('panel.ai_generate'))
+                                    ->icon('heroicon-m-sparkles')
+                                    ->visible(fn (): bool => tenant()?->allowsFeature(PlanFeature::AiListingWriter) ?? false)
+                                    ->action(function (Get $get, Set $set, ?Vehicle $record): void {
+                                        try {
+                                            $description = app(VehicleListingWriter::class)->write(
+                                                specs: [
+                                                    'name' => $get('name'),
+                                                    'category' => $get('category'),
+                                                    'year' => $get('year'),
+                                                    'fuel_type' => $get('fuel_type'),
+                                                    'transmission' => $get('transmission'),
+                                                    'seats' => $get('seats'),
+                                                    'custom_fields' => $get('custom_fields'),
+                                                ],
+                                                vehicle: $record,
+                                                locale: app()->getLocale(),
+                                            );
+                                        } catch (AiRequestFailedException) {
+                                            Notification::make()->title(__('panel.ai_error'))->danger()->send();
+
+                                            return;
+                                        }
+
+                                        $set('description', $description);
+
+                                        Notification::make()->title(__('panel.ai_generated'))->success()->send();
+                                    })
+                            ),
                     ]),
             ]);
+    }
+
+    /**
+     * Compute (and briefly cache) the AI pricing suggestion for a vehicle. The
+     * confirmation modal and the Confirm action run in two separate requests;
+     * caching keyed by vehicle id makes them share a single AI call so the
+     * applied rate always matches the one the operator saw.
+     *
+     * @return array{suggested_daily_rate: float, reasoning: string}
+     *
+     * @throws AiRequestFailedException
+     */
+    protected static function pricingSuggestion(Vehicle $vehicle): array
+    {
+        return Cache::remember(
+            "ai_pricing_suggestion:{$vehicle->id}",
+            now()->addMinutes(10),
+            fn (): array => app(PricingSuggestionService::class)->suggest($vehicle),
+        );
     }
 }
