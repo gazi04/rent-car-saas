@@ -3,6 +3,7 @@
 namespace App\Filament\Operator\Widgets;
 
 use App\Enums\BookingStatus;
+use App\Filament\Operator\Resources\Bookings\BookingResource;
 use App\Models\BlockedDate;
 use App\Models\Booking;
 use App\Models\Vehicle;
@@ -14,7 +15,6 @@ use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
-use Livewire\Attributes\Reactive;
 use Saade\FilamentFullCalendar\Actions;
 use Saade\FilamentFullCalendar\Data\EventData;
 use Saade\FilamentFullCalendar\Widgets\FullCalendarWidget;
@@ -23,13 +23,42 @@ class AvailabilityCalendar extends FullCalendarWidget
 {
     public Model|string|null $model = BlockedDate::class;
 
-    /** @var int|string|null Vehicle ID filter (null = all vehicles). */
-    #[Reactive]
+    // Custom view: wraps the plugin's calendar with a vehicle filter and a
+    // status-color legend (the stock plugin view has neither).
+    protected string $view = 'filament.operator.widgets.availability-calendar';
+
+    /** @var int|string|null Vehicle ID filter (empty string/null = all vehicles). */
     public int|string|null $vehicleFilter = null;
+
+    public function updatedVehicleFilter(): void
+    {
+        $this->refreshRecords();
+    }
+
+    /**
+     * @return array<int|string, string> Vehicle options for the filter select.
+     */
+    public function vehicleOptions(): array
+    {
+        return Vehicle::query()->orderBy('name')->pluck('name', 'id')->all();
+    }
+
+    /**
+     * Weeks start on Monday for the Kosovo market.
+     *
+     * @return array<string, mixed>
+     */
+    public function config(): array
+    {
+        return [
+            'firstDay' => 1,
+        ];
+    }
 
     /**
      * Called by FullCalendar when the user navigates (prev/next/view switch).
-     * Returns bookings (color-coded by status) + blocked dates for this tenant.
+     * Returns bookings (color-coded by status, clickable through to the booking
+     * page) + blocked dates for this tenant.
      *
      * @param  array{start: string, end: string, timezone: string}  $info
      * @return list<array<string, mixed>>
@@ -63,12 +92,14 @@ class AvailabilityCalendar extends FullCalendarWidget
                 ->title(($booking->vehicle->name ?? 'Vehicle').' · '.$booking->customer_name)
                 ->start($booking->start_date)
                 ->end($booking->end_date)
+                ->url(BookingResource::getUrl('view', ['record' => $booking]))
                 ->backgroundColor(match ($booking->status) {
                     BookingStatus::Pending => '#f59e0b',
                     BookingStatus::Confirmed => '#3b82f6',
                     BookingStatus::Active => '#22c55e',
                     default => '#6b7280',
                 })
+                ->textColor('#ffffff')
                 ->extendedProps(['type' => 'booking'])
                 ->toArray();
         }
@@ -80,6 +111,7 @@ class AvailabilityCalendar extends FullCalendarWidget
                 ->start($block->start_date)
                 ->end($block->end_date)
                 ->backgroundColor('#9ca3af')
+                ->textColor('#ffffff')
                 ->extendedProps(['type' => 'block', 'block_id' => $block->id])
                 ->toArray();
         }
@@ -104,16 +136,15 @@ class AvailabilityCalendar extends FullCalendarWidget
     }
 
     /**
-     * When the user clicks an event, delete it if it's a blocked date.
-     * Booking events are read-only on this calendar.
+     * Blocked-date events open a confirm-removal modal (never delete on a bare
+     * click — a misclick must not silently drop a block). Booking events carry
+     * their own URL and navigate to the booking page without reaching here.
      *
      * @param  array<string, mixed>  $event
      */
     public function onEventClick(array $event): void
     {
-        $type = $event['extendedProps']['type'] ?? null;
-
-        if ($type !== 'block') {
+        if (($event['extendedProps']['type'] ?? null) !== 'block') {
             return;
         }
 
@@ -123,11 +154,32 @@ class AvailabilityCalendar extends FullCalendarWidget
             return;
         }
 
-        BlockedDate::destroy($blockId);
+        $this->mountAction('removeBlock', ['block_id' => $blockId]);
+    }
 
-        Notification::make()->title('Date block removed')->success()->send();
+    public function removeBlockAction(): Action
+    {
+        return Action::make('removeBlock')
+            ->label(__('panel.remove_block'))
+            ->modalHeading(__('panel.remove_block'))
+            ->modalDescription(function (array $arguments): string {
+                $block = BlockedDate::query()->with('vehicle')->whereKey($arguments['block_id'] ?? null)->first();
 
-        $this->refreshRecords();
+                return $block
+                    ? ($block->vehicle->name ?? '').' · '
+                        .$block->start_date->toDateString().' → '.$block->end_date->toDateString()
+                        .($block->reason ? ' · '.$block->reason : '')
+                    : '';
+            })
+            ->color('danger')
+            ->requiresConfirmation()
+            ->action(function (array $arguments): void {
+                BlockedDate::destroy($arguments['block_id'] ?? null);
+
+                Notification::make()->title(__('panel.date_block_removed'))->success()->send();
+
+                $this->refreshRecords();
+            });
     }
 
     /** @return array<int, Component> */
@@ -164,6 +216,7 @@ class AvailabilityCalendar extends FullCalendarWidget
                     $schema->fill([
                         'start_date' => $arguments['start'] ?? null,
                         'end_date' => $arguments['end'] ?? null,
+                        'vehicle_id' => $this->vehicleFilter ?: null,
                     ]);
                 })
                 ->using(function (array $data, string $model): BlockedDate {
