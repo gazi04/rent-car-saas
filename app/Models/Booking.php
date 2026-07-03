@@ -16,7 +16,7 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
  * @property BookingStatus $status
  * @property RateType $rate_type
  */
-#[Fillable(['vehicle_id', 'reference', 'customer_name', 'customer_phone', 'customer_email', 'pickup_location', 'notes', 'start_date', 'end_date', 'rate_type', 'subtotal', 'discount_amount', 'total', 'deposit', 'status', 'locale', 'started_at', 'completed_at', 'start_odometer', 'end_odometer'])]
+#[Fillable(['vehicle_id', 'customer_id', 'reference', 'customer_name', 'customer_phone', 'customer_email', 'pickup_location', 'notes', 'start_date', 'end_date', 'rate_type', 'subtotal', 'discount_amount', 'total', 'deposit', 'status', 'locale', 'started_at', 'completed_at', 'start_odometer', 'end_odometer'])]
 class Booking extends Model
 {
     /** @use HasFactory<BookingFactory> */
@@ -45,6 +45,12 @@ class Booking extends Model
     public function vehicle(): BelongsTo
     {
         return $this->belongsTo(Vehicle::class)->withTrashed();
+    }
+
+    /** @return BelongsTo<Customer, $this> */
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
     }
 
     /** @return HasOne<Contract, $this> */

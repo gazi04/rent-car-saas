@@ -9,6 +9,7 @@ use App\Events\BookingCreated;
 use App\Events\BookingRejected;
 use App\Exceptions\VehicleNotAvailableException;
 use App\Models\Booking;
+use App\Models\Customer;
 use App\Models\Vehicle;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +31,7 @@ class BookingService
             $booking = Booking::create([
                 'reference' => $this->generateReference(),
                 'vehicle_id' => $vehicle->id,
+                'customer_id' => $this->resolveCustomer($data)->id,
                 'customer_name' => $data['customer_name'],
                 'customer_phone' => $data['customer_phone'],
                 'customer_email' => $data['customer_email'] ?? null,
@@ -66,6 +68,7 @@ class BookingService
             return Booking::create([
                 'reference' => $this->generateReference(),
                 'vehicle_id' => $vehicle->id,
+                'customer_id' => $this->resolveCustomer($data)->id,
                 'customer_name' => $data['customer_name'],
                 'customer_phone' => $data['customer_phone'],
                 'customer_email' => $data['customer_email'] ?? null,
@@ -174,6 +177,32 @@ class BookingService
         }
 
         $booking->refresh();
+    }
+
+    /**
+     * Find-or-create the customer directory record for this booking, matched by
+     * phone within the current tenant (the customers.[tenant_id, phone] unique
+     * key). Runs inside the booking transaction, under the vehicle row lock, so
+     * every create path links a customer exactly once. Keeps the stored name /
+     * email in sync with the latest booking.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function resolveCustomer(array $data): Customer
+    {
+        $customer = Customer::firstOrCreate(
+            ['phone' => $data['customer_phone']],
+            ['name' => $data['customer_name'], 'email' => $data['customer_email'] ?? null],
+        );
+
+        if (! $customer->wasRecentlyCreated) {
+            $customer->fill([
+                'name' => $data['customer_name'],
+                'email' => $data['customer_email'] ?? null,
+            ])->save();
+        }
+
+        return $customer;
     }
 
     private function generateReference(): string

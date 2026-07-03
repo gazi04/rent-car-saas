@@ -117,4 +117,13 @@ return [
     'issue_awaiting' => 'Awaiting confirmation',
     'issue_overdue' => 'Overdue return',
     'date' => 'Date',
+
+    // Customer directory
+    'nav_customers' => 'Customers',
+    'customer_notes' => 'Notes',
+    'is_blacklisted' => 'Blacklisted',
+    'blacklisted' => 'Blacklisted',
+    'blacklist_hint' => 'Informational only — this never blocks a booking.',
+    'total_spend' => 'Total spend',
+    'bookings_count' => 'Bookings',
 ];
