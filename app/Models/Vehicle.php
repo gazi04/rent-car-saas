@@ -17,6 +17,16 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
+/**
+ * @property string $id
+ * @property VehicleCategory $category
+ * @property FuelType $fuel_type
+ * @property Transmission $transmission
+ * @property VehicleStatus $status
+ * @property int $year
+ * @property string $daily_rate
+ * @property string|null $weekly_rate
+ */
 #[Fillable(['tenant_id', 'name', 'category', 'year', 'fuel_type', 'transmission', 'seats', 'daily_rate', 'hourly_rate', 'weekly_rate', 'monthly_rate', 'discount_type', 'discount_value', 'mileage_limit', 'deposit', 'description', 'custom_fields', 'status', 'is_public'])]
 class Vehicle extends Model implements HasMedia
 {
@@ -75,5 +85,11 @@ class Vehicle extends Model implements HasMedia
     public function blockedDates(): HasMany
     {
         return $this->hasMany(BlockedDate::class);
+    }
+
+    /** @return HasMany<ServiceRecord, $this> */
+    public function serviceRecords(): HasMany
+    {
+        return $this->hasMany(ServiceRecord::class);
     }
 }

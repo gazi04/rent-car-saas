@@ -26,12 +26,13 @@ enum PlanFeature: string implements HasLabel
     case StaffSeatLimit = 'staff_seat_limit';
     case Templates = 'templates';
     case PromoCodes = 'promo_codes';
+    case MaintenanceReminders = 'maintenance_reminders';
 
     public function type(): PlanFeatureType
     {
         return match ($this) {
             self::VehicleLimit, self::PhotosPerVehicle, self::StaffSeatLimit => PlanFeatureType::Limit,
-            self::Reports, self::Branding, self::Templates, self::PromoCodes,
+            self::Reports, self::Branding, self::Templates, self::PromoCodes, self::MaintenanceReminders,
             self::AiListingWriter, self::AiBusinessSummary, self::AiPricingSuggestions => PlanFeatureType::Toggle,
         };
     }
@@ -49,6 +50,7 @@ enum PlanFeature: string implements HasLabel
             self::StaffSeatLimit => 'Max staff accounts',
             self::Templates => 'Custom contract & email templates',
             self::PromoCodes => 'Promo codes',
+            self::MaintenanceReminders => 'Maintenance reminders + auto-block',
         };
     }
 

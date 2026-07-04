@@ -2,6 +2,7 @@
 
 use App\Console\Commands\GenerateBusinessSummaries;
 use App\Console\Commands\ProcessTenantSubscriptions;
+use App\Console\Commands\ProcessVehicleMaintenance;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -17,3 +18,7 @@ Schedule::command(ProcessTenantSubscriptions::class)->daily()->withoutOverlappin
 // Weekly AI business summary fan-out: Mondays 06:00,
 // one queued job per eligible tenant.
 Schedule::command(GenerateBusinessSummaries::class)->weeklyOn(1, '06:00')->withoutOverlapping();
+
+// Daily vehicle maintenance sweep: reminders + auto-block,
+// one queued job per eligible tenant.
+Schedule::command(ProcessVehicleMaintenance::class)->dailyAt('07:00')->withoutOverlapping();

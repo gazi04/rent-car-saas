@@ -87,4 +87,15 @@ return [
         'payment_note' => 'To keep your booking site and dashboard active after the trial, please choose a plan and arrange the payment by bank transfer or in person.',
         'outro' => 'If you have already paid, you can ignore this message — your payment will be recorded shortly.',
     ],
+
+    // Service due reminder (operator, vehicle maintenance tracking)
+    'service_due' => [
+        'subject' => 'Service due soon — :vehicle',
+        'greeting' => 'Hello,',
+        'intro' => 'The vehicle :vehicle has a service due on :date.',
+        'vehicle_label' => 'Vehicle',
+        'due_on_label' => 'Due on',
+        'last_service_label' => 'Last service',
+        'outro' => 'Log a new service record once it is done to clear this reminder.',
+    ],
 ];

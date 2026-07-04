@@ -87,4 +87,15 @@ return [
         'payment_note' => 'Për ta mbajtur aktive faqen tuaj të rezervimeve dhe panelin pas provës, ju lutemi zgjidhni një plan dhe kryeni pagesën me transfertë bankare ose personalisht.',
         'outro' => 'Nëse tashmë keni paguar, mund ta injoroni këtë mesazh — pagesa juaj do të regjistrohet së shpejti.',
     ],
+
+    // Kujtesa e servisit (operatori, gjurmimi i mirëmbajtjes së automjeteve)
+    'service_due' => [
+        'subject' => 'Servisi afër afatit — :vehicle',
+        'greeting' => 'Përshëndetje,',
+        'intro' => 'Automjeti :vehicle ka një servis të planifikuar më :date.',
+        'vehicle_label' => 'Automjeti',
+        'due_on_label' => 'Afati',
+        'last_service_label' => 'Servisi i fundit',
+        'outro' => 'Regjistroni një servis të ri sapo të kryhet për ta pastruar këtë kujtesë.',
+    ],
 ];
