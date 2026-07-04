@@ -12,9 +12,11 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -78,6 +80,9 @@ class TenantsTable
                 self::impersonateAction(),
                 self::approveAction(),
                 self::recordPaymentAction(),
+                self::extendPeriodAction(),
+                self::changePlanAction(),
+                self::extendTrialAction(),
                 self::suspendAction(),
                 self::reactivateAction(),
                 self::rejectAction(),
@@ -251,6 +256,134 @@ class TenantsTable
         return ($paidUntil !== null && $paidUntil->isFuture())
             ? $paidUntil->copy()
             : now();
+    }
+
+    /**
+     * Comp time / correction: adjust paid_until without a payment row. Either add
+     * N days (stacking onto the current paid_until, same rule as record_payment)
+     * or set an explicit date. A suspended tenant paid into the future is flipped
+     * back to active — a paid-up tenant shouldn't stay suspended.
+     */
+    protected static function extendPeriodAction(): Action
+    {
+        return Action::make('extend_period')
+            ->label('Extend period')
+            ->icon('heroicon-o-clock')
+            ->color('info')
+            ->visible(fn (Tenant $record): bool => in_array($record->status, ['active', 'suspended'], true))
+            ->schema([
+                Radio::make('mode')
+                    ->options([
+                        'add_days' => 'Add days',
+                        'set_date' => 'Set exact date',
+                    ])
+                    ->default('add_days')
+                    ->live()
+                    ->required(),
+                TextInput::make('days')
+                    ->numeric()
+                    ->minValue(1)
+                    ->required()
+                    ->visible(fn (Get $get): bool => $get('mode') === 'add_days'),
+                DatePicker::make('paid_until')
+                    ->label('Paid until')
+                    ->default(fn (Tenant $record): CarbonInterface => self::nextPeriodStart($record))
+                    ->required()
+                    ->visible(fn (Get $get): bool => $get('mode') === 'set_date'),
+                Textarea::make('note')
+                    ->placeholder('Reason for this adjustment')
+                    ->maxLength(500),
+            ])
+            ->action(function (Tenant $record, array $data): void {
+                $newPaidUntil = $data['mode'] === 'set_date'
+                    ? Carbon::parse($data['paid_until'])->endOfDay()
+                    : self::nextPeriodStart($record)->addDays((int) $data['days'])->endOfDay();
+
+                $record->update([
+                    'paid_until' => $newPaidUntil,
+                    'status' => $record->status === 'suspended' ? 'active' : $record->status,
+                ]);
+
+                self::logAdminAction($record, 'extended_period', [
+                    'paid_until' => $newPaidUntil->toDateString(),
+                    'mode' => $data['mode'],
+                    'days' => $data['days'] ?? null,
+                    'note' => $data['note'] ?? null,
+                ]);
+            });
+    }
+
+    /**
+     * Switch a tenant's plan mid-cycle with no payment involved. Tenant::allowsFeature()
+     * keys off `plan`, so this changes enabled features immediately — hence the
+     * confirmation warning.
+     */
+    protected static function changePlanAction(): Action
+    {
+        return Action::make('change_plan')
+            ->label('Change plan')
+            ->icon('heroicon-o-arrow-path')
+            ->color('info')
+            ->visible(fn (Tenant $record): bool => in_array($record->status, ['active', 'suspended'], true))
+            ->requiresConfirmation()
+            ->modalDescription('This changes the tenant\'s enabled features immediately, with no payment recorded.')
+            ->schema([
+                Select::make('plan')
+                    ->options(fn (Tenant $record): array => Plan::options($record->plan))
+                    ->default(fn (Tenant $record): ?string => $record->plan)
+                    ->required(),
+                Textarea::make('note')
+                    ->placeholder('Reason for this change')
+                    ->maxLength(500),
+            ])
+            ->action(function (Tenant $record, array $data): void {
+                $from = $record->getOriginal('plan');
+
+                $record->update(['plan' => $data['plan']]);
+
+                self::logAdminAction($record, 'changed_plan', [
+                    'from' => $from,
+                    'to' => $data['plan'],
+                    'note' => $data['note'] ?? null,
+                ]);
+            });
+    }
+
+    /**
+     * Push a trial out by N days. Bumps both trial_ends_at and paid_until — during
+     * the trial, paid_until tracks the trial end (set at approval), and the daily
+     * subscription sweep (reminders -> grace -> suspend) keys off paid_until, so
+     * both must move together.
+     */
+    protected static function extendTrialAction(): Action
+    {
+        return Action::make('extend_trial')
+            ->label('Extend trial')
+            ->icon('heroicon-o-calendar-days')
+            ->color('info')
+            ->visible(fn (Tenant $record): bool => $record->status === 'active' && $record->plan === 'trial')
+            ->schema([
+                TextInput::make('days')
+                    ->numeric()
+                    ->minValue(1)
+                    ->required(),
+                Textarea::make('note')
+                    ->placeholder('Reason for this extension')
+                    ->maxLength(500),
+            ])
+            ->action(function (Tenant $record, array $data): void {
+                $days = (int) $data['days'];
+
+                $record->update([
+                    'trial_ends_at' => ($record->trial_ends_at ?? now())->addDays($days),
+                    'paid_until' => ($record->paid_until ?? now())->addDays($days)->endOfDay(),
+                ]);
+
+                self::logAdminAction($record, 'extended_trial', [
+                    'days' => $days,
+                    'note' => $data['note'] ?? null,
+                ]);
+            });
     }
 
     protected static function suspendAction(): Action
