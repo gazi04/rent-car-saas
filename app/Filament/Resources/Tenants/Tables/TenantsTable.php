@@ -142,11 +142,32 @@ class TenantsTable
             ->color('success')
             ->requiresConfirmation()
             ->visible(fn (Tenant $record): bool => $record->status === 'pending')
-            ->action(fn (Tenant $record) => $record->update([
-                'status' => 'active',
-                'paid_until' => $record->paid_until
-                    ?? now()->addDays((int) config('billing.trial_days'))->endOfDay(),
-            ]));
+            ->action(function (Tenant $record): void {
+                $record->update([
+                    'status' => 'active',
+                    'paid_until' => $record->paid_until
+                        ?? now()->addDays((int) config('billing.trial_days'))->endOfDay(),
+                ]);
+
+                self::logAdminAction($record, 'approved');
+            });
+    }
+
+    /**
+     * Write an admin audit entry (§15.5) for an action performed on a tenant:
+     * who did it (causer = current admin), to which tenant (subject), and any
+     * contextual note. Null property values are dropped so blank notes/fields
+     * don't clutter the log.
+     *
+     * @param  array<string, mixed>  $properties
+     */
+    protected static function logAdminAction(Tenant $tenant, string $description, array $properties = []): void
+    {
+        activity()
+            ->performedOn($tenant)
+            ->causedBy(auth()->user())
+            ->withProperties(array_filter($properties, fn (mixed $value): bool => $value !== null))
+            ->log($description);
     }
 
     /**
@@ -207,6 +228,13 @@ class TenantsTable
                         'paid_until' => Carbon::parse($data['period_end'])->endOfDay(),
                         'status' => $record->status === 'suspended' ? 'active' : $record->status,
                     ]);
+
+                    self::logAdminAction($record, 'recorded_payment', [
+                        'plan' => $data['plan'],
+                        'amount' => $data['amount'],
+                        'method' => $data['method'],
+                        'note' => $data['note'] ?? null,
+                    ]);
                 });
             });
     }
@@ -232,7 +260,11 @@ class TenantsTable
             ->color('danger')
             ->requiresConfirmation()
             ->visible(fn (Tenant $record): bool => $record->status === 'active')
-            ->action(fn (Tenant $record) => $record->update(['status' => 'suspended']));
+            ->action(function (Tenant $record): void {
+                $record->update(['status' => 'suspended']);
+
+                self::logAdminAction($record, 'suspended');
+            });
     }
 
     protected static function reactivateAction(): Action
@@ -242,7 +274,11 @@ class TenantsTable
             ->color('success')
             ->requiresConfirmation()
             ->visible(fn (Tenant $record): bool => $record->status === 'suspended')
-            ->action(fn (Tenant $record) => $record->update(['status' => 'active']));
+            ->action(function (Tenant $record): void {
+                $record->update(['status' => 'active']);
+
+                self::logAdminAction($record, 'reactivated');
+            });
     }
 
     /**
@@ -257,6 +293,10 @@ class TenantsTable
             ->color('gray')
             ->requiresConfirmation()
             ->visible(fn (Tenant $record): bool => in_array($record->status, ['pending', 'active', 'suspended'], true))
-            ->action(fn (Tenant $record) => $record->update(['status' => 'cancelled']));
+            ->action(function (Tenant $record): void {
+                $record->update(['status' => 'cancelled']);
+
+                self::logAdminAction($record, 'rejected');
+            });
     }
 }

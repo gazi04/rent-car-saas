@@ -20,6 +20,7 @@
         "openai-php/laravel": "^0.20.0",
         "resend/resend-laravel": "^1.4",
         "saade/filament-fullcalendar": "^4.0@beta",
+        "spatie/laravel-activitylog": "^5.0",
         "spatie/laravel-medialibrary": "^11.23",
         "stancl/tenancy": "^3.10",
         "stechstudio/filament-impersonate": "^5.5"
