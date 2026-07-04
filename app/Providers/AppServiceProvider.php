@@ -2,13 +2,16 @@
 
 namespace App\Providers;
 
+use App\Listeners\LogImpersonationStart;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use STS\FilamentImpersonate\Events\EnterImpersonation;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -54,5 +57,10 @@ class AppServiceProvider extends ServiceProvider
         // event queues at once — avoids tripping the SMTP provider's
         // per-second cap (see ThrottlesMailQueue).
         RateLimiter::for('mail', fn () => Limit::perSecond(1));
+
+        // Audit trail for admin "log in as operator" — one activity_log row per
+        // start (causer = admin, subject = tenant), surfaced in the admin panel's
+        // read-only Audit log resource (§15.5).
+        Event::listen(EnterImpersonation::class, LogImpersonationStart::class);
     }
 }

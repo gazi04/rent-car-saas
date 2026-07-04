@@ -51,6 +51,16 @@ class User extends Authenticatable implements FilamentUser, PasskeyUser
         return $this->role === 'admin' && $this->tenant_id === null;
     }
 
+    /**
+     * Gate for filament-impersonate: only Super Admins may impersonate an
+     * operator (defence in depth — the action already lives on the admin-only
+     * panel). Called by the package's Impersonate action.
+     */
+    public function canImpersonate(): bool
+    {
+        return $this->isAdmin();
+    }
+
     /** The tenant's owner account (created at registration; full panel access). */
     public function isOwner(): bool
     {

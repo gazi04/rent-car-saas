@@ -21,7 +21,8 @@
         "resend/resend-laravel": "^1.4",
         "saade/filament-fullcalendar": "^4.0@beta",
         "spatie/laravel-medialibrary": "^11.23",
-        "stancl/tenancy": "^3.10"
+        "stancl/tenancy": "^3.10",
+        "stechstudio/filament-impersonate": "^5.5"
     },
     "require-dev": {
         "fakerphp/faker": "^1.24",

@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Tenants\Tables;
 use App\Enums\PaymentMethod;
 use App\Models\Plan;
 use App\Models\Tenant;
+use App\Models\User;
 use Carbon\CarbonInterface;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
@@ -19,6 +20,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use STS\FilamentImpersonate\Actions\Impersonate;
 
 class TenantsTable
 {
@@ -73,6 +75,7 @@ class TenantsTable
                     ]),
             ])
             ->recordActions([
+                self::impersonateAction(),
                 self::approveAction(),
                 self::recordPaymentAction(),
                 self::suspendAction(),
@@ -85,6 +88,43 @@ class TenantsTable
                     DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    /**
+     * Log in as this tenant's operator ("impersonate") to reproduce a bug or
+     * verify their branding/fleet without their password. The package swaps the
+     * shared `web` session to the operator user and redirects to their dashboard
+     * on the tenant subdomain (session survives via SESSION_DOMAIN). The action
+     * auto-hides when the tenant has no operator user yet (blank target), and
+     * User::canImpersonate() restricts the whole thing to Super Admins.
+     */
+    protected static function impersonateAction(): Impersonate
+    {
+        return Impersonate::make()
+            ->label('Log in as operator')
+            ->icon('heroicon-o-finger-print')
+            ->color('warning')
+            ->impersonateRecord(fn (Tenant $record): ?User => self::operatorFor($record))
+            ->redirectTo(fn (Tenant $record): string => $record->publicRootUrl().'/dashboard')
+            ->withoutSpa()
+            // Impersonation swaps the shared session cookie and redirects from the
+            // admin host to the tenant subdomain — impossible unless the cookie is
+            // scoped to a shared parent domain. When SESSION_DOMAIN is unset
+            // (host-only, e.g. local .localhost dev) the swap would strand the admin
+            // logged in as the operator with no way back, so hide the action. It
+            // reappears in production where SESSION_DOMAIN=.yourdomain.com. The
+            // second clause overrides the package's default target-present check.
+            ->visible(fn (Tenant $record): bool => filled(config('session.domain'))
+                && self::operatorFor($record) !== null);
+    }
+
+    /** The tenant's owner (operator) account — the impersonation target. */
+    protected static function operatorFor(Tenant $record): ?User
+    {
+        return User::query()
+            ->where('tenant_id', $record->id)
+            ->where('role', 'operator')
+            ->first();
     }
 
     /**
