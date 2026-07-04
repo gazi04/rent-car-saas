@@ -4,6 +4,7 @@ use App\Enums\BookingStatus;
 use App\Events\BookingCreated;
 use App\Filament\Operator\Resources\Bookings\Pages\CreateBooking;
 use App\Filament\Operator\Resources\Bookings\Pages\ListBookings;
+use App\Filament\Operator\Widgets\AvailabilityCalendar;
 use App\Models\BlockedDate;
 use App\Models\Booking;
 use App\Models\Tenant;
@@ -265,4 +266,108 @@ it('blocked dates from tenant A are invisible in tenant B context', function () 
     tenancy()->initialize($tenantB);
 
     expect(BlockedDate::count())->toBe(0);
+});
+
+// ─── Availability calendar: block dates (M8) ─────────────────────────────────
+
+it('blocks the exact date range picked in the block-dates form', function () {
+    [, , $vehicle] = bookingOperatorFor('caldates');
+
+    Livewire::test(AvailabilityCalendar::class)
+        ->callAction('create', data: [
+            'vehicle_id' => $vehicle->id,
+            'start_date' => '2030-08-01',
+            'end_date' => '2030-08-05',
+            'reason' => 'maintenance',
+        ])
+        ->assertHasNoActionErrors();
+
+    $block = BlockedDate::query()->where('vehicle_id', $vehicle->id)->firstOrFail();
+
+    expect($block->start_date->toDateString())->toBe('2030-08-01')
+        ->and($block->end_date->toDateString())->toBe('2030-08-05');
+});
+
+it('requires both dates and rejects end before start when blocking dates', function () {
+    [, , $vehicle] = bookingOperatorFor('calinvalid');
+
+    Livewire::test(AvailabilityCalendar::class)
+        ->callAction('create', data: [
+            'vehicle_id' => $vehicle->id,
+        ])
+        ->assertHasActionErrors(['start_date', 'end_date']);
+
+    Livewire::test(AvailabilityCalendar::class)
+        ->callAction('create', data: [
+            'vehicle_id' => $vehicle->id,
+            'start_date' => '2030-08-05',
+            'end_date' => '2030-08-01',
+        ])
+        ->assertHasActionErrors(['end_date']);
+
+    expect(BlockedDate::query()->count())->toBe(0);
+});
+
+// ─── Availability calendar: UX rebuild ───────────────────────────────────────
+
+it('filters calendar events by the selected vehicle', function () {
+    [, , $vehicleA] = bookingOperatorFor('calfilter');
+    $vehicleB = Vehicle::factory()->create(['daily_rate' => 40]);
+
+    Booking::factory()->forVehicle($vehicleA)->confirmed()->create([
+        'start_date' => '2030-09-05', 'end_date' => '2030-09-08',
+    ]);
+    Booking::factory()->forVehicle($vehicleB)->confirmed()->create([
+        'start_date' => '2030-09-10', 'end_date' => '2030-09-12',
+    ]);
+
+    $info = ['start' => '2030-09-01', 'end' => '2030-09-30', 'timezone' => 'UTC'];
+
+    $component = Livewire::test(AvailabilityCalendar::class);
+
+    expect($component->instance()->fetchEvents($info))->toHaveCount(2);
+
+    $component->set('vehicleFilter', $vehicleA->id);
+
+    $filtered = $component->instance()->fetchEvents($info);
+
+    expect($filtered)->toHaveCount(1)
+        ->and($filtered[0]['title'])->toContain($vehicleA->name);
+});
+
+it('gives booking events a URL to the booking view page', function () {
+    [, , $vehicle] = bookingOperatorFor('calurl');
+
+    $booking = Booking::factory()->forVehicle($vehicle)->confirmed()->create([
+        'start_date' => '2030-09-05', 'end_date' => '2030-09-08',
+    ]);
+
+    $events = Livewire::test(AvailabilityCalendar::class)->instance()->fetchEvents([
+        'start' => '2030-09-01', 'end' => '2030-09-30', 'timezone' => 'UTC',
+    ]);
+
+    expect($events[0]['url'])->toContain("/dashboard/bookings/{$booking->id}");
+});
+
+it('removes a blocked date only through the confirmed removeBlock action', function () {
+    [, , $vehicle] = bookingOperatorFor('calremove');
+
+    $block = BlockedDate::create([
+        'vehicle_id' => $vehicle->id,
+        'start_date' => '2030-09-01',
+        'end_date' => '2030-09-03',
+        'reason' => 'maintenance',
+    ]);
+
+    $component = Livewire::test(AvailabilityCalendar::class);
+
+    // A bare event click only mounts the confirmation modal — nothing deleted.
+    $component->call('onEventClick', [
+        'extendedProps' => ['type' => 'block', 'block_id' => $block->id],
+    ]);
+    expect(BlockedDate::query()->count())->toBe(1);
+
+    // Confirming the mounted action performs the deletion.
+    $component->call('callMountedAction');
+    expect(BlockedDate::query()->count())->toBe(0);
 });

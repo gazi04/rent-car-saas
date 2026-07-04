@@ -107,7 +107,7 @@ it('exports the range as CSV with only this tenant\'s bookings', function () {
         ->create(['start_date' => '2030-06-05', 'end_date' => '2030-06-10']);
     tenancy()->end();
 
-    $tenant = Tenant::query()->whereRelation('domains', 'domain', 'reports-csv.localhost')->firstOrFail();
+    $tenant = Tenant::query()->whereRelation('domains', 'domain', tenant_domain('reports-csv'))->firstOrFail();
     tenancy()->initialize($tenant);
     Filament::setCurrentPanel(Filament::getPanel('operator'));
 

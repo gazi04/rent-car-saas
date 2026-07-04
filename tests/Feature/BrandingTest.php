@@ -193,7 +193,7 @@ it('injects tenant color into the public layout CSS vars', function () {
     $tenant->setSetting('color_primary', '#abcdef');
     tenancy()->end();
 
-    $this->get('http://css1.localhost/')
+    $this->get(tenant_url('css1', '/'))
         ->assertOk()
         ->assertSee('--color-primary: #abcdef', false);
 });
@@ -201,7 +201,7 @@ it('injects tenant color into the public layout CSS vars', function () {
 it('renders public layout with default colors when no settings are saved', function () {
     Tenant::factory()->withDomain('css2')->create();
 
-    $this->get('http://css2.localhost/')
+    $this->get(tenant_url('css2', '/'))
         ->assertOk()
         ->assertSee('--color-primary', false);
 });
@@ -212,7 +212,7 @@ it('shows operator payment_instructions on booking review page', function () {
     $tenant->setSetting('payment_instructions', 'IBAN AL99 3300 1100 0000 0002 3456 7890');
     tenancy()->end();
 
-    $this->get('http://pay1.localhost/')
+    $this->get(tenant_url('pay1', '/'))
         ->assertOk();
 
     // The instructions value should be available in the tenant settings
@@ -232,7 +232,7 @@ it('cross-tenant: subdomain shows its own colors, not another tenant\'s', functi
     $tenantB->setSetting('color_primary', '#999999');
     tenancy()->end();
 
-    $this->get('http://cross-a.localhost/')
+    $this->get(tenant_url('cross-a', '/'))
         ->assertOk()
         ->assertSee('#111111', false)
         ->assertDontSee('#999999', false);
@@ -246,7 +246,7 @@ it('escapes malicious text in footer_text on render', function () {
     $tenant->setSetting('footer_text', '</style><script>alert(1)</script>');
     tenancy()->end();
 
-    $this->get('http://xss1.localhost/')
+    $this->get(tenant_url('xss1', '/'))
         ->assertOk()
         ->assertDontSee('</style><script>', false)
         ->assertSee('&lt;/style&gt;&lt;script&gt;', false);

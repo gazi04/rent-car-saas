@@ -100,6 +100,57 @@ it('falls back to daily when optional rate is null', function () {
         ->and($result['subtotal'])->toBe(500.0); // 10 * 50
 });
 
+it('bills at least one hour for a sub-hour rental when an hourly rate is set', function () {
+    $vehicle = Vehicle::factory()->create([
+        'daily_rate' => 50,
+        'hourly_rate' => 8,
+    ]);
+
+    $result = $this->service->calculate(
+        $vehicle,
+        Carbon::parse('2030-01-10 09:00'),
+        Carbon::parse('2030-01-10 09:20'), // 20 minutes
+    );
+
+    expect($result['rate_type'])->toBe(RateType::Hourly)
+        ->and($result['subtotal'])->toBe(8.0) // 1 hour minimum, not 0
+        ->and($result['total'])->toBeGreaterThan(0.0);
+});
+
+it('bills at least one day for a sub-day rental when no hourly rate is set', function () {
+    $vehicle = Vehicle::factory()->create([
+        'daily_rate' => 60,
+        'hourly_rate' => null,
+        'weekly_rate' => null,
+        'monthly_rate' => null,
+    ]);
+
+    $result = $this->service->calculate(
+        $vehicle,
+        Carbon::parse('2030-01-10 09:00'),
+        Carbon::parse('2030-01-10 09:20'), // 20 minutes
+    );
+
+    expect($result['rate_type'])->toBe(RateType::Daily)
+        ->and($result['subtotal'])->toBe(60.0) // 1 day minimum, not 0
+        ->and($result['total'])->toBeGreaterThan(0.0);
+});
+
+it('rounds a partial hour up to a full hour when billing hourly', function () {
+    $vehicle = Vehicle::factory()->create([
+        'daily_rate' => 50,
+        'hourly_rate' => 10,
+    ]);
+
+    $result = $this->service->calculate(
+        $vehicle,
+        Carbon::parse('2030-01-10 09:00'),
+        Carbon::parse('2030-01-10 10:15'), // 1h 15m → bills 2 hours
+    );
+
+    expect($result['subtotal'])->toBe(20.0); // 2 * 10, not 1 * 10
+});
+
 it('applies percentage discount and passes deposit through', function () {
     $vehicle = Vehicle::factory()->create([
         'daily_rate' => 100,
@@ -139,4 +190,42 @@ it('applies fixed discount correctly', function () {
 
     expect($result['discount'])->toBe(30.0)
         ->and($result['total'])->toBe(170.0);
+});
+
+it('caps percentage discount at the subtotal', function () {
+    $vehicle = Vehicle::factory()->create([
+        'daily_rate' => 100,
+        'discount_type' => 'percentage',
+        'discount_value' => 150,
+        'weekly_rate' => null,
+        'monthly_rate' => null,
+    ]);
+
+    $result = $this->service->calculate(
+        $vehicle,
+        Carbon::parse('2030-01-01'),
+        Carbon::parse('2030-01-03'), // 2 days → 200 subtotal
+    );
+
+    expect($result['discount'])->toBe(200.0)
+        ->and($result['total'])->toBe(0.0);
+});
+
+it('caps fixed discount at the subtotal', function () {
+    $vehicle = Vehicle::factory()->create([
+        'daily_rate' => 100,
+        'discount_type' => 'fixed',
+        'discount_value' => 300,
+        'weekly_rate' => null,
+        'monthly_rate' => null,
+    ]);
+
+    $result = $this->service->calculate(
+        $vehicle,
+        Carbon::parse('2030-01-01'),
+        Carbon::parse('2030-01-03'), // 2 days → 200 subtotal
+    );
+
+    expect($result['discount'])->toBe(200.0)
+        ->and($result['total'])->toBe(0.0);
 });

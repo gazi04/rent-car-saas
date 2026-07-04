@@ -34,7 +34,7 @@ it('renders the panel in Albanian by default (no saved locale)', function () {
     [, $operator] = localeOperatorFor('loc-default');
 
     actingAs($operator)
-        ->get('http://loc-default.localhost/dashboard/bookings')
+        ->get(tenant_url('loc-default', '/dashboard/bookings'))
         ->assertOk()
         ->assertSee('Rezervimet');
 });
@@ -43,7 +43,7 @@ it('renders the panel in English for an operator with locale=en', function () {
     [, $operator] = localeOperatorFor('loc-en', 'en');
 
     actingAs($operator)
-        ->get('http://loc-en.localhost/dashboard/bookings')
+        ->get(tenant_url('loc-en', '/dashboard/bookings'))
         ->assertOk()
         ->assertSee('Bookings')
         ->assertDontSee('Rezervimet');
@@ -53,14 +53,14 @@ it('persists the language choice via the toggle route and applies it next reques
     [, $operator] = localeOperatorFor('loc-toggle');
 
     actingAs($operator)
-        ->from('http://loc-toggle.localhost/dashboard')
-        ->get('http://loc-toggle.localhost/panel-language/en')
+        ->from(tenant_url('loc-toggle', '/dashboard'))
+        ->get(tenant_url('loc-toggle', '/panel-language/en'))
         ->assertRedirect();
 
     expect($operator->refresh()->locale)->toBe('en');
 
     actingAs($operator)
-        ->get('http://loc-toggle.localhost/dashboard/bookings')
+        ->get(tenant_url('loc-toggle', '/dashboard/bookings'))
         ->assertSee('Bookings')
         ->assertDontSee('Rezervimet');
 });
@@ -69,7 +69,7 @@ it('ignores an unsupported locale in the toggle route', function () {
     [, $operator] = localeOperatorFor('loc-bad');
 
     actingAs($operator)
-        ->get('http://loc-bad.localhost/panel-language/de')
+        ->get(tenant_url('loc-bad', '/panel-language/de'))
         ->assertRedirect();
 
     expect($operator->refresh()->locale)->toBeNull();
@@ -78,7 +78,7 @@ it('ignores an unsupported locale in the toggle route', function () {
 it('requires authentication to change the panel language', function () {
     localeOperatorFor('loc-guest');
 
-    $this->get('http://loc-guest.localhost/panel-language/en')
+    $this->get(tenant_url('loc-guest', '/panel-language/en'))
         ->assertRedirect();
 
     expect(User::query()->whereNotNull('locale')->count())->toBe(0);

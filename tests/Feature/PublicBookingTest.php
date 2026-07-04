@@ -43,7 +43,7 @@ it('shows only public + available vehicles on the listing', function () {
 
     tenancy()->end();
 
-    $this->get('http://ardi.localhost/')
+    $this->get(tenant_url('ardi', '/vehicles'))
         ->assertOk()
         ->assertSee('Toyota Corolla')
         ->assertDontSee('Hidden Car')
@@ -62,7 +62,7 @@ it('does not show tenant B vehicles on tenant A subdomain', function () {
     publicVehicle(['name' => 'Beta Car']);
     tenancy()->end();
 
-    $this->get('http://alpha.localhost/')
+    $this->get(tenant_url('alpha', '/vehicles'))
         ->assertSee('Alpha Car')
         ->assertDontSee('Beta Car');
 });
@@ -76,7 +76,7 @@ it('filters vehicles by category', function () {
 
     tenancy()->end();
 
-    $this->get('http://ardi.localhost/?category=sedan')
+    $this->get(tenant_url('ardi', '/vehicles?category=sedan'))
         ->assertSee('Sedan Car')
         ->assertDontSee('SUV Car');
 });
@@ -90,7 +90,7 @@ it('filters vehicles by transmission', function () {
 
     tenancy()->end();
 
-    $this->get('http://ardi.localhost/?transmission=manual')
+    $this->get(tenant_url('ardi', '/vehicles?transmission=manual'))
         ->assertSee('Manual Car')
         ->assertDontSee('Auto Car');
 });
@@ -104,7 +104,7 @@ it('filters vehicles by max price', function () {
 
     tenancy()->end();
 
-    $this->get('http://ardi.localhost/?maxPrice=50')
+    $this->get(tenant_url('ardi', '/vehicles?maxPrice=50'))
         ->assertSee('Cheap Car')
         ->assertDontSee('Expensive Car');
 });
@@ -124,7 +124,7 @@ it('returns blocking bookings and blocked dates for a vehicle', function () {
 
     tenancy()->end();
 
-    $this->get("http://ardi.localhost/vehicles/{$vehicle->id}/availability")
+    $this->get(tenant_url('ardi', "/vehicles/{$vehicle->id}/availability"))
         ->assertOk()
         ->assertJsonCount(1, 'unavailable')
         ->assertJsonCount(0, 'blocked');
@@ -139,7 +139,7 @@ it('returns 404 for availability endpoint on another tenant vehicle', function (
     tenancy()->end();
 
     // Request from tenant B — vehicle is not visible (global scope filters it).
-    $this->get("http://bbb.localhost/vehicles/{$vehicle->id}/availability")
+    $this->get(tenant_url('bbb', "/vehicles/{$vehicle->id}/availability"))
         ->assertNotFound();
 });
 
@@ -257,7 +257,7 @@ it('confirmation page shows reference and pending notice', function () {
     $booking = Booking::factory()->forVehicle($vehicle)->create(['reference' => 'BK-2030-TESTOK']);
     tenancy()->end();
 
-    $this->get('http://ardi.localhost/booking/BK-2030-TESTOK/confirmation')
+    $this->get(tenant_url('ardi', '/booking/BK-2030-TESTOK/confirmation'))
         ->assertOk()
         ->assertSee('BK-2030-TESTOK');
 });
@@ -272,7 +272,7 @@ it('confirmation page is not reachable for another tenant booking', function () 
     tenancy()->end();
 
     // Access from tenant B → global scope filters → 404.
-    $this->get('http://bbb2.localhost/booking/BK-2030-CROSS1/confirmation')
+    $this->get(tenant_url('bbb2', '/booking/BK-2030-CROSS1/confirmation'))
         ->assertNotFound();
 });
 
@@ -286,7 +286,7 @@ it('valid signed cancel link cancels the booking', function () {
     tenancy()->end();
 
     // Signature must be computed for the tenant subdomain so the host matches the request.
-    URL::forceRootUrl('http://ardi.localhost');
+    URL::forceRootUrl(tenant_url('ardi'));
     $url = URL::temporarySignedRoute(
         'public.booking.cancel',
         now()->addDay(),
@@ -300,31 +300,31 @@ it('valid signed cancel link cancels the booking', function () {
     expect($booking->fresh()->status)->toBe(BookingStatus::Cancelled);
 });
 
-it('expired signed cancel link returns 403', function () {
+it('expired signed cancel link returns 404', function () {
     $tenant = publicTenant('ardi');
     tenancy()->initialize($tenant);
     $vehicle = publicVehicle();
     $booking = Booking::factory()->forVehicle($vehicle)->create();
     tenancy()->end();
 
-    URL::forceRootUrl('http://ardi.localhost');
+    URL::forceRootUrl(tenant_url('ardi'));
     $url = URL::temporarySignedRoute(
         'public.booking.cancel',
         now()->subSecond(),          // already expired
         ['booking' => $booking->id],
     );
 
-    $this->get($url)->assertForbidden();
+    $this->get($url)->assertNotFound();
 });
 
-it('tampered signed cancel link returns 403', function () {
+it('tampered signed cancel link returns 404', function () {
     $tenant = publicTenant('ardi');
     tenancy()->initialize($tenant);
     $vehicle = publicVehicle();
     $booking = Booking::factory()->forVehicle($vehicle)->create();
     tenancy()->end();
 
-    URL::forceRootUrl('http://ardi.localhost');
+    URL::forceRootUrl(tenant_url('ardi'));
     // Build URL then tamper.
     $url = URL::temporarySignedRoute(
         'public.booking.cancel',
@@ -332,8 +332,58 @@ it('tampered signed cancel link returns 403', function () {
         ['booking' => $booking->id],
     );
 
-    // The URL itself is for ardi.localhost — tamper by appending a param.
-    $this->get($url.'&tamper=1')->assertForbidden();
+    // The URL itself is for the ardi subdomain — tamper by appending a param.
+    $this->get($url.'&tamper=1')->assertNotFound();
+});
+
+it('confirmation page does not expose a self-minted cancel link', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+    $vehicle = publicVehicle();
+    $booking = Booking::factory()->forVehicle($vehicle)->create(['reference' => 'BK-2030-NOLINK']);
+    tenancy()->end();
+
+    $this->get(tenant_url('ardi', '/booking/BK-2030-NOLINK/confirmation'))
+        ->assertOk()
+        ->assertDontSee('signature=', escape: false);
+});
+
+it('signed cancel link does not cancel a Confirmed booking', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+    $vehicle = publicVehicle();
+    $booking = Booking::factory()->forVehicle($vehicle)->confirmed()->create();
+    tenancy()->end();
+
+    URL::forceRootUrl(tenant_url('ardi'));
+    $url = URL::temporarySignedRoute(
+        'public.booking.cancel',
+        now()->addDay(),
+        ['booking' => $booking->id],
+    );
+
+    $this->get($url)->assertOk();
+
+    expect($booking->fresh()->status)->toBe(BookingStatus::Confirmed);
+});
+
+it('signed cancel link does not cancel an Active booking', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+    $vehicle = publicVehicle();
+    $booking = Booking::factory()->forVehicle($vehicle)->active()->create();
+    tenancy()->end();
+
+    URL::forceRootUrl(tenant_url('ardi'));
+    $url = URL::temporarySignedRoute(
+        'public.booking.cancel',
+        now()->addDay(),
+        ['booking' => $booking->id],
+    );
+
+    $this->get($url)->assertOk();
+
+    expect($booking->fresh()->status)->toBe(BookingStatus::Active);
 });
 
 // ── Language toggle ───────────────────────────────────────────────────────────
@@ -345,13 +395,13 @@ it('toggling language changes rendered strings', function () {
     tenancy()->end();
 
     // Default locale is sq — header should show 'English'.
-    $this->get('http://ardi.localhost/')
+    $this->get(tenant_url('ardi', '/vehicles'))
         ->assertSee('English');
 
     // Toggle to en.
-    $this->post('http://ardi.localhost/language', ['locale' => 'en'])
+    $this->post(tenant_url('ardi', '/language'), ['locale' => 'en'])
         ->assertRedirect();
 
-    $this->get('http://ardi.localhost/')
+    $this->get(tenant_url('ardi', '/vehicles'))
         ->assertSee('Shqip');
 });

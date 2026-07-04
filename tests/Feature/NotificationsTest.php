@@ -19,8 +19,10 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\BookingService;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     $this->tenant = Tenant::factory()->create();
@@ -107,6 +109,25 @@ test('confirm queues booking confirmed mail to customer', function () {
 
     $listener = new SendBookingConfirmedEmail;
     $listener->handle(new BookingConfirmed($booking));
+
+    Mail::assertQueued(BookingConfirmedMail::class, fn ($m) => $m->hasTo($booking->customer_email)
+        && $m->envelope()->subject === "Booking Confirmed — {$booking->reference}"
+    );
+});
+
+test('confirm still queues mail and generates the agreement when the vehicle was soft-deleted', function () {
+    Storage::fake();
+    Mail::fake();
+
+    $booking = Booking::factory()->create([
+        'vehicle_id' => $this->vehicle->id,
+        'customer_email' => 'ana@example.com',
+        'locale' => 'en',
+    ]);
+    $this->vehicle->delete();
+
+    $listener = new SendBookingConfirmedEmail;
+    $listener->handle(new BookingConfirmed($booking->fresh()));
 
     Mail::assertQueued(BookingConfirmedMail::class, fn ($m) => $m->hasTo($booking->customer_email));
 });
@@ -222,6 +243,20 @@ test('booking confirmed mailable stores booking locale en', function () {
     expect($mailable->booking->locale)->toBe('en');
 });
 
+test('booking confirmed email renders an absolute logo URL, not a relative one', function () {
+    Storage::fake('public');
+
+    $this->tenant->addMedia(UploadedFile::fake()->image('logo.png', 200, 200))
+        ->toMediaCollection('logo');
+
+    $booking = Booking::factory()->create(['vehicle_id' => $this->vehicle->id]);
+
+    $rendered = (new BookingConfirmedMail($booking))->render();
+
+    expect($rendered)->toContain('src="'.rtrim(config('app.url'), '/'))
+        ->and($rendered)->not->toContain('src="/storage/');
+});
+
 // ── Queued, not sync ─────────────────────────────────────────────────────────
 
 test('all mailables implement ShouldQueue', function () {
@@ -254,4 +289,24 @@ test('operator alert goes only to this tenants users not another tenants users',
 
     Mail::assertQueued(NewBookingAlertMail::class, fn ($m) => $m->hasTo($this->operator->email));
     Mail::assertNotQueued(NewBookingAlertMail::class, fn ($m) => $m->hasTo($otherOperator->email));
+});
+
+// ── Signed-URL root derivation (M9) ──────────────────────────────────────────
+
+test('signed cancel link follows app.url scheme and port on the tenant domain', function () {
+    tenancy()->end();
+
+    config(['app.url' => 'https://platform.test:8443']);
+
+    $tenant = Tenant::factory()->withDomain('m9tenant')->create();
+    tenancy()->initialize($tenant);
+    $vehicle = Vehicle::factory()->create(['daily_rate' => 50]);
+    $booking = app(BookingService::class)->create(notifBookingData($vehicle));
+
+    expect($tenant->publicRootUrl())->toBe('https://'.tenant_domain('m9tenant').':8443');
+
+    $mail = BookingReceivedMail::forTenantDomain($booking);
+
+    expect($mail->cancelUrl)->toStartWith('https://'.tenant_domain('m9tenant').':8443/')
+        ->and($mail->cancelUrl)->toContain('signature=');
 });

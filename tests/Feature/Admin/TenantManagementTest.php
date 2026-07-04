@@ -18,18 +18,22 @@ beforeEach(function () {
 
 it('lets a Super Admin reach the admin panel', function () {
     $admin = User::factory()->admin()->create();
+    $adminUrl = 'http://'.config('tenancy.admin_domain').'/';
 
-    actingAs($admin)->get('http://admin.localhost/')->assertOk();
+    actingAs($admin)->get($adminUrl)->assertOk();
 });
 
-it('forbids a non-admin operator from the admin panel', function () {
+it('hides the admin panel from a non-admin operator behind a 404', function () {
     $operator = User::factory()->create(['role' => 'operator']);
+    $adminUrl = 'http://'.config('tenancy.admin_domain').'/';
 
-    actingAs($operator)->get('http://admin.localhost/')->assertForbidden();
+    actingAs($operator)->get($adminUrl)->assertNotFound();
 });
 
 it('redirects guests to the admin login', function () {
-    $this->get('http://admin.localhost/')->assertRedirect('http://admin.localhost/login');
+    $adminUrl = 'http://'.config('tenancy.admin_domain').'/';
+
+    $this->get($adminUrl)->assertRedirect($adminUrl.'login');
 });
 
 it('creates a tenant and its resolvable domain together', function () {
@@ -47,7 +51,7 @@ it('creates a tenant and its resolvable domain together', function () {
         ->assertHasNoFormErrors();
 
     assertDatabaseHas('tenants', ['name' => 'Ardi Rent A Car', 'status' => 'active']);
-    assertDatabaseHas('domains', ['domain' => 'ardi.localhost']);
+    assertDatabaseHas('domains', ['domain' => 'ardi.'.config('tenancy.tenant_base_domain')]);
 });
 
 it('rejects a duplicate subdomain', function () {
@@ -77,14 +81,29 @@ it('rejects an invalid subdomain format', function () {
         ->assertHasFormErrors(['subdomain']);
 });
 
-it('approves a pending tenant', function () {
+it('approves a pending tenant and starts its 30-day trial period', function () {
     actingAs(User::factory()->admin()->create());
-    $tenant = Tenant::factory()->pending()->create();
+    $tenant = Tenant::factory()->pending()->create(['paid_until' => null]);
 
     Livewire::test(ListTenants::class)
         ->callTableAction('approve', $tenant);
 
-    expect($tenant->refresh()->status)->toBe('active');
+    $tenant->refresh();
+
+    expect($tenant->status)->toBe('active')
+        ->and($tenant->paid_until->toDateString())
+        ->toBe(now()->addDays(config('billing.trial_days'))->toDateString());
+});
+
+it('does not reset an existing paid period when re-approving', function () {
+    actingAs(User::factory()->admin()->create());
+    $paidUntil = now()->addDays(90)->startOfSecond();
+    $tenant = Tenant::factory()->pending()->create(['paid_until' => $paidUntil]);
+
+    Livewire::test(ListTenants::class)
+        ->callTableAction('approve', $tenant);
+
+    expect($tenant->refresh()->paid_until->timestamp)->toBe($paidUntil->timestamp);
 });
 
 it('suspends and reactivates a tenant', function () {

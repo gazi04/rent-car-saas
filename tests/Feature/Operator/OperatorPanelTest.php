@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Middleware\ResolveFilamentPanelForSharedRoutes;
 use App\Models\Tenant;
 use App\Models\User;
+use Filament\Facades\Filament;
+use Illuminate\Http\Response;
 use Livewire\Livewire;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 
@@ -44,7 +47,7 @@ it('registers an operator as a pending tenant with a domain and user', function 
         ->assertSet('registered', true);
 
     assertDatabaseHas('tenants', ['name' => 'Ardi Rent A Car', 'status' => 'pending', 'plan' => 'trial']);
-    assertDatabaseHas('domains', ['domain' => 'ardi.localhost']);
+    assertDatabaseHas('domains', ['domain' => tenant_domain('ardi')]);
     assertDatabaseHas('users', ['email' => 'ardi@example.com', 'role' => 'operator']);
 });
 
@@ -76,14 +79,14 @@ it('lets an approved operator reach the panel on their subdomain', function () {
     $tenant = Tenant::factory()->withDomain('ardi')->create(); // active
     $operator = operatorFor($tenant);
 
-    actingAs($operator)->get('http://ardi.localhost/dashboard')->assertOk();
+    actingAs($operator)->get(tenant_url('ardi', '/dashboard'))->assertOk();
 });
 
 it('gates a pending tenant with an under-review message', function () {
     $tenant = Tenant::factory()->pending()->withDomain('ardi')->create();
     $operator = operatorFor($tenant);
 
-    actingAs($operator)->get('http://ardi.localhost/dashboard')
+    actingAs($operator)->get(tenant_url('ardi', '/dashboard'))
         ->assertOk()
         ->assertSee('under review');
 });
@@ -92,24 +95,24 @@ it('gates a suspended tenant with a support message', function () {
     $tenant = Tenant::factory()->suspended()->withDomain('ardi')->create();
     $operator = operatorFor($tenant);
 
-    actingAs($operator)->get('http://ardi.localhost/dashboard')
+    actingAs($operator)->get(tenant_url('ardi', '/dashboard'))
         ->assertOk()
         ->assertSee('suspended');
 });
 
-it('blocks an operator from another tenant\'s subdomain', function () {
+it('hides another tenant\'s dashboard behind a 404', function () {
     $tenantA = Tenant::factory()->withDomain('ardi')->create();
     $tenantB = Tenant::factory()->withDomain('bardh')->create();
     $operatorA = operatorFor($tenantA);
 
-    actingAs($operatorA)->get('http://bardh.localhost/dashboard')->assertForbidden();
+    actingAs($operatorA)->get(tenant_url('bardh', '/dashboard'))->assertNotFound();
 });
 
 it('redirects an unauthenticated visitor to the operator login', function () {
     Tenant::factory()->withDomain('ardi')->create();
 
-    $this->get('http://ardi.localhost/dashboard')
-        ->assertRedirect('http://ardi.localhost/dashboard/login');
+    $this->get(tenant_url('ardi', '/dashboard'))
+        ->assertRedirect(tenant_url('ardi', '/dashboard/login'));
 });
 
 it('makes the shared Livewire update route tenancy-aware', function () {
@@ -123,5 +126,21 @@ it('makes the shared Livewire update route tenancy-aware', function () {
     $middleware = $route->gatherMiddleware();
 
     expect($middleware)->toContain('universal')
-        ->and($middleware)->toContain(InitializeTenancyByDomain::class);
+        ->and($middleware)->toContain(InitializeTenancyByDomain::class)
+        ->and($middleware)->toContain(ResolveFilamentPanelForSharedRoutes::class);
+});
+
+it('resolves the operator panel, not the default admin panel, for the shared Livewire update route on a tenant subdomain', function () {
+    $tenant = Tenant::factory()->withDomain('ardi')->create();
+    tenancy()->initialize($tenant);
+
+    (new ResolveFilamentPanelForSharedRoutes)->handle(request(), fn () => new Response);
+
+    expect(Filament::getCurrentPanel()->getId())->toBe('operator');
+});
+
+it('resolves the admin panel for the shared Livewire update route on the central domain', function () {
+    (new ResolveFilamentPanelForSharedRoutes)->handle(request(), fn () => new Response);
+
+    expect(Filament::getCurrentPanel()->getId())->toBe('admin');
 });

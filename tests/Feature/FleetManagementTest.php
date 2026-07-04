@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Vehicle;
 use Filament\Facades\Filament;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
@@ -136,6 +137,7 @@ it('creates a vehicle with custom fields through the operator panel form', funct
 it('attaches an uploaded photo on a subdomain and generates a webp conversion', function () {
     [$tenant, $operator] = fleetOperator('ardi.localhost');
     tenancy()->initialize($tenant);
+    Storage::fake('public');
     Filament::setCurrentPanel(Filament::getPanel('operator'));
     actingAs($operator);
 
@@ -152,4 +154,41 @@ it('attaches an uploaded photo on a subdomain and generates a webp conversion', 
 
     expect($vehicle->getMedia('vehicle_photos'))->toHaveCount(1)
         ->and($media->hasGeneratedConversion('web'))->toBeTrue();
+});
+
+it('stores vehicle photos under a tenants/{tenant_id}/vehicle_photos/{media_id}/ path, not a bare media-ID folder', function () {
+    [$tenant] = fleetOperator('ardi.localhost');
+    tenancy()->initialize($tenant);
+    Storage::fake('public');
+
+    $vehicle = Vehicle::factory()->create();
+    $media = $vehicle->addMedia(UploadedFile::fake()->image('car.jpg', 800, 600))
+        ->toMediaCollection('vehicle_photos');
+
+    $expectedPrefix = "tenants/{$tenant->id}/vehicle_photos/{$media->id}/";
+
+    expect($media->getPath())->toContain($expectedPrefix)
+        ->and($media->getPathRelativeToRoot())->toStartWith($expectedPrefix);
+});
+
+it('keeps vehicle photos from different tenants under separate storage roots', function () {
+    [$tenantA] = fleetOperator('a.localhost');
+    [$tenantB] = fleetOperator('b.localhost');
+
+    tenancy()->initialize($tenantA);
+    Storage::fake('public');
+    $vehicleA = Vehicle::factory()->create();
+    $mediaA = $vehicleA->addMedia(UploadedFile::fake()->image('a.jpg'))->toMediaCollection('vehicle_photos');
+    $rootA = $mediaA->getPath();
+    tenancy()->end();
+
+    tenancy()->initialize($tenantB);
+    Storage::fake('public');
+    $vehicleB = Vehicle::factory()->create();
+    $mediaB = $vehicleB->addMedia(UploadedFile::fake()->image('b.jpg'))->toMediaCollection('vehicle_photos');
+    $rootB = $mediaB->getPath();
+
+    expect($rootA)->not->toBe($rootB)
+        ->and($rootA)->toContain((string) $tenantA->id)
+        ->and($rootB)->toContain((string) $tenantB->id);
 });

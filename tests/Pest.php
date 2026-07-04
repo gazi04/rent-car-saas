@@ -5,6 +5,53 @@ use Tests\TestCase;
 
 /*
 |--------------------------------------------------------------------------
+| Test storage cleanup
+|--------------------------------------------------------------------------
+|
+| stancl/tenancy's FilesystemTenancyBootstrapper calls useStoragePath() on every
+| tenancy()->initialize() — this swaps storage_path() itself for that test's
+| duration, to storage/tenant{id}/. That's not limited to real disk writes:
+| Storage::fake()'s own fake-disk location is *also* computed from
+| storage_path(), so even fully-faked tests still create a fresh
+| storage/tenant{id}/framework/testing/disks/... tree, one per tenant created.
+| With ~170+ Feature tests each spinning up their own tenant, that's a folder
+| per test, every run, forever, if nothing sweeps them.
+|
+| Two sweeps: once before any test runs (clears leftovers from a previous run
+| that was interrupted before its own shutdown sweep could fire), and once via
+| register_shutdown_function (fires after the whole suite finishes, pass or
+| fail, clearing what *this* run creates). Runs before the app container
+| exists, so this uses a plain path, not storage_path().
+|
+*/
+
+function pest_recursive_rmdir(string $dir): void
+{
+    foreach (scandir($dir) ?: [] as $item) {
+        if ($item === '.' || $item === '..') {
+            continue;
+        }
+
+        $path = $dir.'/'.$item;
+
+        is_dir($path) ? pest_recursive_rmdir($path) : unlink($path);
+    }
+
+    rmdir($dir);
+}
+
+function pest_sweep_tenant_storage_dirs(): void
+{
+    foreach (glob(__DIR__.'/../storage/tenant*', GLOB_ONLYDIR) ?: [] as $leftoverTenantDir) {
+        pest_recursive_rmdir($leftoverTenantDir);
+    }
+}
+
+pest_sweep_tenant_storage_dirs();
+register_shutdown_function('pest_sweep_tenant_storage_dirs');
+
+/*
+|--------------------------------------------------------------------------
 | Test Case
 |--------------------------------------------------------------------------
 |
@@ -17,6 +64,12 @@ use Tests\TestCase;
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature');
+
+// Postgres suite deliberately has no RefreshDatabase: these tests open a second,
+// independent connection that must see (or be blocked by) rows the first connection
+// committed/locked — RefreshDatabase's wrapping transaction would make that impossible.
+pest()->extend(TestCase::class)
+    ->in('Postgres');
 
 /*
 |--------------------------------------------------------------------------
@@ -44,7 +97,18 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * The full domain a tenant subdomain resolves at, built from the same config
+ * key the app itself uses (tenancy.tenant_base_domain) — never hardcode a base
+ * domain literal in a test, it drifts the moment that config changes.
+ */
+function tenant_domain(string $subdomain): string
 {
-    // ..
+    return $subdomain.'.'.config('tenancy.tenant_base_domain');
+}
+
+/** A full http:// URL for a tenant subdomain, optionally with a path/query. */
+function tenant_url(string $subdomain, string $path = ''): string
+{
+    return 'http://'.tenant_domain($subdomain).$path;
 }
