@@ -23,8 +23,11 @@ class RentalAgreementService
 
         App::setLocale($booking->locale ?? 'sq');
 
-        $pdf = Pdf::loadView('pdf.rental-agreement', ['booking' => $booking->load('vehicle')])
-            ->setPaper('a4');
+        $pdf = Pdf::loadView('pdf.rental-agreement', [
+            'booking' => $booking->load('vehicle'),
+            // Operator's custom terms wording (feature #7), or the built-in default.
+            'terms' => app(TemplateRenderer::class)->resolve($booking, 'tmpl_agreement_terms', 'contract.terms_body'),
+        ])->setPaper('a4');
 
         Storage::put($path, $pdf->output());
 

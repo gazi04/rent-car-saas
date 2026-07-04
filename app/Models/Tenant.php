@@ -148,7 +148,9 @@ class Tenant extends BaseTenant implements HasMedia
      */
     public function setSetting(string $key, mixed $value): void
     {
-        if (! in_array($key, config('branding.keys'), true)) {
+        // Allow-list spans branding keys + custom-template keys; anything else
+        // is silently rejected (prevents mass-assignment of arbitrary settings).
+        if (! in_array($key, [...config('branding.keys'), ...config('templates.keys')], true)) {
             return;
         }
 

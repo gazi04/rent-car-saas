@@ -18,7 +18,7 @@
 
 {{ __('emails.booking_confirmed.greeting', ['name' => $booking->customer_name]) }}
 
-{{ __('emails.booking_confirmed.intro') }}
+{{ $intro }}
 
 | | |
 |---|---|
@@ -35,5 +35,5 @@
 </x-mail::button>
 @endif
 
-{{ __('emails.booking_confirmed.outro', ['operator' => $tenant->name ?? config('app.name')]) }}
+{{ $outro }}
 </x-mail::message>

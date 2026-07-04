@@ -136,6 +136,25 @@ return [
     'staff_password_hint' => 'Lëreni bosh për të mbajtur fjalëkalimin aktual.',
     'staff_seat_limit_reached_title' => 'U arrit kufiri i stafit',
     'staff_seat_limit_reached_body' => 'Plani juaj lejon :limit llogari stafi. Na kontaktoni për të përmirësuar planin dhe për të shtuar më shumë.',
+
+    // Shabllonet e personalizuara
+    'nav_templates' => 'Shabllonet',
+    'content_lang_sq' => 'Shqip',
+    'content_lang_en' => 'Anglisht',
+    'tmpl_tab_agreement' => 'Kontrata e qirasë',
+    'tmpl_tab_emails' => 'Email-et',
+    'tmpl_terms' => 'Kushtet e përgjithshme',
+    'tmpl_email_received' => 'Rezervimi u pranua',
+    'tmpl_email_confirmed' => 'Rezervimi u konfirmua',
+    'tmpl_email_rejected' => 'Rezervimi u refuzua',
+    'tmpl_email_cancelled' => 'Rezervimi u anulua',
+    'tmpl_subject' => 'Subjekti',
+    'tmpl_intro' => 'Mesazhi',
+    'tmpl_outro' => 'Mbyllja',
+    'tmpl_variables_hint' => 'Vendmbajtëset e disponueshme: :variables',
+    'tmpl_save' => 'Ruaj shabllonet',
+    'tmpl_saved' => 'Shabllonet u ruajtën',
+
     // Kodet promocionale
     'nav_promo_codes' => 'Kodet promocionale',
     'promo_section' => 'Kodi promocional',

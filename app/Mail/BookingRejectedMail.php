@@ -5,6 +5,7 @@ namespace App\Mail;
 use App\Concerns\ThrottlesMailQueue;
 use App\Models\Booking;
 use App\Models\Tenant;
+use App\Services\TemplateRenderer;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
@@ -25,15 +26,27 @@ class BookingRejectedMail extends Mailable implements ShouldQueue
 
         return new Envelope(
             from: new Address($tenant->email, $tenant->name),
-            subject: __('emails.booking_rejected.subject', ['reference' => $this->booking->reference]),
+            subject: app(TemplateRenderer::class)->resolve(
+                $this->booking,
+                'tmpl_email_rejected_subject',
+                'emails.booking_rejected.subject',
+                ['reference' => $this->booking->reference],
+            ),
         );
     }
 
     public function content(): Content
     {
+        $renderer = app(TemplateRenderer::class);
+        $operator = Tenant::find($this->booking->tenant_id)->name;
+
         return new Content(
             markdown: 'emails.booking-rejected',
-            with: ['booking' => $this->booking],
+            with: [
+                'booking' => $this->booking,
+                'intro' => $renderer->resolve($this->booking, 'tmpl_email_rejected_intro', 'emails.booking_rejected.intro'),
+                'outro' => $renderer->resolve($this->booking, 'tmpl_email_rejected_outro', 'emails.booking_rejected.outro', ['operator' => $operator]),
+            ],
         );
     }
 }

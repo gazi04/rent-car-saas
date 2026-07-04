@@ -136,6 +136,25 @@ return [
     'staff_password_hint' => 'Leave blank to keep the current password.',
     'staff_seat_limit_reached_title' => 'Staff limit reached',
     'staff_seat_limit_reached_body' => 'Your plan allows :limit staff accounts. Contact us to upgrade and add more.',
+
+    // Custom templates
+    'nav_templates' => 'Templates',
+    'content_lang_sq' => 'Albanian',
+    'content_lang_en' => 'English',
+    'tmpl_tab_agreement' => 'Rental agreement',
+    'tmpl_tab_emails' => 'Emails',
+    'tmpl_terms' => 'Terms & conditions',
+    'tmpl_email_received' => 'Booking received',
+    'tmpl_email_confirmed' => 'Booking confirmed',
+    'tmpl_email_rejected' => 'Booking rejected',
+    'tmpl_email_cancelled' => 'Booking cancelled',
+    'tmpl_subject' => 'Subject',
+    'tmpl_intro' => 'Message',
+    'tmpl_outro' => 'Closing',
+    'tmpl_variables_hint' => 'Available placeholders: :variables',
+    'tmpl_save' => 'Save templates',
+    'tmpl_saved' => 'Templates saved',
+
     // Promo codes
     'nav_promo_codes' => 'Promo codes',
     'promo_section' => 'Promo code',

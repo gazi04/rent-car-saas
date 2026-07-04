@@ -24,13 +24,14 @@ enum PlanFeature: string implements HasLabel
     case AiBusinessSummary = 'ai_business_summary';
     case AiPricingSuggestions = 'ai_pricing_suggestions';
     case StaffSeatLimit = 'staff_seat_limit';
+    case Templates = 'templates';
     case PromoCodes = 'promo_codes';
 
     public function type(): PlanFeatureType
     {
         return match ($this) {
             self::VehicleLimit, self::PhotosPerVehicle, self::StaffSeatLimit => PlanFeatureType::Limit,
-            self::Reports, self::Branding, self::PromoCodes,
+            self::Reports, self::Branding, self::Templates, self::PromoCodes,
             self::AiListingWriter, self::AiBusinessSummary, self::AiPricingSuggestions => PlanFeatureType::Toggle,
         };
     }
@@ -46,6 +47,7 @@ enum PlanFeature: string implements HasLabel
             self::AiBusinessSummary => 'AI weekly business summary',
             self::AiPricingSuggestions => 'AI pricing suggestions',
             self::StaffSeatLimit => 'Max staff accounts',
+            self::Templates => 'Custom contract & email templates',
             self::PromoCodes => 'Promo codes',
         };
     }

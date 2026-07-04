@@ -164,7 +164,7 @@
     {{-- Terms --}}
     <div class="section">
         <div class="section-title">{{ __('contract.terms_title') }}</div>
-        <p class="terms">{{ __('contract.terms_body') }}</p>
+        <p class="terms">{!! nl2br(e($terms ?? __('contract.terms_body'))) !!}</p>
     </div>
 
     {{-- Signatures --}}

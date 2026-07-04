@@ -3,7 +3,7 @@
 
 {{ __('emails.booking_received.greeting', ['name' => $booking->customer_name]) }}
 
-{{ __('emails.booking_received.intro') }}
+{{ $intro }}
 
 | | |
 |---|---|
@@ -20,5 +20,5 @@
 {{ __('emails.booking_received.cancel_note') }}
 @endif
 
-{{ __('emails.booking_received.outro', ['operator' => $booking->vehicle->tenant->name ?? config('app.name')]) }}
+{{ $outro }}
 </x-mail::message>
