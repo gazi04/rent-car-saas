@@ -106,4 +106,11 @@ return [
     'cancellation_confirmed' => 'Your booking has been cancelled successfully.',
     'booking_already_cancelled' => 'This booking has already been cancelled or completed.',
     'booking_not_cancellable' => 'This bookin is already confirmed. Please contact the operator directly to cancle or change it.',
+
+    // Promo codes
+    'promo_label' => 'Promo code',
+    'promo_placeholder' => 'Enter a code',
+    'promo_apply' => 'Apply',
+    'promo_applied' => 'Promo code applied.',
+    'promo_invalid' => 'This promo code is not valid.',
 ];

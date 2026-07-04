@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\BookingStatus;
 use App\Enums\RateType;
+use Carbon\CarbonImmutable;
 use Database\Factories\BookingFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,8 +16,10 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 /**
  * @property BookingStatus $status
  * @property RateType $rate_type
+ * @property CarbonImmutable $start_date
+ * @property CarbonImmutable $end_date
  */
-#[Fillable(['vehicle_id', 'customer_id', 'reference', 'customer_name', 'customer_phone', 'customer_email', 'pickup_location', 'notes', 'start_date', 'end_date', 'rate_type', 'subtotal', 'discount_amount', 'total', 'deposit', 'status', 'locale', 'started_at', 'completed_at', 'start_odometer', 'end_odometer'])]
+#[Fillable(['vehicle_id', 'customer_id', 'promo_code_id', 'reference', 'customer_name', 'customer_phone', 'customer_email', 'pickup_location', 'notes', 'start_date', 'end_date', 'rate_type', 'subtotal', 'discount_amount', 'total', 'deposit', 'status', 'locale', 'started_at', 'completed_at', 'start_odometer', 'end_odometer'])]
 class Booking extends Model
 {
     /** @use HasFactory<BookingFactory> */
@@ -51,6 +54,12 @@ class Booking extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    /** @return BelongsTo<PromoCode, $this> */
+    public function promoCode(): BelongsTo
+    {
+        return $this->belongsTo(PromoCode::class);
     }
 
     /** @return HasOne<Contract, $this> */

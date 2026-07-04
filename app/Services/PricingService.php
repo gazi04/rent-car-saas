@@ -3,24 +3,31 @@
 namespace App\Services;
 
 use App\Enums\RateType;
+use App\Models\PromoCode;
 use App\Models\Vehicle;
 use Carbon\Carbon;
 
 class PricingService
 {
     /**
-     * Calculate the price for a rental period.
+     * Calculate the price for a rental period. An optional promo code stacks on
+     * top of the per-vehicle discount (applied to the post-vehicle-discount
+     * amount); the combined figure is returned in `discount` and the total is
+     * floored at zero.
      *
      * @return array{rate_type: RateType, subtotal: float, discount: float, total: float, deposit: float}
      */
-    public function calculate(Vehicle $vehicle, Carbon $start, Carbon $end): array
+    public function calculate(Vehicle $vehicle, Carbon $start, Carbon $end, ?PromoCode $promo = null): array
     {
         $hours = (int) ceil($start->diffInMinutes($end) / 60);
         $days = max(1, (int) ceil($hours / 24));
 
         [$rateType, $subtotal] = $this->selectRate($vehicle, $hours, $days);
 
-        $discount = $this->applyDiscount($vehicle, $subtotal);
+        $vehicleDiscount = $this->applyDiscount($vehicle, $subtotal);
+        $promoDiscount = $promo?->discountFor($subtotal - $vehicleDiscount) ?? 0.0;
+
+        $discount = min($subtotal, $vehicleDiscount + $promoDiscount);
         $total = max(0, $subtotal - $discount);
 
         return [

@@ -1,7 +1,10 @@
 <?php
 
+use App\Enums\PlanFeature;
 use App\Enums\VehicleStatus;
+use App\Exceptions\PromoCodeInvalidException;
 use App\Exceptions\VehicleNotAvailableException;
+use App\Models\PromoCode;
 use App\Models\Vehicle;
 use App\Services\BookingService;
 use App\Services\PricingService;
@@ -20,6 +23,11 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
     public string $endDate = '';
     /** @var array<string, mixed>|null */
     public ?array $priceBreakdown = null;
+
+    // Promo code (gated feature)
+    public string $promoCode = '';
+    public ?string $promoNotice = null;
+    public ?string $promoError = null;
 
     // Step 2 — customer details
     public string $customerName = '';
@@ -72,6 +80,11 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
         $this->step = max(1, $this->step - 1);
     }
 
+    public function applyPromo(): void
+    {
+        $this->refreshPrice();
+    }
+
     public function submit(): void
     {
         $this->validate([
@@ -96,6 +109,7 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
                 'customer_email' => $this->customerEmail ?: null,
                 'pickup_location' => $this->pickupLocation ?: null,
                 'notes' => $this->notes ?: null,
+                'promo_code' => $this->promoCode ?: null,
             ]);
 
             $this->redirect(route('public.booking.confirmation', $booking->reference), navigate: false);
@@ -105,7 +119,38 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
             $this->startDate = '';
             $this->endDate = '';
             $this->priceBreakdown = null;
+        } catch (PromoCodeInvalidException) {
+            $this->promoError = __('booking.promo_invalid');
         }
+    }
+
+    /**
+     * Resolve the entered promo code for the price preview (read-only — no lock,
+     * no usage increment; the authoritative check + redemption happen in
+     * BookingService at submit). Sets promoNotice / promoError.
+     */
+    private function previewPromo(): ?PromoCode
+    {
+        $this->promoNotice = null;
+        $this->promoError = null;
+
+        $code = strtoupper(trim($this->promoCode));
+
+        if ($code === '' || ! (tenant()?->allowsFeature(PlanFeature::PromoCodes) ?? true)) {
+            return null;
+        }
+
+        $promo = PromoCode::query()->where('code', $code)->first();
+
+        if ($promo === null || ! $promo->isCurrentlyValid()) {
+            $this->promoError = __('booking.promo_invalid');
+
+            return null;
+        }
+
+        $this->promoNotice = __('booking.promo_applied');
+
+        return $promo;
     }
 
     private function refreshPrice(): void
@@ -125,7 +170,7 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
             return;
         }
 
-        $pricing = app(PricingService::class)->calculate($this->vehicle, $start, $end);
+        $pricing = app(PricingService::class)->calculate($this->vehicle, $start, $end, $this->previewPromo());
 
         $this->priceBreakdown = [
             'rate_type' => $pricing['rate_type']->getLabel(),
@@ -230,6 +275,26 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
                         @endif
                     </dl>
                 </div>
+
+                @if (tenant()?->allowsFeature(\App\Enums\PlanFeature::PromoCodes) ?? true)
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('booking.promo_label') }}</label>
+                        <div class="flex gap-2">
+                            <input type="text" wire:model="promoCode"
+                                   placeholder="{{ __('booking.promo_placeholder') }}"
+                                   class="flex-1 rounded-md border-gray-300 text-sm uppercase focus:border-primary focus:ring-primary">
+                            <button type="button" wire:click="applyPromo"
+                                    class="rounded-md bg-gray-800 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 transition-colors">
+                                {{ __('booking.promo_apply') }}
+                            </button>
+                        </div>
+                        @if ($promoNotice)
+                            <p class="mt-1 text-sm text-green-700">{{ $promoNotice }}</p>
+                        @elseif ($promoError)
+                            <p class="mt-1 text-sm text-red-600">{{ $promoError }}</p>
+                        @endif
+                    </div>
+                @endif
             @endif
 
             <button wire:click="nextStep"

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Operator\Resources\Bookings\Pages;
 
+use App\Exceptions\PromoCodeInvalidException;
 use App\Exceptions\VehicleNotAvailableException;
 use App\Filament\Operator\Resources\Bookings\BookingResource;
 use App\Models\Booking;
@@ -22,9 +23,9 @@ class CreateBooking extends CreateRecord
     {
         try {
             return app(BookingService::class)->createManual($data);
-        } catch (VehicleNotAvailableException $e) {
+        } catch (VehicleNotAvailableException|PromoCodeInvalidException $e) {
             Notification::make()
-                ->title('Vehicle not available')
+                ->title($e instanceof PromoCodeInvalidException ? __('panel.promo_invalid_title') : 'Vehicle not available')
                 ->body($e->getMessage())
                 ->danger()
                 ->send();

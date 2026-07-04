@@ -3,13 +3,16 @@
 namespace App\Services;
 
 use App\Enums\BookingStatus;
+use App\Enums\PlanFeature;
 use App\Events\BookingCancelled;
 use App\Events\BookingConfirmed;
 use App\Events\BookingCreated;
 use App\Events\BookingRejected;
+use App\Exceptions\PromoCodeInvalidException;
 use App\Exceptions\VehicleNotAvailableException;
 use App\Models\Booking;
 use App\Models\Customer;
+use App\Models\PromoCode;
 use App\Models\Vehicle;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -26,12 +29,16 @@ class BookingService
     public function create(array $data): Booking
     {
         return DB::transaction(function () use ($data) {
-            [$vehicle, $start, $end, $price] = $this->lockAndValidate($data);
+            [$vehicle, $start, $end] = $this->lockAndValidate($data);
+            $customer = $this->resolveCustomer($data);
+            $promo = $this->resolvePromo($data, $customer);
+            $price = $this->pricing->calculate($vehicle, $start, $end, $promo);
 
             $booking = Booking::create([
                 'reference' => $this->generateReference(),
                 'vehicle_id' => $vehicle->id,
-                'customer_id' => $this->resolveCustomer($data)->id,
+                'customer_id' => $customer->id,
+                'promo_code_id' => $promo?->id,
                 'customer_name' => $data['customer_name'],
                 'customer_phone' => $data['customer_phone'],
                 'customer_email' => $data['customer_email'] ?? null,
@@ -48,6 +55,8 @@ class BookingService
                 'locale' => app()->getLocale(),
             ]);
 
+            $promo?->increment('uses_count');
+
             BookingCreated::dispatch($booking);
 
             return $booking;
@@ -63,12 +72,16 @@ class BookingService
     public function createManual(array $data): Booking
     {
         return DB::transaction(function () use ($data) {
-            [$vehicle, $start, $end, $price] = $this->lockAndValidate($data);
+            [$vehicle, $start, $end] = $this->lockAndValidate($data);
+            $customer = $this->resolveCustomer($data);
+            $promo = $this->resolvePromo($data, $customer);
+            $price = $this->pricing->calculate($vehicle, $start, $end, $promo);
 
-            return Booking::create([
+            $booking = Booking::create([
                 'reference' => $this->generateReference(),
                 'vehicle_id' => $vehicle->id,
-                'customer_id' => $this->resolveCustomer($data)->id,
+                'customer_id' => $customer->id,
+                'promo_code_id' => $promo?->id,
                 'customer_name' => $data['customer_name'],
                 'customer_phone' => $data['customer_phone'],
                 'customer_email' => $data['customer_email'] ?? null,
@@ -84,6 +97,10 @@ class BookingService
                 'status' => BookingStatus::Confirmed,
                 'locale' => app()->getLocale(),
             ]);
+
+            $promo?->increment('uses_count');
+
+            return $booking;
         });
     }
 
@@ -125,11 +142,12 @@ class BookingService
     }
 
     /**
-     * Lock the vehicle row, parse dates, re-check availability, and calculate price.
-     * Must be called inside a DB::transaction.
+     * Lock the vehicle row, parse dates, and re-check availability. Must be
+     * called inside a DB::transaction. Pricing is computed by the caller (after
+     * resolving any promo code).
      *
      * @param  array<string, mixed>  $data
-     * @return array{0: Vehicle, 1: Carbon, 2: Carbon, 3: array<string, mixed>}
+     * @return array{0: Vehicle, 1: Carbon, 2: Carbon}
      */
     private function lockAndValidate(array $data): array
     {
@@ -144,9 +162,39 @@ class BookingService
             throw new VehicleNotAvailableException('Sorry, this vehicle was just booked by someone else.');
         }
 
-        $price = $this->pricing->calculate($vehicle, $start, $end);
+        return [$vehicle, $start, $end];
+    }
 
-        return [$vehicle, $start, $end, $price];
+    /**
+     * Resolve and validate the promo code on the booking data (if any) for this
+     * customer. Returns null when no code is given or the feature is off (the
+     * code is silently ignored). Locks the promo row so a global usage cap can't
+     * be exceeded by concurrent redemptions. Must run inside the transaction.
+     *
+     * @param  array<string, mixed>  $data
+     *
+     * @throws PromoCodeInvalidException
+     */
+    private function resolvePromo(array $data, Customer $customer): ?PromoCode
+    {
+        $code = strtoupper(trim((string) ($data['promo_code'] ?? '')));
+
+        if ($code === '' || ! (tenant()?->allowsFeature(PlanFeature::PromoCodes) ?? true)) {
+            return null;
+        }
+
+        $promo = PromoCode::query()->where('code', $code)->lockForUpdate()->first();
+
+        if ($promo === null || ! $promo->isCurrentlyValid()) {
+            throw new PromoCodeInvalidException('This promo code is not valid.');
+        }
+
+        if ($promo->per_customer_limit !== null
+            && $customer->bookings()->where('promo_code_id', $promo->id)->count() >= $promo->per_customer_limit) {
+            throw new PromoCodeInvalidException('This promo code has already been used.');
+        }
+
+        return $promo;
     }
 
     /**

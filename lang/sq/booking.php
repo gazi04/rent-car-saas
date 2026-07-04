@@ -106,4 +106,11 @@ return [
     'cancellation_confirmed' => 'Rezervimi juaj është anuluar me sukses.',
     'booking_already_cancelled' => 'Ky rezervim është anuluar ose kompletuar tashmë.',
     'booking_not_cancellable' => 'Ky rezervim është konfirmuar tashmë. Ju lutemi kontaktoni operatorin drejtpërdrejt për ta anuluar ose ndryshuar.',
+
+    // Kodet promocionale
+    'promo_label' => 'Kodi promocional',
+    'promo_placeholder' => 'Shkruani një kod',
+    'promo_apply' => 'Apliko',
+    'promo_applied' => 'Kodi promocional u aplikua.',
+    'promo_invalid' => 'Ky kod promocional nuk është i vlefshëm.',
 ];

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Operator\Resources\Bookings\Schemas;
 
+use App\Enums\PlanFeature;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -38,6 +39,12 @@ class BookingForm
                         TextInput::make('pickup_location')
                             ->label(__('panel.pickup_location'))
                             ->maxLength(255),
+                        // Transient field — not a Booking column; createManual()
+                        // reads it from the form data and applies the discount.
+                        TextInput::make('promo_code')
+                            ->label(__('panel.promo_code'))
+                            ->maxLength(50)
+                            ->visible(fn (): bool => tenant()?->allowsFeature(PlanFeature::PromoCodes) ?? true),
                     ]),
 
                 Section::make(__('panel.section_customer'))
