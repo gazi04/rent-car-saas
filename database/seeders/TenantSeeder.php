@@ -30,7 +30,8 @@ class TenantSeeder extends Seeder
             ],
         );
 
-        $tenant->domains()->firstOrCreate(['domain' => 'ardi.localhost']);
+        $base = config('tenancy.tenant_base_domain', 'localhost');
+        $tenant->domains()->firstOrCreate(['domain' => 'ardi.'.$base]);
 
         // `role` and `tenant_id` are not mass-assignable, so set them via forceFill —
         // same pattern as AdminUserSeeder and the operator self-registration flow.

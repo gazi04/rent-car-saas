@@ -26,8 +26,10 @@ return [
      */
     'central_domains' => [
         '127.0.0.1',
-        'localhost',
-        'admin.localhost',
+        'lvh.me',
+        'admin.lvh.me',
+        /* 'localhost', */
+        /* 'admin.localhost', */
         'yourdomain.com',
         'admin.yourdomain.com',
     ],
