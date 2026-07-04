@@ -2,6 +2,7 @@
 
 return [
     'navigation_label' => 'Raportet',
+    'date_range' => 'Periudha',
     'start_date' => 'Nga',
     'end_date' => 'Deri më',
     'export_csv' => 'Eksporto CSV',
@@ -15,4 +16,5 @@ return [
     'booked_days' => 'Ditë të rezervuara',
     'utilisation_percent' => 'Shfrytëzimi',
     'no_vehicles' => 'Ende nuk ka automjete.',
+    'no_bookings' => 'Nuk ka rezervime në këtë periudhë.',
 ];

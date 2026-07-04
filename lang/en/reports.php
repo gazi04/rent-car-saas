@@ -2,6 +2,7 @@
 
 return [
     'navigation_label' => 'Reports',
+    'date_range' => 'Date range',
     'start_date' => 'From',
     'end_date' => 'Until',
     'export_csv' => 'Export CSV',
@@ -15,4 +16,5 @@ return [
     'booked_days' => 'Booked days',
     'utilisation_percent' => 'Utilisation',
     'no_vehicles' => 'No vehicles yet.',
+    'no_bookings' => 'No bookings in this date range.',
 ];

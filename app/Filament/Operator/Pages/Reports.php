@@ -137,6 +137,16 @@ class Reports extends Page
             ->values();
     }
 
+    /** Semantic color for a utilisation percentage, so idle vehicles stand out. */
+    public function utilisationColor(int $percent): string
+    {
+        return match (true) {
+            $percent < 30 => 'danger',
+            $percent < 70 => 'warning',
+            default => 'success',
+        };
+    }
+
     public function exportCsv(): StreamedResponse
     {
         [$rangeStart, $rangeEnd] = $this->range();
