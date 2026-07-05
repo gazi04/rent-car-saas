@@ -3,6 +3,7 @@
 use App\Console\Commands\GenerateBusinessSummaries;
 use App\Console\Commands\ProcessTenantSubscriptions;
 use App\Console\Commands\ProcessVehicleMaintenance;
+use App\Console\Commands\RequestPendingReviews;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -22,3 +23,7 @@ Schedule::command(GenerateBusinessSummaries::class)->weeklyOn(1, '06:00')->witho
 // Daily vehicle maintenance sweep: reminders + auto-block,
 // one queued job per eligible tenant.
 Schedule::command(ProcessVehicleMaintenance::class)->dailyAt('07:00')->withoutOverlapping();
+
+// Daily review-request fan-out: next-day invitation email,
+// one queued job per eligible tenant.
+Schedule::command(RequestPendingReviews::class)->dailyAt('09:00')->withoutOverlapping();

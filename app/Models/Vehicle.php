@@ -92,4 +92,26 @@ class Vehicle extends Model implements HasMedia
     {
         return $this->hasMany(ServiceRecord::class);
     }
+
+    /** @return HasMany<Review, $this> */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    /** @return HasMany<Review, $this> */
+    public function approvedReviews(): HasMany
+    {
+        return $this->reviews()->where('is_approved', true);
+    }
+
+    /**
+     * Average of this vehicle's approved star ratings, or null when it has none.
+     */
+    public function averageRating(): ?float
+    {
+        $average = $this->approvedReviews()->avg('rating');
+
+        return $average !== null ? round((float) $average, 1) : null;
+    }
 }

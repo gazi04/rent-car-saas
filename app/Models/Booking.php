@@ -19,7 +19,7 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
  * @property CarbonImmutable $start_date
  * @property CarbonImmutable $end_date
  */
-#[Fillable(['vehicle_id', 'customer_id', 'promo_code_id', 'reference', 'customer_name', 'customer_phone', 'customer_email', 'pickup_location', 'notes', 'start_date', 'end_date', 'rate_type', 'subtotal', 'discount_amount', 'total', 'deposit', 'status', 'locale', 'started_at', 'completed_at', 'start_odometer', 'end_odometer'])]
+#[Fillable(['vehicle_id', 'customer_id', 'promo_code_id', 'reference', 'customer_name', 'customer_phone', 'customer_email', 'pickup_location', 'notes', 'start_date', 'end_date', 'rate_type', 'subtotal', 'discount_amount', 'total', 'deposit', 'status', 'locale', 'started_at', 'completed_at', 'review_requested_at', 'start_odometer', 'end_odometer'])]
 class Booking extends Model
 {
     /** @use HasFactory<BookingFactory> */
@@ -37,6 +37,7 @@ class Booking extends Model
             'end_date' => 'datetime',
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
+            'review_requested_at' => 'datetime',
             'subtotal' => 'decimal:2',
             'discount_amount' => 'decimal:2',
             'total' => 'decimal:2',
@@ -66,5 +67,11 @@ class Booking extends Model
     public function contract(): HasOne
     {
         return $this->hasOne(Contract::class);
+    }
+
+    /** @return HasOne<Review, $this> */
+    public function review(): HasOne
+    {
+        return $this->hasOne(Review::class);
     }
 }

@@ -52,6 +52,11 @@ Route::middleware([
         ->name('public.booking.cancel')
         ->middleware('signed');
 
+    // Signed ~30-day review-submission link — tokenless, no account required.
+    Route::livewire('/booking/{booking}/review', 'pages::public.booking-review')
+        ->name('public.booking.review')
+        ->middleware('signed');
+
     // Signed 7-day rental-agreement download link — no auth required.
     Route::get('/booking/{booking:reference}/agreement', DownloadAgreementController::class)
         ->name('agreement.download')

@@ -98,4 +98,13 @@ return [
         'last_service_label' => 'Servisi i fundit',
         'outro' => 'Regjistroni një servis të ri sapo të kryhet për ta pastruar këtë kujtesë.',
     ],
+
+    // Kërkesa për vlerësim
+    'review_request' => [
+        'subject' => 'Si ishte qiraja juaj me :operator?',
+        'greeting' => 'Përshëndetje :name,',
+        'intro' => 'Faleminderit që morët me qira :vehicle. Do të donim të dëgjonim përvojën tuaj — merr vetëm një minutë.',
+        'button' => 'Lini një vlerësim',
+        'outro' => 'Faleminderit që zgjodhët :operator.',
+    ],
 ];

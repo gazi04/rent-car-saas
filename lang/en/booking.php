@@ -113,4 +113,15 @@ return [
     'promo_apply' => 'Apply',
     'promo_applied' => 'Promo code applied.',
     'promo_invalid' => 'This promo code is not valid.',
+
+    // Reviews
+    'review_title' => 'How was your rental?',
+    'review_rating' => 'Your rating',
+    'review_comment' => 'Your comment (optional)',
+    'review_submit' => 'Submit review',
+    'review_thanks' => 'Thank you for your review!',
+    'review_already' => 'You have already reviewed this booking.',
+    'review_unavailable' => 'This review link is no longer available.',
+    'reviews_heading' => 'Customer reviews',
+    'reviews_count' => '{0} No reviews yet|{1} :count review|[2,*] :count reviews',
 ];

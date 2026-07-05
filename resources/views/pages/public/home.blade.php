@@ -1,6 +1,8 @@
 <?php
 
+use App\Enums\PlanFeature;
 use App\Enums\VehicleStatus;
+use App\Models\Review;
 use App\Models\Vehicle;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
@@ -41,6 +43,46 @@ new #[Layout('layouts.public')] #[Title('Home')] class extends Component {
         ];
     }
 
+    /**
+     * Whether to show the home-page review showcase — gated (Standard/Pro).
+     */
+    #[Computed]
+    public function showsReviewShowcase(): bool
+    {
+        return (tenant()?->allowsFeature(PlanFeature::Reviews) ?? false)
+            && $this->showcaseReviews->isNotEmpty();
+    }
+
+    /**
+     * A few featured approved reviews across the whole fleet. Auto tenant-scoped.
+     *
+     * @return Collection<int, Review>
+     */
+    #[Computed]
+    public function showcaseReviews(): Collection
+    {
+        return Review::query()
+            ->where('is_approved', true)
+            ->with('vehicle')
+            ->latest('submitted_at')
+            ->limit(6)
+            ->get();
+    }
+
+    #[Computed]
+    public function averageRating(): ?float
+    {
+        $average = Review::query()->where('is_approved', true)->avg('rating');
+
+        return $average !== null ? round((float) $average, 1) : null;
+    }
+
+    #[Computed]
+    public function reviewsCount(): int
+    {
+        return Review::query()->where('is_approved', true)->count();
+    }
+
     #[Computed]
     public function pageLayout(): string
     {
@@ -61,4 +103,8 @@ new #[Layout('layouts.public')] #[Title('Home')] class extends Component {
     @endphp
 
     @include('pages.public.partials.home.' . $this->pageLayout)
+
+    @if ($this->showsReviewShowcase)
+        @include('pages.public.partials.home._reviews')
+    @endif
 </div>

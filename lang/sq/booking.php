@@ -113,4 +113,15 @@ return [
     'promo_apply' => 'Apliko',
     'promo_applied' => 'Kodi promocional u aplikua.',
     'promo_invalid' => 'Ky kod promocional nuk është i vlefshëm.',
+
+    // Vlerësimet
+    'review_title' => 'Si ishte qiraja juaj?',
+    'review_rating' => 'Vlerësimi juaj',
+    'review_comment' => 'Komenti juaj (opsional)',
+    'review_submit' => 'Dërgo vlerësimin',
+    'review_thanks' => 'Faleminderit për vlerësimin tuaj!',
+    'review_already' => 'Ju e keni vlerësuar tashmë këtë rezervim.',
+    'review_unavailable' => 'Kjo lidhje vlerësimi nuk është më e disponueshme.',
+    'reviews_heading' => 'Vlerësimet e klientëve',
+    'reviews_count' => '{0} Ende asnjë vlerësim|{1} :count vlerësim|[2,*] :count vlerësime',
 ];

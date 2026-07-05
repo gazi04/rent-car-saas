@@ -98,4 +98,12 @@ return [
         'last_service_label' => 'Last service',
         'outro' => 'Log a new service record once it is done to clear this reminder.',
     ],
+
+    'review_request' => [
+        'subject' => 'How was your rental with :operator?',
+        'greeting' => 'Hello :name,',
+        'intro' => 'Thank you for renting the :vehicle. We would love to hear how it went — it only takes a minute.',
+        'button' => 'Leave a Review',
+        'outro' => 'Thank you for choosing :operator.',
+    ],
 ];

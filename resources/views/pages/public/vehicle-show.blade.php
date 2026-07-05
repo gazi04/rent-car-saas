@@ -1,7 +1,9 @@
 <?php
 
 use App\Enums\VehicleStatus;
+use App\Models\Review;
 use App\Models\Vehicle;
+use Illuminate\Database\Eloquent\Collection;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -29,6 +31,30 @@ new #[Layout('layouts.public')] #[Title('Vehicle Details')] class extends Compon
             ->all();
     }
 
+    /**
+     * Approved reviews for this vehicle, newest first. Free on every plan so
+     * accumulated reviews are always visible. Auto tenant-scoped via BelongsToTenant.
+     *
+     * @return Collection<int, Review>
+     */
+    #[Computed]
+    public function reviews(): Collection
+    {
+        return Review::query()
+            ->where('vehicle_id', $this->vehicle->id)
+            ->where('is_approved', true)
+            ->latest('submitted_at')
+            ->get();
+    }
+
+    #[Computed]
+    public function averageRating(): ?float
+    {
+        $reviews = $this->reviews;
+
+        return $reviews->isNotEmpty() ? round((float) $reviews->avg('rating'), 1) : null;
+    }
+
     #[Computed]
     public function pageLayout(): string
     {
@@ -49,4 +75,6 @@ new #[Layout('layouts.public')] #[Title('Vehicle Details')] class extends Compon
     @endphp
 
     @include('pages.public.partials.vehicle-show.' . $this->pageLayout)
+
+    @include('pages.public.partials.vehicle-show._reviews')
 </div>

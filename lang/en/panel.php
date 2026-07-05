@@ -191,4 +191,14 @@ return [
     'service_overdue' => 'overdue',
     'service_due_bell_title' => 'Service due soon',
     'service_overdue_bell_title' => 'Service overdue — vehicle blocked',
+
+    // Reviews
+    'nav_reviews' => 'Reviews',
+    'review_reviewer' => 'Reviewer',
+    'review_rating' => 'Rating',
+    'review_comment' => 'Comment',
+    'review_approved' => 'Approved',
+    'review_submitted_at' => 'Submitted',
+    'review_action_approve' => 'Approve',
+    'review_action_hide' => 'Hide',
 ];

@@ -191,4 +191,14 @@ return [
     'service_overdue' => 'i vonuar',
     'service_due_bell_title' => 'Servisi afër afatit',
     'service_overdue_bell_title' => 'Servisi i vonuar — automjeti u bllokua',
+
+    // Vlerësimet
+    'nav_reviews' => 'Vlerësimet',
+    'review_reviewer' => 'Vlerësuesi',
+    'review_rating' => 'Vlerësimi',
+    'review_comment' => 'Komenti',
+    'review_approved' => 'Aprovuar',
+    'review_submitted_at' => 'Dërguar më',
+    'review_action_approve' => 'Aprovo',
+    'review_action_hide' => 'Fshih',
 ];
