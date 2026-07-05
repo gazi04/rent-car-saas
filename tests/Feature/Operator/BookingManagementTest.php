@@ -371,3 +371,82 @@ it('removes a blocked date only through the confirmed removeBlock action', funct
     $component->call('callMountedAction');
     expect(BlockedDate::query()->count())->toBe(0);
 });
+
+// ─── Availability calendar: block actions are owner-only (M4) ─────────────────
+
+/**
+ * Boot an active tenant with a STAFF user (not the owner) and a vehicle inside it.
+ *
+ * @return array{0: Tenant, 1: User, 2: Vehicle}
+ */
+function bookingStaffFor(string $domain): array
+{
+    $tenant = Tenant::factory()->withDomain($domain)->create();
+    $staff = User::factory()->staff()->create(['tenant_id' => $tenant->id]);
+
+    tenancy()->initialize($tenant);
+    Filament::setCurrentPanel(Filament::getPanel('operator'));
+    actingAs($staff);
+
+    $vehicle = Vehicle::factory()->create(['daily_rate' => 50, 'weekly_rate' => null, 'monthly_rate' => null]);
+
+    return [$tenant, $staff, $vehicle];
+}
+
+it('shows the block-dates action to the owner', function () {
+    bookingOperatorFor('m4owner');
+
+    Livewire::test(AvailabilityCalendar::class)->assertActionVisible('create');
+});
+
+it('hides the block-dates action from staff', function () {
+    bookingStaffFor('m4staff');
+
+    Livewire::test(AvailabilityCalendar::class)->assertActionHidden('create');
+});
+
+it('ignores a staff drag-select — no block modal, no block created', function () {
+    bookingStaffFor('m4staffselect');
+
+    Livewire::test(AvailabilityCalendar::class)
+        ->call('onDateSelect', '2030-08-01', '2030-08-02', true, null, null)
+        ->assertHasNoActionErrors();
+
+    expect(BlockedDate::query()->count())->toBe(0);
+});
+
+it('does not let staff delete a block via event click', function () {
+    [, , $vehicle] = bookingStaffFor('m4staffremove');
+
+    $block = BlockedDate::create([
+        'vehicle_id' => $vehicle->id,
+        'start_date' => '2030-09-01',
+        'end_date' => '2030-09-03',
+        'reason' => 'maintenance',
+    ]);
+
+    $component = Livewire::test(AvailabilityCalendar::class);
+
+    // Block click must not mount the removeBlock action for staff…
+    $component->call('onEventClick', [
+        'extendedProps' => ['type' => 'block', 'block_id' => $block->id],
+    ]);
+    // …so confirming a (non-existent) mounted action deletes nothing.
+    $component->call('callMountedAction');
+
+    expect(BlockedDate::query()->count())->toBe(1);
+});
+
+it('still shows the calendar read view to staff', function () {
+    [, , $vehicle] = bookingStaffFor('m4staffread');
+
+    Booking::factory()->forVehicle($vehicle)->confirmed()->create([
+        'start_date' => '2030-09-05', 'end_date' => '2030-09-08',
+    ]);
+
+    $events = Livewire::test(AvailabilityCalendar::class)->instance()->fetchEvents([
+        'start' => '2030-09-01', 'end' => '2030-09-30', 'timezone' => 'UTC',
+    ]);
+
+    expect($events)->toHaveCount(1);
+});

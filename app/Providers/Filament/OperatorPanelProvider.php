@@ -38,7 +38,9 @@ class OperatorPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Indigo,
             ])
-            ->plugin(FilamentFullCalendarPlugin::make())
+            // Enables FullCalendar's drag-across-days selection; AvailabilityCalendar's
+            // onDateSelect() relies on this to open the block-dates modal.
+            ->plugin(FilamentFullCalendarPlugin::make()->selectable())
             // Language toggle: shows the *other* language, mirroring the public
             // site's toggle convention. Persists to users.locale via the route.
             ->userMenuItems([

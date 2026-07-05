@@ -7,7 +7,20 @@
     $plugin = \Saade\FilamentFullCalendar\FilamentFullCalendarPlugin::get();
 @endphp
 
+{{--
+    The widget wrapper must be the component's single root element — Livewire renders
+    only the first top-level element, so a sibling <style> above it would swallow the
+    whole calendar. Keep the <style> nested inside.
+--}}
 <x-filament-widgets::widget>
+    <style>
+        /* Diagonal hatch over the flat gray fill so a blocked date reads as
+           "unavailable" at a glance, not just another (differently-colored) booking. */
+        .fc-event-blocked {
+            background-image: repeating-linear-gradient(45deg, rgba(255, 255, 255, 0.35) 0 4px, transparent 4px 8px);
+        }
+    </style>
+
     <x-filament::section>
         <div class="mb-4 flex flex-wrap items-end justify-between gap-4">
             <div class="w-full sm:w-64">
@@ -31,20 +44,14 @@
 
         {{-- Legend --}}
         <div class="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-600 dark:text-gray-300">
+            @foreach (\App\Enums\BookingStatus::blocking() as $status)
+                <span class="flex items-center gap-1.5">
+                    <span class="h-3 w-3 rounded-sm" style="background:{{ $status->calendarColor() }}"></span>
+                    {{ __('panel.legend_'.$status->value) }}
+                </span>
+            @endforeach
             <span class="flex items-center gap-1.5">
-                <span class="h-3 w-3 rounded-sm" style="background:#f59e0b"></span>
-                {{ __('panel.legend_pending') }}
-            </span>
-            <span class="flex items-center gap-1.5">
-                <span class="h-3 w-3 rounded-sm" style="background:#3b82f6"></span>
-                {{ __('panel.legend_confirmed') }}
-            </span>
-            <span class="flex items-center gap-1.5">
-                <span class="h-3 w-3 rounded-sm" style="background:#22c55e"></span>
-                {{ __('panel.legend_active') }}
-            </span>
-            <span class="flex items-center gap-1.5">
-                <span class="h-3 w-3 rounded-sm" style="background:#9ca3af"></span>
+                <span class="h-3 w-3 rounded-sm fc-event-blocked" style="background-color:#9ca3af"></span>
                 {{ __('panel.legend_blocked') }}
             </span>
             <span class="ms-auto hidden text-gray-400 sm:inline dark:text-gray-500">

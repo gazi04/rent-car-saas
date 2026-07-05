@@ -40,4 +40,19 @@ enum BookingStatus: string implements HasColor, HasLabel
     {
         return [self::Pending, self::Confirmed, self::Active];
     }
+
+    /**
+     * Literal hex for the availability calendar (AvailabilityCalendar), which needs a
+     * real CSS color for FullCalendar's backgroundColor, not a Filament palette token.
+     * Single source of truth shared by the event fill and the calendar legend.
+     */
+    public function calendarColor(): string
+    {
+        return match ($this) {
+            self::Pending => '#f59e0b',
+            self::Confirmed => '#3b82f6',
+            self::Active => '#22c55e',
+            default => '#6b7280',
+        };
+    }
 }

@@ -36,6 +36,15 @@ class AvailabilityCalendar extends FullCalendarWidget
     }
 
     /**
+     * Blocking/unblocking vehicle dates is fleet management — owner-only, matching
+     * VehicleResource::canAccess(). Staff keep the read-only calendar view.
+     */
+    private function isOwner(): bool
+    {
+        return auth()->user()?->isOwner() ?? false;
+    }
+
+    /**
      * @return array<int|string, string> Vehicle options for the filter select.
      */
     public function vehicleOptions(): array
@@ -44,7 +53,11 @@ class AvailabilityCalendar extends FullCalendarWidget
     }
 
     /**
-     * Weeks start on Monday for the Kosovo market.
+     * Weeks start on Monday for the Kosovo market. headerToolbar adds day/week/list
+     * view buttons (the dayGrid/timeGrid/list FullCalendar plugins are already loaded
+     * by default, so these view names need no extra plugin registration); dayMaxEvents
+     * caps a busy day behind a "+N more" popover instead of the month grid growing
+     * unbounded; nowIndicator draws the current-time line (useful once week view exists).
      *
      * @return array<string, mixed>
      */
@@ -52,7 +65,34 @@ class AvailabilityCalendar extends FullCalendarWidget
     {
         return [
             'firstDay' => 1,
+            'headerToolbar' => [
+                'left' => 'prev,next today',
+                'center' => 'title',
+                'right' => 'dayGridMonth,timeGridWeek,listWeek',
+            ],
+            'dayMaxEvents' => true,
+            'nowIndicator' => true,
         ];
+    }
+
+    /** Tags blocked-date events with a CSS class for the diagonal-hatch styling (see the view). */
+    public function eventClassNames(): string
+    {
+        return <<<'JS'
+            (arg) => arg.event.extendedProps.type === 'block' ? ['fc-event-blocked'] : []
+        JS;
+    }
+
+    /**
+     * Sets a native title attribute from the event's own title, so hovering a
+     * truncated event (month view routinely clips long titles) shows the full
+     * "Vehicle · Customer" / "Blocked · reason" text as a plain browser tooltip.
+     */
+    public function eventDidMount(): string
+    {
+        return <<<'JS'
+            (arg) => { arg.el.setAttribute('title', arg.event.title); }
+        JS;
     }
 
     /**
@@ -93,12 +133,7 @@ class AvailabilityCalendar extends FullCalendarWidget
                 ->start($booking->start_date)
                 ->end($booking->end_date)
                 ->url(BookingResource::getUrl('view', ['record' => $booking]))
-                ->backgroundColor(match ($booking->status) {
-                    BookingStatus::Pending => '#f59e0b',
-                    BookingStatus::Confirmed => '#3b82f6',
-                    BookingStatus::Active => '#22c55e',
-                    default => '#6b7280',
-                })
+                ->backgroundColor($booking->status->calendarColor())
                 ->textColor('#ffffff')
                 ->extendedProps(['type' => 'booking'])
                 ->toArray();
@@ -127,6 +162,10 @@ class AvailabilityCalendar extends FullCalendarWidget
      */
     public function onDateSelect(string $start, ?string $end, bool $allDay, ?array $view, ?array $resource): void
     {
+        if (! $this->isOwner()) {
+            return;
+        }
+
         $this->mountAction('create', [
             'type' => 'select',
             'start' => $start,
@@ -148,6 +187,10 @@ class AvailabilityCalendar extends FullCalendarWidget
             return;
         }
 
+        if (! $this->isOwner()) {
+            return;
+        }
+
         $blockId = $event['extendedProps']['block_id'] ?? null;
 
         if (! $blockId) {
@@ -160,6 +203,7 @@ class AvailabilityCalendar extends FullCalendarWidget
     public function removeBlockAction(): Action
     {
         return Action::make('removeBlock')
+            ->visible(fn (): bool => $this->isOwner())
             ->label(__('panel.remove_block'))
             ->modalHeading(__('panel.remove_block'))
             ->modalDescription(function (array $arguments): string {
@@ -209,6 +253,7 @@ class AvailabilityCalendar extends FullCalendarWidget
     {
         return [
             Actions\CreateAction::make()
+                ->visible(fn (): bool => $this->isOwner())
                 ->label(__('panel.block_dates'))
                 // Pre-fill the pickers from a calendar drag-select; the header
                 // button opens them empty and the operator picks the range.
