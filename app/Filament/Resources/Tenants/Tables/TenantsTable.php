@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Tenants\Tables;
 
 use App\Enums\PaymentMethod;
+use App\Filament\Resources\Tenants\Pages\ViewTenant;
 use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\User;
@@ -29,6 +30,7 @@ class TenantsTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->recordUrl(fn (Tenant $record): string => ViewTenant::getUrl(['record' => $record]))
             ->columns([
                 TextColumn::make('name')
                     ->searchable()
