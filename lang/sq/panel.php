@@ -72,6 +72,7 @@ return [
     'description' => 'Përshkrimi',
 
     // Kalendari i disponueshmërisë
+    'availability_calendar' => 'Kalendari i disponueshmërisë',
     'block_dates' => 'Blloko datat',
     'reason' => 'Arsyeja',
     'reason_placeholder' => 'mirëmbajtje, personale, tjetër…',

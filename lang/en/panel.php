@@ -72,6 +72,7 @@ return [
     'description' => 'Description',
 
     // Availability calendar
+    'availability_calendar' => 'Availability calendar',
     'block_dates' => 'Block dates',
     'reason' => 'Reason',
     'reason_placeholder' => 'maintenance, personal, other…',

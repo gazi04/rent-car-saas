@@ -28,6 +28,16 @@
         html.dark .filament-fullcalendar {
             --fc-page-bg-color: color-mix(in oklab, var(--color-white) 10%, transparent);
         }
+
+        /* Sticky day-header row (list view) inherits a transparent background from its
+           ancestors, so scrolled event rows show through it instead of being hidden. */
+        .filament-fullcalendar .fc-list-sticky .fc-list-day th {
+            background-color: var(--color-white);
+        }
+
+        html.dark .filament-fullcalendar .fc-list-sticky .fc-list-day th {
+            background-color: var(--color-gray-900);
+        }
     </style>
 
     <x-filament::section icon="heroicon-o-calendar-days">
