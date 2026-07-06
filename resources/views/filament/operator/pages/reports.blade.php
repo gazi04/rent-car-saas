@@ -73,38 +73,40 @@
             @if ($utilisation->isEmpty())
                 <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('reports.no_vehicles') }}</p>
             @else
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr class="text-left text-gray-500 dark:text-gray-400">
-                            <th class="pb-2 font-medium">{{ __('reports.vehicle') }}</th>
-                            <th class="pb-2 text-right font-medium">{{ __('reports.booked_days') }}</th>
-                            <th class="pb-2 text-right font-medium">{{ __('reports.utilisation_percent') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($utilisation as $row)
-                            @php
-                                $barColorClass = match ($this->utilisationColor($row['percent'])) {
-                                    'danger' => 'bg-danger-500',
-                                    'warning' => 'bg-warning-500',
-                                    default => 'bg-success-500',
-                                };
-                            @endphp
-                            <tr class="border-t border-gray-100 odd:bg-gray-50 dark:border-white/5 dark:odd:bg-white/[0.02]">
-                                <td class="py-2 px-2">{{ $row['vehicle'] }}</td>
-                                <td class="py-2 px-2 text-right tabular-nums">{{ $row['booked_days'] }}</td>
-                                <td class="py-2 px-2">
-                                    <div class="flex items-center justify-end gap-2">
-                                        <div class="h-2 w-32 overflow-hidden rounded-full bg-gray-100 dark:bg-white/10">
-                                            <div class="h-full rounded-full {{ $barColorClass }}" style="width: {{ $row['percent'] }}%"></div>
-                                        </div>
-                                        <span class="w-10 text-right tabular-nums">{{ $row['percent'] }}%</span>
-                                    </div>
-                                </td>
+                <div class="overflow-x-auto rounded-xl ring-1 ring-gray-950/5 dark:ring-white/10">
+                    <table class="w-full text-sm border-red-500">
+                        <thead>
+                            <tr class="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500 dark:bg-white/5 dark:text-gray-400">
+                                <th class="px-4 py-2.5">{{ __('reports.vehicle') }}</th>
+                                <th class="px-4 py-2.5 text-right">{{ __('reports.booked_days') }}</th>
+                                <th class="px-4 py-2.5 text-right">{{ __('reports.utilisation_percent') }}</th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 dark:divide-white/5">
+                            @foreach ($utilisation as $row)
+                                @php
+                                    $barColorClass = match ($this->utilisationColor($row['percent'])) {
+                                        'danger' => 'bg-danger-500',
+                                        'warning' => 'bg-warning-500',
+                                        default => 'bg-success-500',
+                                    };
+                                @endphp
+                                <tr class="transition-colors hover:bg-gray-50 dark:hover:bg-white/[0.03]">
+                                    <td class="px-4 py-3 font-medium text-gray-950 dark:text-white">{{ $row['vehicle'] }}</td>
+                                    <td class="px-4 py-3 text-right tabular-nums text-gray-600 dark:text-gray-300">{{ $row['booked_days'] }}</td>
+                                    <td class="px-4 py-3">
+                                        <div class="flex items-center justify-end gap-3">
+                                            <div class="h-2 w-full max-w-32 flex-1 overflow-hidden rounded-full bg-gray-100 dark:bg-white/10">
+                                                <div class="h-full rounded-full {{ $barColorClass }} transition-all" style="width: {{ $row['percent'] }}%"></div>
+                                            </div>
+                                            <span class="w-11 shrink-0 text-right font-semibold tabular-nums text-gray-950 dark:text-white">{{ $row['percent'] }}%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             @endif
         </x-filament::section>
     </div>
