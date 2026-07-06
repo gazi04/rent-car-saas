@@ -45,7 +45,7 @@
             {{ __('panel.availability_calendar') }}
         </x-slot>
 
-        <x-slot name="headerEnd">
+        <x-slot name="afterHeader">
             <div class="flex flex-wrap items-center gap-2">
                 {{-- Vehicle filter --}}
                 <div class="relative w-full sm:w-56">

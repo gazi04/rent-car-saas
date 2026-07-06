@@ -12,7 +12,7 @@
             {{ __('panel.ai_summary_heading') }}
         </x-slot>
 
-        <x-slot name="headerEnd">
+        <x-slot name="afterHeader">
             <x-filament::button
                 wire:click="generate"
                 wire:loading.attr="disabled"
