@@ -6,24 +6,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `rent-car-saas` (product name **RentACar SaaS**) is a **multi-tenant, white-label car-rental SaaS** for the Kosovo / Western Balkans market. Car-rental businesses ("operators") subscribe to get their own branded booking website on a subdomain (`operatorname.yourdomain.com`); their customers book cars there with no account required. The platform owner ("Super Admin") onboards operators, charges a monthly subscription, and never touches the money that flows between operators and their customers.
 
-The full spec lives in **`docs/RentACar_Application_Plan.pdf`** (17 pages) — read it before any domain work. Key facts and version drift in `docs/`-vs-repo are summarized below.
+The full spec lives in **`docs/RentACar_Application_Plan.pdf`** (17 pages) — read it before any domain work, for *feature intent* only (see version note below). **`docs/00-roadmap.md`** is the up-to-date build index — check it first for what's implemented vs planned; each step has its own `docs/NN-*.md` plan doc with a `Status:` line kept current. `docs/operator-feature-report.md` tracks the post-MVP operator backlog the same way.
 
-**Status:** Currently the **Laravel Livewire starter kit** scaffolding only (auth, settings, profile, passkeys, 2FA). The rent-car domain (tenants, vehicles, bookings, billing) is **not yet implemented** — build it per the plan.
+**Status (2026-07-04):** The rent-car domain is **implemented**, not scaffolding — Steps 1–14 of the roadmap are done (multi-tenancy, admin dashboard, operator panel, fleet, booking engine, public site, booking management, notifications, rental-agreement PDF, white-label branding, billing, reports/localization, custom plans, AI features), plus most of the operator backlog (dashboard home, customer directory, staff accounts, custom templates, promo codes, vehicle maintenance tracking) and part of the admin-ops backlog (impersonation, manual subscription controls, audit log). Two Filament panels are live: `admin.yourdomain.com` (Super Admin) and `operatorname.yourdomain.com/dashboard` (operator, tenant-scoped). See `00-roadmap.md` for exactly what's still open.
 
-> **Ignore the PDF's stack versions — use the latest.** The plan PDF names Laravel 11 / Livewire 3 / Filament 3, but those are stale — use **Filament 4**, not 3. Always build on the **latest stable version** of each technology; the installed versions in this repo (Laravel 13 / Livewire 4 / Flux UI — see Boost foundational context below) are the source of truth. Use the PDF only for *domain and feature* intent, never for stack/version decisions. Filament, Cashier, a tenancy package, dompdf, Intervention Image, Flatpickr, and Resend are **planned but not yet installed** — when adding them, pull the latest stable release, and get approval before adding any dependency.
+> **Ignore the PDF's stack versions — use the latest.** The plan PDF names Laravel 11 / Livewire 3 / Filament 3; the installed versions in this repo (PHP 8.5.7 · Laravel 13.17 · Livewire 4.3 · **Filament 5.6** · Flux UI 2.15 · Tailwind CSS 4.3 — see Boost foundational context below) are the source of truth. Use the PDF only for *domain and feature* intent, never for stack/version decisions. Also installed (see `composer.json`/`composer.lock`): `stancl/tenancy` 3.10, `barryvdh/laravel-dompdf` 3.1, `resend/resend-laravel` 1.4, `spatie/laravel-medialibrary` 11.23, `saade/filament-fullcalendar` 4.0.0-beta7, `openai-php/laravel` 0.20, `spatie/laravel-activitylog` 5.0, and `stechstudio/filament-impersonate` 5.5. **Laravel Cashier/Stripe was evaluated and rejected** — Stripe doesn't support payouts to Kosovo, so B2B billing (Step 11) is manual (admin-recorded cash/bank transfer), not gateway-driven; see `docs/11-billing-subscriptions.md`. Get approval before adding any new dependency.
 
 ## Product / Domain Model
 
-**Three roles:** Super Admin (platform owner, `admin.yourdomain.com`, separate auth guard, `users.tenant_id = NULL`, `role = admin`) · Operator (subscribing rental business, `operatorname.yourdomain.com/dashboard`) · Customer (renter, public subdomain, no login).
+**Three roles:** Super Admin (platform owner, `admin.yourdomain.com`, separate auth guard, `users.tenant_id = NULL`, `role = admin`) · Operator (subscribing rental business, `operatorname.yourdomain.com/dashboard`; owner role `operator` or front-desk `staff`) · Customer (renter, public subdomain, no login).
 
-**Five modules:**
-1. **Public Booking Website** — white-label per operator (logo/colors/font/footer via `tenant_settings` key-value table → CSS variables injected in Blade layout). Vehicle listing + filters, 3-step booking flow (dates → details → review), no account. Bookings created as `pending`. Bilingual (Albanian/English).
-2. **Operator Dashboard** — fleet management (vehicle CRUD, photos→WebP, custom JSONB fields, soft deletes), availability calendar, booking management (confirm/reject/active/complete/cancel), pricing (hourly/daily/weekly/monthly + promo codes + discounts), rental-agreement PDF per booking, dashboard notifications, reports + CSV export.
-3. **Admin Dashboard** (planned Filament 4) — tenant management, approve/reject/suspend/impersonate operators, MRR & revenue overview, platform health.
-4. **Billing & Subscriptions** (planned Laravel Cashier + Stripe) — operator subscriptions (Trial/Basic €15/Standard €29/Pro €49), webhook-driven status, 30-day trial → grace → suspension via scheduled command. **Two strictly separate payment flows:** B2B (operator→platform, automated via Stripe) and B2C (customer→operator, cash/bank transfer, platform never touches it).
-5. **Notifications & Emails** (planned Resend) — queued Blade-template Mailables, bilingual, per-operator branding on customer-facing emails.
+**Five modules, all implemented (see `00-roadmap.md` for the remaining admin-ops backlog):**
+1. **Public Booking Website** — white-label per operator (logo/colors/font/footer/per-page layout via `tenant_settings` key-value table → CSS variables injected in Blade layout). Vehicle listing + filters, 3-step booking flow (dates → details → review), no account, promo codes. Bookings created as `pending`. Bilingual (Albanian/English).
+2. **Operator Dashboard** — fleet management (vehicle CRUD, photos→WebP, custom JSONB fields, soft deletes, service/maintenance history), availability calendar, booking management (confirm/reject/active/complete/cancel), pricing (hourly/daily/weekly/monthly + promo codes + discounts), rental-agreement PDF per booking, dashboard notifications, reports + CSV export, customer directory, staff sub-accounts, custom contract/email templates, customer review collection/moderation/showcase, three OpenAI-backed features (listing writer, business summary, pricing suggestions).
+3. **Admin Dashboard** (Filament 5) — tenant management, approve/reject/suspend/impersonate operators, manual subscription controls (extend period, change plan, extend trial), custom plan/feature-gate editor, revenue-this-month + at-risk-tenants widgets, audit log. Still planned: AI usage/cost tracking, a tenant detail/overview page, queue health, email delivery log, global search.
+4. **Billing & Subscriptions** — **manual B2B billing**, no payment gateway: operator subscriptions (Trial/Basic €15/Standard €29/Pro €49), admin-recorded payments (`TenantPayment`) advance `paid_until`, daily sweep drives renewal reminders → grace → auto-suspension. **Two strictly separate payment flows:** B2B (operator→platform, manual, admin-recorded) and B2C (customer→operator, cash/bank transfer, platform never touches it).
+5. **Notifications & Emails** (Resend) — queued Blade-template Mailables, bilingual, per-operator branding on customer-facing emails, Filament DB-bell notifications.
 
-**Multi-tenancy:** Single shared database, single codebase. `tenant_id` on every tenant-scoped table; middleware resolves tenant from subdomain and an Eloquent **global scope** auto-filters all queries. Availability conflict checks **must** run server-side inside a DB transaction with a row-level lock on the vehicle (double-booking destroys operator trust). Planned core tables: `tenants`, `tenant_settings`, `vehicles`, `vehicle_photos`, `bookings`, `blocked_dates`, `contracts`, `promo_codes` (+ Laravel `notifications`/`jobs`/`failed_jobs`).
+**Multi-tenancy:** Single shared database (PostgreSQL in production; SQLite `:memory:` for the fast test suite, plus a `tests/Postgres` suite for lock/migration fidelity), single codebase, `stancl/tenancy` single-DB mode. `tenant_id` on every tenant-scoped table; middleware resolves tenant from subdomain and the `BelongsToTenant` trait's Eloquent **global scope** auto-filters all queries. Availability conflict checks run server-side inside a DB transaction with a row-level lock on the vehicle (double-booking destroys operator trust) — proven against real Postgres locking in CI, not just SQLite. Core tables: `tenants`, `tenant_settings`, `plans`, `vehicles` (+ Spatie `media` for photos), `bookings`, `blocked_dates`, `contracts`, `promo_codes`, `service_records`, `customers`, `tenant_payments`, `activity_log`, `reviews` (+ Laravel `notifications`/`jobs`/`failed_jobs`).
 
 ## Commands
 
@@ -33,17 +33,18 @@ composer setup        # First-time setup: install, .env, key:gen, migrate, npm i
 npm run dev           # Vite dev server only
 npm run build         # Build frontend assets (run if UI changes don't appear)
 
-composer test         # Full CI gate: config:clear + pint --test + phpstan + artisan test
-php artisan test --compact                          # Run tests
+composer test         # Full CI gate: config:clear + pint --test + phpstan + artisan test --testsuite=Unit,Feature
+php artisan test --compact                          # Run tests (Unit + Feature, SQLite)
 php artisan test --compact --filter=testName        # Run a single test by name
 php artisan test --compact tests/Feature/Auth/AuthenticationTest.php  # Single file
+php artisan test --testsuite=Postgres               # Lock/migration fidelity suite (needs a real Postgres connection; CI-only, not part of `composer test`)
 
 composer lint         # Fix code style (pint --parallel)
 vendor/bin/pint --dirty --format agent              # Format only changed files (run before finalizing)
 composer types:check  # Static analysis (phpstan/larastan, level in phpstan.neon)
 ```
 
-Tests use SQLite `:memory:` (see `phpunit.xml`); the dev DB is SQLite (`database/database.sqlite`).
+Tests use SQLite `:memory:` (see `phpunit.xml`), plus a separate `tests/Postgres` suite (`php artisan test --testsuite=Postgres`) for lock/migration behavior SQLite can't exercise. The dev/production DB is **PostgreSQL** (`DB_CONNECTION=pgsql` in `.env`) — the app is Postgres-only by design (see `docs/bug-and-risk-audit.md` M6). `database/database.sqlite` is an unused leftover from initial scaffolding.
 
 ## Architecture
 
@@ -52,6 +53,8 @@ Tests use SQLite `:memory:` (see `phpunit.xml`); the dev DB is SQLite (`database
 - **Authentication via Fortify**, customized through action classes in `app/Actions/Fortify/` (`CreateNewUser`, `ResetUserPassword`) and `app/Providers/FortifyServiceProvider.php`. Validation rules are shared via traits in `app/Concerns/` (`PasswordValidationRules`, `ProfileValidationRules`). Logout is a Livewire action: `app/Livewire/Actions/Logout.php`.
 - **2FA + Passkeys (WebAuthn).** Two-factor columns added to `users` table; passkeys stored in `passkeys` table. Frontend passkey logic in `resources/js/passkeys.js` (uses `@laravel/passkeys`). `.well-known/passkey-endpoints` route exposes enroll/manage URLs.
 - **UI is Flux UI (free tier)** + Tailwind v4. Custom Flux overrides and icons live in `resources/views/flux/`. Layouts in `resources/views/layouts/` (app shell with sidebar/header, plus auth card/simple/split variants).
+- **Two Filament 5 panels**, registered as separate `PanelProvider`s: the central **admin** panel (`app/Filament/Resources/**`, no `App\Filament\Admin` namespace despite the name) and the tenant-scoped **operator** panel (`app/Filament/Operator/**`). Both gate access via `User::canAccessPanel()` (role + `tenant_id` match).
+- **Tenancy is `stancl/tenancy` single-database mode.** Tenant resolved from subdomain; every tenant-owned model uses the `BelongsToTenant` trait (installs the auto-filtering global scope) — `User` and `Tenant` itself are the central exceptions. Background jobs dispatched from a central command (e.g. `ProcessVehicleMaintenanceJob`, `GenerateBusinessSummaryJob`) must call `tenancy()->initialize($tenant)`/`tenancy()->end()` themselves in a `try/finally`, since the queue's `QueueTenancyBootstrapper` doesn't do it for jobs fanned out this way.
 
 ## Skills
 
@@ -163,7 +166,7 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 - Always use curly braces for control structures, even for single-line bodies.
 - Use PHP 8 constructor property promotion: `public function __construct(public GitHub $github) { }`. Do not leave empty zero-parameter `__construct()` methods unless the constructor is private.
 - Use explicit return type declarations and type hints for all method parameters: `function isAccessible(User $user, ?string $path = null): bool`
-- Use TitleCase for Enum keys: `FavoritePerson`, `BestLake`, `Monthly`.
+- Follow existing application Enum naming conventions.
 - Prefer PHPDoc blocks over inline comments. Only add inline comments for exceptionally complex logic.
 - Use array shape type definitions in PHPDoc blocks.
 
