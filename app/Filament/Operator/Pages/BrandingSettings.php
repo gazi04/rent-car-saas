@@ -3,6 +3,8 @@
 namespace App\Filament\Operator\Pages;
 
 use App\Enums\PlanFeature;
+use App\Filament\Support\HelpAction;
+use Filament\Actions\Action;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\SpatieMediaLibraryFileUpload;
@@ -60,6 +62,16 @@ class BrandingSettings extends Page
         $this->form->fill(array_merge($settings, [
             'logo' => $logoMedia ? [$logoMedia->uuid] : [],
         ]));
+    }
+
+    /**
+     * @return array<int, Action>
+     */
+    protected function getHeaderActions(): array
+    {
+        return [
+            HelpAction::make('branding'),
+        ];
     }
 
     public function form(Schema $schema): Schema
