@@ -13,6 +13,8 @@ export default defineConfig({
                 'resources/js/app.js',
                 'resources/js/passkeys.js',
                 'resources/js/booking-form.js',
+                'resources/css/filament/operator/theme.css',
+                'resources/css/filament/admin/theme.css',
             ],
             refresh: true,
             fonts: [

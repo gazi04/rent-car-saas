@@ -28,6 +28,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('/')
+            ->viteTheme('resources/css/filament/admin/theme.css')
             // Central admin host (see config/tenancy.php). Never tenant-scoped.
             ->domain((string) config('tenancy.admin_domain'))
             ->login()

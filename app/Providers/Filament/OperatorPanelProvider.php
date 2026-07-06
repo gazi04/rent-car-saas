@@ -33,6 +33,7 @@ class OperatorPanelProvider extends PanelProvider
             // No fixed ->domain(): this single panel serves every tenant subdomain.
             // The tenancy middleware resolves which tenant per request.
             ->path('dashboard')
+            ->viteTheme('resources/css/filament/operator/theme.css')
             ->login()
             ->brandName(fn (): string => tenant() ? (string) tenant('name') : 'Operator')
             ->colors([
