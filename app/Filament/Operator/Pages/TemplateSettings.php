@@ -3,6 +3,8 @@
 namespace App\Filament\Operator\Pages;
 
 use App\Enums\PlanFeature;
+use App\Filament\Support\HelpAction;
+use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -47,6 +49,16 @@ class TemplateSettings extends Page
     public function mount(): void
     {
         $this->form->fill(tenant()->settings());
+    }
+
+    /**
+     * @return array<int, Action>
+     */
+    protected function getHeaderActions(): array
+    {
+        return [
+            HelpAction::make('templates'),
+        ];
     }
 
     public function form(Schema $schema): Schema
