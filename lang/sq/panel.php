@@ -84,6 +84,7 @@ return [
     'legend_active' => 'Aktive',
     'legend_blocked' => 'E bllokuar',
     'calendar_hint' => 'Kliko një rezervim për ta hapur · kliko një bllokim për ta hequr · zvarrit për të bllokuar data',
+    'invalid_vehicle' => 'Automjeti i zgjedhur është i pavlefshëm.',
 
     // Kufijtë e planit
     'vehicle_limit_reached_title' => 'U arrit kufiri i automjeteve',

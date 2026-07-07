@@ -84,6 +84,7 @@ return [
     'legend_active' => 'Active',
     'legend_blocked' => 'Blocked',
     'calendar_hint' => 'Click a booking to open it · click a block to remove it · drag to block dates',
+    'invalid_vehicle' => 'The selected vehicle is invalid.',
 
     // Plan limits
     'vehicle_limit_reached_title' => 'Vehicle limit reached',

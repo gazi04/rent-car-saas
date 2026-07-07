@@ -8,6 +8,7 @@ use App\Filament\Support\HelpAction;
 use App\Models\BlockedDate;
 use App\Models\Booking;
 use App\Models\Vehicle;
+use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
@@ -234,7 +235,14 @@ class AvailabilityCalendar extends FullCalendarWidget
             Select::make('vehicle_id')
                 ->label(__('panel.vehicle'))
                 ->options(Vehicle::query()->pluck('name', 'id'))
-                ->required(),
+                ->required()
+                ->rule(static function (): Closure {
+                    return static function (string $attribute, mixed $value, Closure $fail): void {
+                        if (! Vehicle::query()->whereKey($value)->exists()) {
+                            $fail(__('panel.invalid_vehicle'));
+                        }
+                    };
+                }),
             DatePicker::make('start_date')
                 ->label(__('panel.from'))
                 ->required(),
