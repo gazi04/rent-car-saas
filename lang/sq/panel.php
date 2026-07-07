@@ -46,6 +46,7 @@ return [
     'section_custom_fields' => 'Fusha shtesë',
     'section_visibility' => 'Dukshmëria',
     'name' => 'Emri',
+    'plate' => 'Targa',
     'category' => 'Kategoria',
     'year' => 'Viti',
     'fuel_type' => 'Karburanti',

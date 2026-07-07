@@ -27,7 +27,7 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
  * @property string $daily_rate
  * @property string|null $weekly_rate
  */
-#[Fillable(['tenant_id', 'name', 'category', 'year', 'fuel_type', 'transmission', 'seats', 'daily_rate', 'hourly_rate', 'weekly_rate', 'monthly_rate', 'discount_type', 'discount_value', 'mileage_limit', 'deposit', 'description', 'custom_fields', 'status', 'is_public'])]
+#[Fillable(['tenant_id', 'name', 'plate', 'category', 'year', 'fuel_type', 'transmission', 'seats', 'daily_rate', 'hourly_rate', 'weekly_rate', 'monthly_rate', 'discount_type', 'discount_value', 'mileage_limit', 'deposit', 'description', 'custom_fields', 'status', 'is_public'])]
 class Vehicle extends Model implements HasMedia
 {
     /** @use HasFactory<VehicleFactory> */

@@ -41,6 +41,13 @@ class VehicleForm
                             ->label(__('panel.name'))
                             ->required()
                             ->maxLength(255),
+                        TextInput::make('plate')
+                            ->label(__('panel.plate'))
+                            ->maxLength(20)
+                            // ->unique() runs a raw DB-table check that bypasses the
+                            // BelongsToTenant global scope; ->scopedUnique() queries
+                            // through Vehicle::query() so it's correctly tenant-scoped.
+                            ->scopedUnique(ignoreRecord: true),
                         Select::make('category')
                             ->label(__('panel.category'))
                             ->options(VehicleCategory::class)

@@ -46,6 +46,7 @@ return [
     'section_custom_fields' => 'Custom fields',
     'section_visibility' => 'Visibility',
     'name' => 'Name',
+    'plate' => 'Plate',
     'category' => 'Category',
     'year' => 'Year',
     'fuel_type' => 'Fuel type',

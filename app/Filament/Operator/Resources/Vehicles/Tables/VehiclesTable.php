@@ -33,6 +33,10 @@ class VehiclesTable
                     ->label(__('panel.name'))
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('plate')
+                    ->label(__('panel.plate'))
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('category')
                     ->label(__('panel.category'))
                     ->badge(),
