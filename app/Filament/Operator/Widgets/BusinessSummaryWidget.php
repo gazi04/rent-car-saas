@@ -25,7 +25,8 @@ class BusinessSummaryWidget extends Widget
 
     public static function canView(): bool
     {
-        return tenant()?->allowsFeature(PlanFeature::AiBusinessSummary) ?? false;
+        return (auth()->user()?->isOwner() ?? false)
+            && (tenant()?->allowsFeature(PlanFeature::AiBusinessSummary) ?? false);
     }
 
     public function latestSummary(): ?AiBusinessSummary
@@ -35,6 +36,13 @@ class BusinessSummaryWidget extends Widget
 
     public function generate(): void
     {
+        if (! (auth()->user()?->isOwner() ?? false)
+            || ! (tenant()?->allowsFeature(PlanFeature::AiBusinessSummary) ?? false)) {
+            Notification::make()->title(__('panel.unauthorized'))->danger()->send();
+
+            return;
+        }
+
         $days = (int) config('ai.summary_period_days');
 
         try {

@@ -95,6 +95,7 @@ return [
     'ai_error' => 'The AI request failed. Please try again.',
     'ai_suggest_price' => 'Suggest a rate with AI',
     'ai_apply_rate' => 'Apply this rate',
+    'unauthorized' => 'You are not authorized to perform this action.',
     'ai_suggested_rate' => 'Suggested daily rate: €:rate',
     'ai_generate_now' => 'Generate now',
     'ai_summary_heading' => 'AI business summary',
