@@ -1,10 +1,8 @@
 <x-mail::message>
 @php
     $tenant = $booking->vehicle->tenant ?? null;
-    $logoUrl = $tenant?->logoUrl();
-    if ($logoUrl) {
-        $logoUrl = rtrim(config('app.url'), '/').$logoUrl;
-    }
+    $logoUrl = $tenant?->logoUrlForEmail();
+    $colorPrimary = $tenant?->colorPrimary() ?? config('branding.defaults.color_primary', '#2563eb');
     $paymentInstructions = $tenant?->setting('payment_instructions');
 @endphp
 
@@ -14,7 +12,7 @@
 </div>
 @endif
 
-# {{ $tenant->name ?? config('app.name') }}
+<h1 style="color: {{ $colorPrimary }};">{{ $tenant->name ?? config('app.name') }}</h1>
 
 {{ __('emails.booking_confirmed.greeting', ['name' => $booking->customer_name]) }}
 

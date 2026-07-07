@@ -1,5 +1,17 @@
 <x-mail::message>
-# {{ $booking->vehicle->tenant->name ?? config('app.name') }}
+@php
+    $tenant = $booking->vehicle->tenant ?? null;
+    $logoUrl = $tenant?->logoUrlForEmail();
+    $colorPrimary = $tenant?->colorPrimary() ?? config('branding.defaults.color_primary', '#2563eb');
+@endphp
+
+@if($logoUrl)
+<div style="text-align:center;margin-bottom:16px;">
+<img src="{{ $logoUrl }}" alt="{{ $tenant->name }}" style="max-height:60px;max-width:200px;">
+</div>
+@endif
+
+<h1 style="color: {{ $colorPrimary }};">{{ $tenant->name ?? config('app.name') }}</h1>
 
 {{ __('emails.booking_rejected.greeting', ['name' => $booking->customer_name]) }}
 
