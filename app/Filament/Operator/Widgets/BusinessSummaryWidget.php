@@ -7,7 +7,12 @@ use App\Exceptions\AiRequestFailedException;
 use App\Filament\Support\HelpAction;
 use App\Models\AiBusinessSummary;
 use App\Services\Ai\BusinessSummaryGenerator;
+use Filament\Actions\Action;
+use Filament\Actions\Concerns\InteractsWithActions;
+use Filament\Actions\Contracts\HasActions;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Contracts\HasSchemas;
 use Filament\Widgets\Widget;
 
 /**
@@ -16,8 +21,11 @@ use Filament\Widgets\Widget;
  * synchronously in the current tenant context. Gated behind the plan feature —
  * hidden entirely for tenants without it.
  */
-class BusinessSummaryWidget extends Widget
+class BusinessSummaryWidget extends Widget implements HasActions, HasSchemas
 {
+    use InteractsWithActions;
+    use InteractsWithSchemas;
+
     protected string $view = 'filament.operator.widgets.business-summary';
 
     protected int|string|array $columnSpan = 'full';

@@ -13,14 +13,18 @@
         </x-slot>
 
         <x-slot name="afterHeader">
-            <x-filament::button
-                wire:click="generate"
-                wire:loading.attr="disabled"
-                icon="heroicon-m-sparkles"
-                size="sm"
-            >
-                {{ __('panel.ai_generate_now') }}
-            </x-filament::button>
+            <div class="flex items-center gap-2">
+                {{ $this->helpAction() }}
+
+                <x-filament::button
+                    wire:click="generate"
+                    wire:loading.attr="disabled"
+                    icon="heroicon-m-sparkles"
+                    size="sm"
+                >
+                    {{ __('panel.ai_generate_now') }}
+                </x-filament::button>
+            </div>
         </x-slot>
 
         @if ($summary)
@@ -40,4 +44,6 @@
             </p>
         @endif
     </x-filament::section>
+
+    <x-filament-actions::modals />
 </x-filament-widgets::widget>
