@@ -53,12 +53,15 @@ class TodaysMovementsWidget extends TableWidget
     }
 
     /**
-     * A row is a pickup when it starts today (as opposed to a return that ends
-     * today). A same-day rental counts as a pickup.
+     * A row is a pickup when its status is Pending/Confirmed (matched the query's
+     * pickup branch) and a return when Active (matched the return branch) — the
+     * two branches filter on mutually exclusive statuses, so status alone tells
+     * us which branch selected this row. A same-day rental (Active, starts and
+     * ends today) is correctly a return: it's already been picked up.
      */
     protected function isPickup(Booking $booking): bool
     {
-        return $booking->start_date->isToday();
+        return in_array($booking->status, [BookingStatus::Pending, BookingStatus::Confirmed], true);
     }
 
     /** @return Builder<Booking> */
