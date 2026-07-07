@@ -29,7 +29,7 @@ class OperatorStatsOverview extends StatsOverviewWidget
 
         $todaysReturns = Booking::query()
             ->where('status', BookingStatus::Active)
-            ->whereBetween('end_date', [$startOfToday, $endOfToday])
+            ->whereBetween('end_date', [now(), $endOfToday])
             ->count();
 
         $awaiting = Booking::query()
