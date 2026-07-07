@@ -28,7 +28,7 @@ class PromoCodesTable
                     ->label(__('panel.promo_value')),
                 TextColumn::make('uses')
                     ->label(__('panel.promo_uses'))
-                    ->state(fn (PromoCode $record): string => $record->uses_count.($record->max_uses !== null ? ' / '.$record->max_uses : '')),
+                    ->state(fn (PromoCode $record): string => $record->redeemedUsesCount().($record->max_uses !== null ? ' / '.$record->max_uses : '')),
                 TextColumn::make('expires_at')
                     ->label(__('panel.promo_expires_at'))
                     ->date()

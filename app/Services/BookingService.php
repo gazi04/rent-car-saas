@@ -55,8 +55,6 @@ class BookingService
                 'locale' => app()->getLocale(),
             ]);
 
-            $promo?->increment('uses_count');
-
             BookingCreated::dispatch($booking);
 
             return $booking;
@@ -97,8 +95,6 @@ class BookingService
                 'status' => BookingStatus::Confirmed,
                 'locale' => app()->getLocale(),
             ]);
-
-            $promo?->increment('uses_count');
 
             return $booking;
         });
@@ -190,7 +186,8 @@ class BookingService
         }
 
         if ($promo->per_customer_limit !== null
-            && $customer->bookings()->where('promo_code_id', $promo->id)->count() >= $promo->per_customer_limit) {
+            && $customer->bookings()->where('promo_code_id', $promo->id)
+                ->whereNot('status', BookingStatus::Cancelled)->count() >= $promo->per_customer_limit) {
             throw new PromoCodeInvalidException('This promo code has already been used.');
         }
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\BookingStatus;
 use Database\Factories\PromoCodeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -76,9 +77,19 @@ class PromoCode extends Model
             && ($this->expires_at === null || $this->expires_at->gte($today));
     }
 
+    /**
+     * Live count of bookings that actually redeemed this code — the single
+     * source of truth for the max_uses cap, instead of the mutable uses_count
+     * column (which drifted permanently as pending/rejected bookings churned).
+     */
+    public function redeemedUsesCount(): int
+    {
+        return $this->bookings()->whereIn('status', BookingStatus::countsTowardPromoCap())->count();
+    }
+
     public function hasUsesLeft(): bool
     {
-        return $this->max_uses === null || $this->uses_count < $this->max_uses;
+        return $this->max_uses === null || $this->redeemedUsesCount() < $this->max_uses;
     }
 
     public function isCurrentlyValid(): bool

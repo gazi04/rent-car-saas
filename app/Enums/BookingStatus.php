@@ -42,6 +42,17 @@ enum BookingStatus: string implements HasColor, HasLabel
     }
 
     /**
+     * Statuses that represent an actually-redeemed promo use — excludes Pending
+     * (not yet a real commitment) and Cancelled (never became one).
+     *
+     * @return array<self>
+     */
+    public static function countsTowardPromoCap(): array
+    {
+        return [self::Confirmed, self::Active, self::Completed];
+    }
+
+    /**
      * Literal hex for the availability calendar (AvailabilityCalendar), which needs a
      * real CSS color for FullCalendar's backgroundColor, not a Filament palette token.
      * Single source of truth shared by the event fill and the calendar legend.
