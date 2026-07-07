@@ -36,7 +36,7 @@
                     'start' => $summary->period_start->translatedFormat('d M Y'),
                     'end' => $summary->period_end->translatedFormat('d M Y'),
                 ]) }}
-                · {{ $summary->created_at->diffForHumans() }}
+                · {{ $summary->updated_at->diffForHumans() }}
             </p>
         @else
             <p class="text-sm text-gray-500 dark:text-gray-400">

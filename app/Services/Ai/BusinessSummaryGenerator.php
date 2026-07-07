@@ -5,6 +5,7 @@ namespace App\Services\Ai;
 use App\Enums\BookingStatus;
 use App\Models\Booking;
 use App\Models\Vehicle;
+use Carbon\CarbonInterface;
 
 /**
  * Turns the last summary_period_days of a tenant's booking data into 3-5
@@ -16,11 +17,18 @@ class BusinessSummaryGenerator
 {
     public function __construct(private readonly AiChatService $chat) {}
 
-    public function generate(string $locale): string
+    /**
+     * @return array{content: string, period_start: CarbonInterface, period_end: CarbonInterface}
+     */
+    public function generate(string $locale): array
     {
+        $days = (int) config('ai.summary_period_days');
+        $periodStart = now()->subDays($days)->startOfDay();
+        $periodEnd = now()->startOfDay();
+
         $language = $locale === 'sq' ? 'Albanian' : 'English';
 
-        return $this->chat->chat(messages: [
+        $content = $this->chat->chat(messages: [
             [
                 'role' => 'system',
                 'content' => "You are a business analyst for a small car-rental company. Write 3-5 short sentences in {$language}, "
@@ -29,19 +37,23 @@ class BusinessSummaryGenerator
             ],
             [
                 'role' => 'user',
-                'content' => json_encode($this->metrics(), JSON_PRETTY_PRINT),
+                'content' => json_encode($this->metrics($days, $periodStart), JSON_PRETTY_PRINT),
             ],
         ]);
+
+        return [
+            'content' => $content,
+            'period_start' => $periodStart,
+            'period_end' => $periodEnd,
+        ];
     }
 
     /**
      * @return array<string, mixed>
      */
-    private function metrics(): array
+    private function metrics(int $days, CarbonInterface $periodStart): array
     {
-        $days = (int) config('ai.summary_period_days');
-        $periodStart = now()->subDays($days)->startOfDay();
-        $previousStart = now()->subDays($days * 2)->startOfDay();
+        $previousStart = $periodStart->copy()->subDays($days);
 
         $inPeriod = fn ($start, $end) => Booking::query()
             ->where('start_date', '<=', $end)

@@ -57,21 +57,21 @@ class BusinessSummaryWidget extends Widget implements HasActions, HasSchemas
             return;
         }
 
-        $days = (int) config('ai.summary_period_days');
-
         try {
-            $content = app(BusinessSummaryGenerator::class)->generate(app()->getLocale());
+            $summary = app(BusinessSummaryGenerator::class)->generate(app()->getLocale());
         } catch (AiRequestFailedException) {
             Notification::make()->title(__('panel.ai_error'))->danger()->send();
 
             return;
         }
 
-        AiBusinessSummary::query()->create([
-            'content' => $content,
-            'period_start' => now()->subDays($days)->startOfDay(),
-            'period_end' => now()->startOfDay(),
-        ]);
+        AiBusinessSummary::query()->updateOrCreate(
+            [
+                'period_start' => $summary['period_start'],
+                'period_end' => $summary['period_end'],
+            ],
+            ['content' => $summary['content']],
+        );
 
         Notification::make()->title(__('panel.ai_generated'))->success()->send();
     }
