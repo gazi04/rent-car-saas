@@ -4,6 +4,7 @@ namespace App\Filament\Operator\Widgets;
 
 use App\Enums\PlanFeature;
 use App\Exceptions\AiRequestFailedException;
+use App\Filament\Support\HelpAction;
 use App\Models\AiBusinessSummary;
 use App\Services\Ai\BusinessSummaryGenerator;
 use Filament\Notifications\Notification;
@@ -32,6 +33,11 @@ class BusinessSummaryWidget extends Widget
     public function latestSummary(): ?AiBusinessSummary
     {
         return AiBusinessSummary::query()->latest()->first();
+    }
+
+    public function helpAction(): Action
+    {
+        return HelpAction::make('business_summary');
     }
 
     public function generate(): void

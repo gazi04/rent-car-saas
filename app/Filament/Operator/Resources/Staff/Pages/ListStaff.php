@@ -4,6 +4,7 @@ namespace App\Filament\Operator\Resources\Staff\Pages;
 
 use App\Enums\PlanFeature;
 use App\Filament\Operator\Resources\Staff\StaffResource;
+use App\Filament\Support\HelpAction;
 use App\Models\User;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
@@ -15,6 +16,7 @@ class ListStaff extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            HelpAction::make('staff'),
             // Disabled (not hidden) at the plan's staff-seat cap so the owner
             // sees why they can't add more. CreateStaff::beforeCreate() is the
             // enforcing backstop.

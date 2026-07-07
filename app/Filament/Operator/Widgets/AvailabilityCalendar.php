@@ -4,6 +4,7 @@ namespace App\Filament\Operator\Widgets;
 
 use App\Enums\BookingStatus;
 use App\Filament\Operator\Resources\Bookings\BookingResource;
+use App\Filament\Support\HelpAction;
 use App\Models\BlockedDate;
 use App\Models\Booking;
 use App\Models\Vehicle;
@@ -252,6 +253,7 @@ class AvailabilityCalendar extends FullCalendarWidget
     protected function headerActions(): array
     {
         return [
+            HelpAction::make('availability_calendar'),
             Actions\CreateAction::make()
                 ->visible(fn (): bool => $this->isOwner())
                 ->label(__('panel.block_dates'))

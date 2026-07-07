@@ -4,6 +4,7 @@ namespace App\Filament\Operator\Widgets;
 
 use App\Enums\BookingStatus;
 use App\Filament\Operator\Resources\Bookings\BookingResource;
+use App\Filament\Support\HelpAction;
 use App\Models\Booking;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -25,6 +26,9 @@ class NeedsAttentionWidget extends TableWidget
     {
         return $table
             ->heading(__('panel.dashboard_needs_attention'))
+            ->headerActions([
+                HelpAction::make('needs_attention'),
+            ])
             ->emptyStateHeading(__('panel.dashboard_all_caught_up'))
             ->query($this->attentionQuery())
             ->defaultSort('start_date', 'asc')

@@ -4,6 +4,7 @@ namespace App\Filament\Operator\Resources\Vehicles\Pages;
 
 use App\Enums\PlanFeature;
 use App\Filament\Operator\Resources\Vehicles\VehicleResource;
+use App\Filament\Support\HelpAction;
 use App\Models\Vehicle;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
@@ -15,6 +16,7 @@ class ListVehicles extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            HelpAction::make('vehicles'),
             // Disabled (not hidden) at the plan's vehicle cap so the operator
             // sees why they can't add more. CreateVehicle::beforeCreate() is
             // the enforcing backstop.

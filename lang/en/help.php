@@ -23,4 +23,90 @@ return [
             'Changes apply immediately on save — no republishing step.',
         ],
     ],
+
+    'reports' => [
+        'title' => 'Reports',
+        'body' => [
+            'Pick a start and end date to see booking counts, revenue, and per-vehicle utilisation for that range.',
+            'Revenue only counts active and completed bookings — pending, rejected, and cancelled bookings are excluded.',
+            'Utilisation is booked days ÷ days in the range, per vehicle — low percentages point to idle cars worth promoting or repricing.',
+            'Export CSV downloads every booking overlapping the selected range, including reference, customer, vehicle, dates, status, and total.',
+        ],
+    ],
+
+    'promo_codes' => [
+        'title' => 'Promo Codes',
+        'body' => [
+            'Create discount codes customers can enter during booking — either a fixed amount off or a percentage off the total.',
+            'Set an expiry date and/or a usage limit to control how long and how often a code can be redeemed; leave either blank for no limit.',
+            'Only one promo code can be applied per booking — codes do not stack with each other.',
+            'Deactivating a code stops new redemptions immediately without deleting its history.',
+        ],
+    ],
+
+    'service_records' => [
+        'title' => 'Service & Maintenance Records',
+        'body' => [
+            'Log maintenance and service history per vehicle — free on every plan, with no reminders.',
+            'On plans with maintenance reminders, a due/overdue service can automatically block the vehicle\'s calendar until it is marked serviced, preventing a booking from starting on an unsafe vehicle.',
+            'Marking a record complete removes any auto-block it created for that service.',
+        ],
+    ],
+
+    'vehicles' => [
+        'title' => 'Fleet & Vehicles',
+        'body' => [
+            'Set hourly, daily, weekly, and monthly rates per vehicle — the booking engine picks the cheapest applicable rate for the requested duration.',
+            'Custom fields let you record extra vehicle details (e.g. mileage, transmission) that show up on the public listing without needing a code change.',
+            'Photos are converted to WebP automatically and the first uploaded photo is used as the cover image on the public site.',
+            'Your plan caps the number of vehicles you can list — the "Add vehicle" button disables itself once you hit that limit.',
+        ],
+    ],
+
+    'staff' => [
+        'title' => 'Staff Accounts',
+        'body' => [
+            'Add front-desk staff accounts so employees can manage bookings and the fleet without sharing your owner login.',
+            'Staff accounts cannot access billing, branding, or plan settings — those stay owner-only.',
+            'Your plan caps the number of staff seats — the "Add staff" button disables itself once you hit that limit.',
+        ],
+    ],
+
+    'bookings' => [
+        'title' => 'Bookings',
+        'body' => [
+            'Bookings move through a lifecycle: Pending → Confirmed → Active → Completed, or Rejected/Cancelled at any point before Active.',
+            'Use "Confirm" once you\'ve checked availability and payment arrangements with the customer, and "Reject" if you can\'t fulfil the request.',
+            'Mark a booking "Active" at handover and "Completed" at return — this is what drives revenue and utilisation in Reports.',
+            'You can also create a booking manually here for phone/walk-in customers, without them going through the public site.',
+        ],
+    ],
+
+    'availability_calendar' => [
+        'title' => 'Availability Calendar',
+        'body' => [
+            'Shows every booking and manually blocked date range, color-coded by status — click a booking to open it.',
+            'Use "Block dates" (or drag-select a range) to take a vehicle off the public site temporarily, e.g. for maintenance or personal use.',
+            'Blocked dates prevent new public bookings from overlapping them, the same way an existing booking does.',
+            'Filter by vehicle using the dropdown to see one car\'s schedule at a time.',
+        ],
+    ],
+
+    'needs_attention' => [
+        'title' => 'Needs Attention',
+        'body' => [
+            'Lists bookings that need a decision from you right now: those still Pending confirmation, and Active rentals whose return date has already passed (overdue).',
+            'Click any row to open the booking and act on it — confirm, reject, or mark it returned.',
+            'This list clears itself as bookings move past Pending/overdue — no manual dismissal needed.',
+        ],
+    ],
+
+    'business_summary' => [
+        'title' => 'AI Business Summary',
+        'body' => [
+            'Generates a short written summary of your recent bookings and revenue using AI, so you get a quick read on how business is going without digging through Reports.',
+            '"Generate now" reruns the summary on demand for the configured period — each generation replaces the previous one shown here.',
+            'This feature is only available on plans that include it.',
+        ],
+    ],
 ];

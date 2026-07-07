@@ -4,6 +4,7 @@ namespace App\Filament\Operator\Pages;
 
 use App\Enums\BookingStatus;
 use App\Enums\PlanFeature;
+use App\Filament\Support\HelpAction;
 use App\Models\Booking;
 use App\Models\Vehicle;
 use Carbon\CarbonInterface;
@@ -75,6 +76,7 @@ class Reports extends Page
     protected function getHeaderActions(): array
     {
         return [
+            HelpAction::make('reports'),
             Action::make('export_csv')
                 ->label(__('reports.export_csv'))
                 ->icon(Heroicon::OutlinedArrowDownTray)
