@@ -8,7 +8,9 @@ use App\Models\Booking;
 use App\Models\Tenant;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Throwable;
 
 /**
  * Sends the next-day review invitation for one tenant:
@@ -23,6 +25,10 @@ use Illuminate\Support\Facades\Mail;
 class RequestReviewsJob implements ShouldQueue
 {
     use Queueable;
+
+    public int $tries = 3;
+
+    public int $timeout = 60;
 
     public function __construct(private readonly Tenant $tenant) {}
 
@@ -47,5 +53,21 @@ class RequestReviewsJob implements ShouldQueue
         } finally {
             tenancy()->end();
         }
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    public function backoff(): array
+    {
+        return [60, 300, 900];
+    }
+
+    public function failed(Throwable $exception): void
+    {
+        Log::error('Review request sweep failed', [
+            'tenant_id' => $this->tenant->id,
+            'exception' => $exception->getMessage(),
+        ]);
     }
 }

@@ -12,7 +12,9 @@ use Filament\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Throwable;
 
 /**
  * Processes one tenant's due service records (operator feature #10): sends a
@@ -26,6 +28,10 @@ use Illuminate\Support\Facades\Mail;
 class ProcessVehicleMaintenanceJob implements ShouldQueue
 {
     use Queueable;
+
+    public int $tries = 3;
+
+    public int $timeout = 60;
 
     public function __construct(private readonly Tenant $tenant) {}
 
@@ -41,6 +47,7 @@ class ProcessVehicleMaintenanceJob implements ShouldQueue
 
             ServiceRecord::query()
                 ->whereNotNull('next_due_on')
+                ->whereHas('vehicle')
                 ->each(function (ServiceRecord $record) use ($owners): void {
                     if ($record->next_due_on->isPast() || $record->next_due_on->isToday()) {
                         $this->autoBlock($record, $owners);
@@ -111,5 +118,21 @@ class ProcessVehicleMaintenanceJob implements ShouldQueue
                 ->danger()
                 ->sendToDatabase($owner);
         }
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    public function backoff(): array
+    {
+        return [60, 300, 900];
+    }
+
+    public function failed(Throwable $exception): void
+    {
+        Log::error('Vehicle maintenance sweep failed', [
+            'tenant_id' => $this->tenant->id,
+            'exception' => $exception->getMessage(),
+        ]);
     }
 }
