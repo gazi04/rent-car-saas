@@ -3,6 +3,8 @@
 use App\Concerns\PasswordValidationRules;
 use App\Models\Tenant;
 use App\Models\User;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
@@ -80,6 +82,9 @@ new #[Layout('layouts.auth')] #[Title('Start your rental business')] class exten
             'password' => Hash::make($validated['password']),
         ])->save();
 
+        Auth::login($user);
+        event(new Registered($user));
+
         $this->registered = true;
     }
 }; ?>
@@ -89,7 +94,7 @@ new #[Layout('layouts.auth')] #[Title('Start your rental business')] class exten
         <div class="flex flex-col gap-6 text-center">
             <flux:heading size="xl">{{ __('Account under review') }}</flux:heading>
             <flux:text>
-                {{ __('Thanks for signing up. An administrator will review your account shortly. You will be able to sign in at your subdomain once it is approved.') }}
+                {{ __('Thanks for signing up. Check your inbox to verify your email address, and an administrator will review your account shortly. You will be able to sign in at your subdomain once it is approved.') }}
             </flux:text>
             <flux:badge color="amber" class="mx-auto">{{ $subdomain }}.{{ config('tenancy.tenant_base_domain', 'localhost') }}</flux:badge>
         </div>
