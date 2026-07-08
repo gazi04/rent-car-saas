@@ -10,9 +10,9 @@ class EnsureTenantIsActive
 {
     /**
      * Gate both the operator panel and the public storefront by tenant status. Runs after
-     * tenancy is initialized, so tenant() is set. Inactive tenants get a clear message
-     * (HTTP 200), never a crash — Filament panel routes get the operator-facing "sign in"
-     * copy, everything else gets customer-facing copy.
+     * tenancy is initialized, so tenant() is set. Inactive tenants get a clear message,
+     * never a crash — Filament panel routes get the operator-facing "sign in" copy,
+     * everything else gets customer-facing copy.
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -26,7 +26,7 @@ class EnsureTenantIsActive
             return response()->view($view, [
                 'status' => $tenant->status,
                 'name' => $tenant->name,
-            ]);
+            ], 403);
         }
 
         return $next($request);
