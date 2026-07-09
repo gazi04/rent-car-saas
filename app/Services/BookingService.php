@@ -162,8 +162,14 @@ class BookingService
         $start = Carbon::parse($data['start_date']);
         $end = Carbon::parse($data['end_date']);
 
+        try {
+            $available = $this->availability->isAvailable($vehicle, $start, $end);
+        } catch (\InvalidArgumentException) {
+            throw new VehicleNotAvailableException('The selected dates are invalid.');
+        }
+
         // Re-check under the lock — the answer can't change until we commit.
-        if (! $this->availability->isAvailable($vehicle, $start, $end)) {
+        if (! $available) {
             throw new VehicleNotAvailableException('Sorry, this vehicle was just booked by someone else.');
         }
 
