@@ -133,7 +133,16 @@ class BookingService
         if ($booking->status === BookingStatus::Completed) {
             throw new \InvalidArgumentException('Completed bookings cannot be cancelled.');
         }
-        $booking->update(['status' => BookingStatus::Cancelled]);
+
+        $updated = Booking::whereKey($booking->getKey())
+            ->where('status', '!=', BookingStatus::Cancelled->value)
+            ->update(['status' => BookingStatus::Cancelled->value]);
+
+        if ($updated === 0) {
+            return;
+        }
+
+        $booking->refresh();
         BookingCancelled::dispatch($booking, $cancelledBy);
     }
 
