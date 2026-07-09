@@ -18,7 +18,7 @@ class SendBookingRejectedEmail implements ShouldQueue
         }
 
         Mail::to($booking->customer_email)
-            ->locale($booking->locale)
+            ->locale($booking->locale ?? 'sq')
             ->queue(new BookingRejectedMail($booking));
     }
 }

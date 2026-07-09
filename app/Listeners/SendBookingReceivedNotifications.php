@@ -19,7 +19,7 @@ class SendBookingReceivedNotifications implements ShouldQueue
 
         if ($booking->customer_email) {
             Mail::to($booking->customer_email)
-                ->locale($booking->locale)
+                ->locale($booking->locale ?? 'sq')
                 ->queue(BookingReceivedMail::forTenantDomain($booking));
         }
 
@@ -27,6 +27,7 @@ class SendBookingReceivedNotifications implements ShouldQueue
 
         foreach ($operators as $operator) {
             Mail::to($operator->email)
+                ->locale($operator->locale ?? 'sq')
                 ->queue(new NewBookingAlertMail($booking));
 
             Notification::make()

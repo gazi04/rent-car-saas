@@ -18,7 +18,7 @@ class SendBookingCancelledNotifications implements ShouldQueue
 
         if ($booking->customer_email) {
             Mail::to($booking->customer_email)
-                ->locale($booking->locale)
+                ->locale($booking->locale ?? 'sq')
                 ->queue(new BookingCancelledMail($booking));
         }
 
@@ -28,6 +28,7 @@ class SendBookingCancelledNotifications implements ShouldQueue
 
             foreach ($operators as $operator) {
                 Mail::to($operator->email)
+                    ->locale($operator->locale ?? 'sq')
                     ->queue(new BookingCancelledMail($booking));
 
                 Notification::make()

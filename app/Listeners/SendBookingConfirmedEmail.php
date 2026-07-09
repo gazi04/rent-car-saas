@@ -43,7 +43,7 @@ class SendBookingConfirmedEmail implements ShouldQueue
         }
 
         Mail::to($booking->customer_email)
-            ->locale($booking->locale)
+            ->locale($booking->locale ?? 'sq')
             ->queue(new BookingConfirmedMail($booking, $agreementUrl));
     }
 }
