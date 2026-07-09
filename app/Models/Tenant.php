@@ -184,6 +184,23 @@ class Tenant extends BaseTenant implements HasMedia
     }
 
     /**
+     * Absolute logo URL for email clients — unlike a browser rendering the
+     * public site, a mail client has no page origin to resolve a relative
+     * URL against.
+     */
+    public function logoUrlForEmail(): ?string
+    {
+        $url = $this->logoUrl();
+
+        return $url !== null ? rtrim(config('app.url'), '/').$url : null;
+    }
+
+    public function colorPrimary(): string
+    {
+        return $this->setting('color_primary', config('branding.defaults.color_primary', '#2563eb'));
+    }
+
+    /**
      * The tenant has no locale of its own — use its operator's saved panel
      * language, falling back to the platform's primary market (sq). Drives
      * the subscription-reminder emails and the AI business summary.
