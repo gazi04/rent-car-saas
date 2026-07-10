@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\BookingStatus;
+use App\Enums\VehicleStatus;
 use App\Http\Controllers\CancelBookingController;
 use App\Http\Controllers\DownloadAgreementController;
 use App\Http\Middleware\EnsureTenantIsActive;
@@ -85,6 +86,8 @@ Route::middleware([
     // Availability JSON endpoint — feeds Flatpickr disabled ranges.
     // Route-model-bound and tenant-scoped (global scope); no cross-tenant leakage.
     Route::get('/vehicles/{vehicle}/availability', function (Vehicle $vehicle) {
+        abort_unless($vehicle->is_public && $vehicle->status === VehicleStatus::Available, 404);
+
         return response()->json([
             'unavailable' => $vehicle->bookings()
                 ->whereIn('status', BookingStatus::blocking())
