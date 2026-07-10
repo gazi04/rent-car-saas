@@ -108,6 +108,14 @@ return [
         ],
     ],
 
+    /*
+     * Single source of truth for the accepted hex-color format. Referenced
+     * by both the Filament form rule (BrandingSettings.php) and the
+     * model-layer guard (Tenant::setSetting()) so the two can't drift out
+     * of sync.
+     */
+    'color_format' => '/^#[0-9a-fA-F]{6}$/',
+
     'defaults' => [
         'color_primary' => '#2563eb',
         'color_secondary' => '#1e40af',

@@ -6,8 +6,8 @@
     <title>{{ ($title ?? null) ? $title . ' — ' . (tenant()?->name ?? config('app.name')) : (tenant()?->name ?? config('app.name')) }}</title>
 
     @php
-        $colorPrimary   = tenant()?->setting('color_primary',   config('branding.defaults.color_primary',   '#2563eb'));
-        $colorSecondary = tenant()?->setting('color_secondary', config('branding.defaults.color_secondary', '#1e40af'));
+        $colorPrimary   = tenant()?->colorPrimary()   ?? config('branding.defaults.color_primary',   '#2563eb');
+        $colorSecondary = tenant()?->colorSecondary() ?? config('branding.defaults.color_secondary', '#1e40af');
         $fontFamily     = tenant()?->setting('font_family',     config('branding.defaults.font_family',     'Inter'));
         $fontConfig     = config('branding.fonts.' . $fontFamily);
         $fontUrl        = $fontConfig['url'] ?? null;
@@ -96,8 +96,8 @@
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             @php
                 $footerText       = tenant()?->localizedSetting('footer_text');
-                $socialFacebook   = tenant()?->setting('social_facebook');
-                $socialInstagram  = tenant()?->setting('social_instagram');
+                $socialFacebook   = tenant()?->socialFacebookUrl();
+                $socialInstagram  = tenant()?->socialInstagramUrl();
                 $contactPhone     = tenant()?->setting('contact_phone');
                 $contactEmail     = tenant()?->setting('contact_email');
                 $contactAddress   = tenant()?->setting('contact_address');

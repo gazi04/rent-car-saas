@@ -144,7 +144,8 @@ class Tenant extends BaseTenant implements HasMedia
     }
 
     /**
-     * Upsert a single setting. Keys not on the allow-list are silently ignored.
+     * Upsert a single setting. Keys not on the allow-list are silently
+     * ignored, as are values that fail the per-key format guard below.
      */
     public function setSetting(string $key, mixed $value): void
     {
@@ -156,12 +157,48 @@ class Tenant extends BaseTenant implements HasMedia
 
         $normalized = ($value === '' || $value === null) ? null : (string) $value;
 
+        if ($normalized !== null && ! $this->settingValueIsValid($key, $normalized)) {
+            return;
+        }
+
         $this->tenantSettings()->updateOrCreate(
             ['key' => $key],
             ['value' => $normalized],
         );
 
         $this->settingsCache = null;
+    }
+
+    /**
+     * Per-key value-format guard for settings that reach an unescaped
+     * render sink (CSS custom properties) or a curated allow-list. Keys
+     * not listed here have no extra format constraint beyond the key
+     * allow-list above — their values are HTML-escaped at render, not
+     * interpolated raw.
+     *
+     * Rejects silently rather than throwing, mirroring the invalid-key
+     * branch above: the Filament form's own rules/allow-lists already keep
+     * a bad value from reaching this method on the normal path, so this
+     * only ever fires on an off-form write (tinker, a seeder, a future
+     * import job).
+     */
+    private function settingValueIsValid(string $key, string $value): bool
+    {
+        if (in_array($key, ['color_primary', 'color_secondary'], true)) {
+            return (bool) preg_match((string) config('branding.color_format'), $value);
+        }
+
+        if ($key === 'font_family') {
+            return array_key_exists($value, config('branding.fonts', []));
+        }
+
+        if (in_array($key, ['social_facebook', 'social_instagram'], true)) {
+            $scheme = parse_url($value, PHP_URL_SCHEME);
+
+            return in_array($scheme, ['http', 'https'], true) && filter_var($value, FILTER_VALIDATE_URL) !== false;
+        }
+
+        return true;
     }
 
     public function registerMediaCollections(): void
@@ -197,7 +234,48 @@ class Tenant extends BaseTenant implements HasMedia
 
     public function colorPrimary(): string
     {
-        return $this->setting('color_primary', config('branding.defaults.color_primary', '#2563eb'));
+        return $this->validatedColor('color_primary', (string) config('branding.defaults.color_primary', '#2563eb'));
+    }
+
+    public function colorSecondary(): string
+    {
+        return $this->validatedColor('color_secondary', (string) config('branding.defaults.color_secondary', '#1e40af'));
+    }
+
+    /**
+     * A stored color setting, re-validated against the hex format at read
+     * time so a row written before this format check existed — or via any
+     * future bypass of setSetting() — can never reach the public <style>
+     * block or an email's inline style attribute.
+     */
+    private function validatedColor(string $key, string $default): string
+    {
+        $value = (string) $this->setting($key);
+
+        return preg_match((string) config('branding.color_format'), $value) === 1 ? $value : $default;
+    }
+
+    public function socialFacebookUrl(): ?string
+    {
+        return $this->validatedSocialUrl('social_facebook');
+    }
+
+    public function socialInstagramUrl(): ?string
+    {
+        return $this->validatedSocialUrl('social_instagram');
+    }
+
+    /**
+     * A stored social-link setting, re-validated against the http/https
+     * scheme guard at read time so a row written before this check existed
+     * — or via any future bypass of setSetting() — can never render as a
+     * javascript: (or other dangerous-scheme) href on the public footer.
+     */
+    private function validatedSocialUrl(string $key): ?string
+    {
+        $value = $this->setting($key);
+
+        return is_string($value) && $this->settingValueIsValid($key, $value) ? $value : null;
     }
 
     /**
