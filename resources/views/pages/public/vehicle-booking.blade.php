@@ -136,7 +136,7 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
 
         $code = strtoupper(trim($this->promoCode));
 
-        if ($code === '' || ! (tenant()?->allowsFeature(PlanFeature::PromoCodes) ?? true)) {
+        if ($code === '' || ! (tenant()?->allowsFeature(PlanFeature::PromoCodes) ?? (bool) PlanFeature::PromoCodes->default())) {
             return null;
         }
 
@@ -276,7 +276,7 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
                     </dl>
                 </div>
 
-                @if (tenant()?->allowsFeature(\App\Enums\PlanFeature::PromoCodes) ?? true)
+                @if (tenant()?->allowsFeature(\App\Enums\PlanFeature::PromoCodes) ?? (bool) \App\Enums\PlanFeature::PromoCodes->default())
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('booking.promo_label') }}</label>
                         <div class="flex gap-2">

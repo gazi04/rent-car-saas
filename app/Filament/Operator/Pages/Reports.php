@@ -40,7 +40,7 @@ class Reports extends Page
     public static function canAccess(): bool
     {
         return (auth()->user()?->isOwner() ?? false)
-            && (tenant()?->allowsFeature(PlanFeature::Reports) ?? true);
+            && (tenant()?->allowsFeature(PlanFeature::Reports) ?? (bool) PlanFeature::Reports->default());
     }
 
     /** @var array<string, mixed>|null */

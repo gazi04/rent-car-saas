@@ -35,7 +35,7 @@ class BusinessSummaryWidget extends Widget implements HasActions, HasSchemas
     public static function canView(): bool
     {
         return (auth()->user()?->isOwner() ?? false)
-            && (tenant()?->allowsFeature(PlanFeature::AiBusinessSummary) ?? false);
+            && (tenant()?->allowsFeature(PlanFeature::AiBusinessSummary) ?? (bool) PlanFeature::AiBusinessSummary->default());
     }
 
     public function latestSummary(): ?AiBusinessSummary
@@ -51,7 +51,7 @@ class BusinessSummaryWidget extends Widget implements HasActions, HasSchemas
     public function generate(): void
     {
         if (! (auth()->user()?->isOwner() ?? false)
-            || ! (tenant()?->allowsFeature(PlanFeature::AiBusinessSummary) ?? false)) {
+            || ! (tenant()?->allowsFeature(PlanFeature::AiBusinessSummary) ?? (bool) PlanFeature::AiBusinessSummary->default())) {
             Notification::make()->title(__('panel.unauthorized'))->danger()->send();
 
             return;

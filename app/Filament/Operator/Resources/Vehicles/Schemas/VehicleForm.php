@@ -89,7 +89,7 @@ class VehicleForm
                                     ->label(__('panel.ai_suggest_price'))
                                     ->icon('heroicon-m-sparkles')
                                     ->visible(fn (?Vehicle $record): bool => $record !== null
-                                        && (tenant()?->allowsFeature(PlanFeature::AiPricingSuggestions) ?? false))
+                                        && (tenant()?->allowsFeature(PlanFeature::AiPricingSuggestions) ?? (bool) PlanFeature::AiPricingSuggestions->default()))
                                     ->requiresConfirmation()
                                     ->modalHeading(__('panel.ai_suggest_price'))
                                     ->modalSubmitActionLabel(__('panel.ai_apply_rate'))
@@ -201,7 +201,7 @@ class VehicleForm
                                 Action::make('generateDescription')
                                     ->label(__('panel.ai_generate'))
                                     ->icon('heroicon-m-sparkles')
-                                    ->visible(fn (): bool => tenant()?->allowsFeature(PlanFeature::AiListingWriter) ?? false)
+                                    ->visible(fn (): bool => tenant()?->allowsFeature(PlanFeature::AiListingWriter) ?? (bool) PlanFeature::AiListingWriter->default())
                                     ->action(function (Get $get, Set $set, ?Vehicle $record): void {
                                         try {
                                             $description = app(VehicleListingWriter::class)->write(

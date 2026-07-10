@@ -44,7 +44,7 @@ class BookingForm
                         TextInput::make('promo_code')
                             ->label(__('panel.promo_code'))
                             ->maxLength(50)
-                            ->visible(fn (): bool => tenant()?->allowsFeature(PlanFeature::PromoCodes) ?? true),
+                            ->visible(fn (): bool => tenant()?->allowsFeature(PlanFeature::PromoCodes) ?? (bool) PlanFeature::PromoCodes->default()),
                     ]),
 
                 Section::make(__('panel.section_customer'))

@@ -35,7 +35,7 @@ class TemplateSettings extends Page
     public static function canAccess(): bool
     {
         return (auth()->user()?->isOwner() ?? false)
-            && (tenant()?->allowsFeature(PlanFeature::Templates) ?? true);
+            && (tenant()?->allowsFeature(PlanFeature::Templates) ?? (bool) PlanFeature::Templates->default());
     }
 
     public static function getNavigationLabel(): string

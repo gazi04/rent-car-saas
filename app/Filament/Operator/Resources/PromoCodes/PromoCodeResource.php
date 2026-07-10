@@ -38,7 +38,7 @@ class PromoCodeResource extends Resource
     public static function canAccess(): bool
     {
         return (auth()->user()?->isOwner() ?? false)
-            && (tenant()?->allowsFeature(PlanFeature::PromoCodes) ?? true);
+            && (tenant()?->allowsFeature(PlanFeature::PromoCodes) ?? (bool) PlanFeature::PromoCodes->default());
     }
 
     public static function form(Schema $schema): Schema

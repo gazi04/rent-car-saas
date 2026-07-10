@@ -36,7 +36,7 @@ class BrandingSettings extends Page
     public static function canAccess(): bool
     {
         return (auth()->user()?->isOwner() ?? false)
-            && (tenant()?->allowsFeature(PlanFeature::Branding) ?? true);
+            && (tenant()?->allowsFeature(PlanFeature::Branding) ?? (bool) PlanFeature::Branding->default());
     }
 
     /** @var array<string, mixed>|null */
@@ -106,10 +106,10 @@ class BrandingSettings extends Page
                                     ->components([
                                         ColorPicker::make('color_primary')
                                             ->label(__('branding.color_primary'))
-                                            ->rule('regex:/^#[0-9a-fA-F]{6}$/'),
+                                            ->rule('regex:'.config('branding.color_format')),
                                         ColorPicker::make('color_secondary')
                                             ->label(__('branding.color_secondary'))
-                                            ->rule('regex:/^#[0-9a-fA-F]{6}$/'),
+                                            ->rule('regex:'.config('branding.color_format')),
                                     ]),
 
                                 Section::make(__('branding.section_font'))

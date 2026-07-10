@@ -190,7 +190,7 @@ class BookingService
     {
         $code = strtoupper(trim((string) ($data['promo_code'] ?? '')));
 
-        if ($code === '' || ! (tenant()?->allowsFeature(PlanFeature::PromoCodes) ?? true)) {
+        if ($code === '' || ! (tenant()?->allowsFeature(PlanFeature::PromoCodes) ?? (bool) PlanFeature::PromoCodes->default())) {
             return null;
         }
 

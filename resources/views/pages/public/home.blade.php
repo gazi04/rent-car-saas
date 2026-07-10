@@ -49,7 +49,7 @@ new #[Layout('layouts.public')] #[Title('Home')] class extends Component {
     #[Computed]
     public function showsReviewShowcase(): bool
     {
-        return (tenant()?->allowsFeature(PlanFeature::Reviews) ?? false)
+        return (tenant()?->allowsFeature(PlanFeature::Reviews) ?? (bool) PlanFeature::Reviews->default())
             && $this->showcaseReviews->isNotEmpty();
     }
 
