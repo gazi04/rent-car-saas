@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignId('vehicle_id')->constrained();
-            $table->string('reference')->unique();       // e.g. BK-2026-AB12CD
+            $table->string('reference');                 // e.g. BK-2026-AB12CD; unique per-tenant (see index below)
             $table->string('customer_name');
             $table->string('customer_phone');
             $table->string('customer_email')->nullable();
@@ -36,6 +36,7 @@ return new class extends Migration
             $table->unsignedInteger('end_odometer')->nullable();
             $table->timestamps();
 
+            $table->unique(['tenant_id', 'reference']);                            // customer-facing ref, unique within a tenant
             $table->index(['tenant_id', 'vehicle_id', 'status']);                  // availability query
             $table->index(['tenant_id', 'vehicle_id', 'start_date', 'end_date']);  // overlap scan
         });
