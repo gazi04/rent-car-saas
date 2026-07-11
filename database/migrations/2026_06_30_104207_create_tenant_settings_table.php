@@ -13,13 +13,11 @@ return new class extends Migration
     {
         Schema::create('tenant_settings', function (Blueprint $table) {
             $table->id();
-            $table->string('tenant_id');
+            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->string('key');
             $table->text('value')->nullable();
             $table->timestamps();
 
-            $table->foreign('tenant_id')->references('id')->on('tenants')->cascadeOnDelete();
-            $table->index('tenant_id');
             $table->unique(['tenant_id', 'key']);
         });
     }

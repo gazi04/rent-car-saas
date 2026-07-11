@@ -14,9 +14,7 @@ return new class extends Migration
     {
         Schema::create('tenant_payments', function (Blueprint $table) {
             $table->id();
-            // tenants.id is a string PK (stancl/tenancy convention).
-            $table->string('tenant_id');
-            $table->foreign('tenant_id')->references('id')->on('tenants')->cascadeOnDelete();
+            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->string('plan');
             $table->string('method');
             $table->decimal('amount', 8, 2);

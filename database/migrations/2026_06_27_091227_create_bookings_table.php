@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('bookings', function (Blueprint $table) {
             $table->id();
-            $table->string('tenant_id');                 // FK + index (tenant UUID)
+            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignId('vehicle_id')->constrained();
             $table->string('reference')->unique();       // e.g. BK-2026-AB12CD
             $table->string('customer_name');
@@ -36,7 +36,6 @@ return new class extends Migration
             $table->unsignedInteger('end_odometer')->nullable();
             $table->timestamps();
 
-            $table->foreign('tenant_id')->references('id')->on('tenants')->cascadeOnDelete();
             $table->index(['tenant_id', 'vehicle_id', 'status']);                  // availability query
             $table->index(['tenant_id', 'vehicle_id', 'start_date', 'end_date']);  // overlap scan
         });

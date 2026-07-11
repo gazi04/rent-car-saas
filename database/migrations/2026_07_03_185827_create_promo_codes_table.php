@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('promo_codes', function (Blueprint $table) {
             $table->id();
-            $table->string('tenant_id');
+            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->string('code');
             $table->string('type'); // percentage | fixed
             $table->decimal('value', 10, 2);
@@ -25,7 +25,6 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->timestamps();
 
-            $table->foreign('tenant_id')->references('id')->on('tenants')->cascadeOnDelete();
             $table->unique(['tenant_id', 'code']);
             $table->index(['tenant_id', 'is_active']);
         });

@@ -13,15 +13,12 @@ return new class extends Migration
     {
         Schema::create('contracts', function (Blueprint $table) {
             $table->id();
-            $table->string('tenant_id');
+            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignId('booking_id')->unique()->constrained()->cascadeOnDelete();
             $table->string('path');
             $table->timestamp('generated_at');
             $table->string('token', 60)->nullable();
             $table->timestamps();
-
-            $table->foreign('tenant_id')->references('id')->on('tenants')->cascadeOnDelete();
-            $table->index('tenant_id');
         });
     }
 

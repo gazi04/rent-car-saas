@@ -13,14 +13,12 @@ return new class extends Migration
     {
         Schema::create('ai_business_summaries', function (Blueprint $table) {
             $table->id();
-            // Operator-facing + BelongsToTenant-scoped: string FK matching tenants.id.
-            $table->string('tenant_id');
+            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->text('content');
             $table->date('period_start');
             $table->date('period_end');
             $table->timestamps();
 
-            $table->foreign('tenant_id')->references('id')->on('tenants')->cascadeOnDelete();
             $table->index(['tenant_id', 'created_at']);
         });
     }

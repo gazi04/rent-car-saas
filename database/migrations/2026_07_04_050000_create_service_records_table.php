@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('service_records', function (Blueprint $table) {
             $table->id();
-            $table->string('tenant_id');
+            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignId('vehicle_id')->constrained();
             $table->string('service_type');
             $table->date('performed_on');
@@ -26,7 +26,6 @@ return new class extends Migration
             $table->foreignId('blocked_date_id')->nullable()->constrained()->nullOnDelete();
             $table->timestamps();
 
-            $table->foreign('tenant_id')->references('id')->on('tenants')->cascadeOnDelete();
             $table->index(['tenant_id', 'vehicle_id']);
             $table->index(['tenant_id', 'next_due_on']);
         });

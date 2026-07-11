@@ -18,7 +18,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
 /**
- * @property string $id
+ * @property int $id
  * @property VehicleCategory $category
  * @property FuelType $fuel_type
  * @property Transmission $transmission
@@ -32,8 +32,6 @@ class Vehicle extends Model implements HasMedia
 {
     /** @use HasFactory<VehicleFactory> */
     use BelongsToTenant, HasFactory, InteractsWithMedia, SoftDeletes;
-
-    protected $keyType = 'string';
 
     /**
      * @var array<string, mixed>

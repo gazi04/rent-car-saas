@@ -12,12 +12,7 @@ return new class extends Migration
             $table->id();
             $table->string('log_name')->nullable()->index();
             $table->text('description');
-            // subject_id is a string (not the default bigint) because tenant
-            // subjects use UUID primary keys (config/tenancy.php id_generator);
-            // a bigint column would reject them on Postgres.
-            $table->string('subject_type')->nullable();
-            $table->string('subject_id')->nullable();
-            $table->index(['subject_type', 'subject_id'], 'subject');
+            $table->nullableMorphs('subject');
             $table->string('event')->nullable();
             // Causers are always integer-keyed User rows, so the default morph is fine.
             $table->nullableMorphs('causer', 'causer');

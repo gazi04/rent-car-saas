@@ -11,11 +11,12 @@ use Stancl\Tenancy\Features\UniversalRoutes;
 use Stancl\Tenancy\TenantDatabaseManagers\MySQLDatabaseManager;
 use Stancl\Tenancy\TenantDatabaseManagers\PostgreSQLDatabaseManager;
 use Stancl\Tenancy\TenantDatabaseManagers\SQLiteDatabaseManager;
-use Stancl\Tenancy\UUIDGenerator;
 
 return [
     'tenant_model' => App\Models\Tenant::class,
-    'id_generator' => UUIDGenerator::class,
+    // No custom ID generator: tenants.id is a normal bigint auto-increment PK
+    // (see docs/consolidated-audit-report.md A2 for why this replaced the UUID default).
+    'id_generator' => null,
 
     'domain_model' => Domain::class,
 

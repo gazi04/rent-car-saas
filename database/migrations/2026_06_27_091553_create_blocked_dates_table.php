@@ -13,14 +13,13 @@ return new class extends Migration
     {
         Schema::create('blocked_dates', function (Blueprint $table) {
             $table->id();
-            $table->string('tenant_id');
+            $table->foreignId('tenant_id')->constrained()->cascadeOnDelete();
             $table->foreignId('vehicle_id')->constrained();
             $table->dateTime('start_date');
             $table->dateTime('end_date');
             $table->string('reason')->nullable();        // maintenance | personal | other
             $table->timestamps();
 
-            $table->foreign('tenant_id')->references('id')->on('tenants')->cascadeOnDelete();
             $table->index(['tenant_id', 'vehicle_id', 'start_date', 'end_date']);
         });
     }
