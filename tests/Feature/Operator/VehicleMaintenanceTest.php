@@ -15,6 +15,7 @@ use App\Models\Vehicle;
 use App\Services\AvailabilityService;
 use Carbon\Carbon;
 use Filament\Facades\Filament;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
@@ -163,6 +164,26 @@ it('clears the vehicle\'s active maintenance block when a new service record is 
         ->and(ServiceRecord::query()->whereNotNull('blocked_date_id')->count())->toBe(0);
 });
 
+it('skips a service record whose vehicle was soft-deleted, without fataling the whole sweep', function () {
+    Mail::fake();
+
+    [$tenant] = maintenanceTenant('maintdeleted', [PlanFeature::MaintenanceReminders->value => true], 'deletedplan');
+
+    $deletedVehicle = Vehicle::factory()->create();
+    $deletedRecord = ServiceRecord::factory()->overdue()->create(['vehicle_id' => $deletedVehicle->id]);
+    $deletedVehicle->delete();
+
+    $liveVehicle = Vehicle::factory()->create();
+    $liveRecord = ServiceRecord::factory()->overdue()->create(['vehicle_id' => $liveVehicle->id]);
+
+    (new ProcessVehicleMaintenanceJob($tenant))->handle();
+
+    expect($deletedRecord->fresh()->blocked_date_id)->toBeNull();
+
+    $liveRecord->refresh();
+    expect($liveRecord->blocked_date_id)->not->toBeNull();
+});
+
 it('queues maintenance jobs only for active tenants with the feature enabled', function () {
     Queue::fake();
 
@@ -176,4 +197,25 @@ it('queues maintenance jobs only for active tenants with the feature enabled', f
     $this->artisan('maintenance:process-due')->assertSuccessful();
 
     Queue::assertPushed(ProcessVehicleMaintenanceJob::class, 1);
+});
+
+it('configures retries and timeout for maintenance sweep failures', function () {
+    $job = new ProcessVehicleMaintenanceJob(Tenant::factory()->make());
+
+    expect($job->tries)->toBe(3)
+        ->and($job->timeout)->toBe(60)
+        ->and($job->backoff())->toBe([60, 300, 900]);
+});
+
+it('logs tenant context when the maintenance sweep job fails permanently', function () {
+    $tenant = Tenant::factory()->create();
+
+    Log::spy();
+
+    (new ProcessVehicleMaintenanceJob($tenant))->failed(new Exception('boom'));
+
+    Log::shouldHaveReceived('error')->once()->withArgs(
+        fn (string $message, array $context) => $message === 'Vehicle maintenance sweep failed'
+            && $context['tenant_id'] === $tenant->id
+    );
 });

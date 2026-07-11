@@ -13,6 +13,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vehicle;
 use Filament\Facades\Filament;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\URL;
@@ -264,4 +265,25 @@ it('dispatches the sweep job only for active tenants with Reviews enabled', func
     $this->artisan('reviews:request-pending')->assertSuccessful();
 
     Queue::assertPushed(RequestReviewsJob::class, 1);
+});
+
+it('configures retries and timeout for review sweep failures', function () {
+    $job = new RequestReviewsJob(Tenant::factory()->make());
+
+    expect($job->tries)->toBe(3)
+        ->and($job->timeout)->toBe(60)
+        ->and($job->backoff())->toBe([60, 300, 900]);
+});
+
+it('logs tenant context when the review sweep job fails permanently', function () {
+    $tenant = Tenant::factory()->create();
+
+    Log::spy();
+
+    (new RequestReviewsJob($tenant))->failed(new Exception('boom'));
+
+    Log::shouldHaveReceived('error')->once()->withArgs(
+        fn (string $message, array $context) => $message === 'Review request sweep failed'
+            && $context['tenant_id'] === $tenant->id
+    );
 });

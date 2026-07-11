@@ -308,6 +308,37 @@ it('requires both dates and rejects end before start when blocking dates', funct
     expect(BlockedDate::query()->count())->toBe(0);
 });
 
+// ─── Availability calendar: block dates reject a cross-tenant vehicle (M6) ────
+
+it('rejects blocking a vehicle that belongs to another tenant', function () {
+    $tenantB = Tenant::factory()->withDomain('calcrossb')->create();
+    tenancy()->initialize($tenantB);
+    $vehicleB = Vehicle::factory()->create();
+    tenancy()->end();
+
+    [, , $vehicleA] = bookingOperatorFor('calcross');
+
+    Livewire::test(AvailabilityCalendar::class)
+        ->callAction('create', data: [
+            'vehicle_id' => $vehicleB->id,
+            'start_date' => '2030-08-01',
+            'end_date' => '2030-08-05',
+        ])
+        ->assertHasActionErrors(['vehicle_id']);
+
+    expect(BlockedDate::query()->count())->toBe(0);
+
+    Livewire::test(AvailabilityCalendar::class)
+        ->callAction('create', data: [
+            'vehicle_id' => $vehicleA->id,
+            'start_date' => '2030-08-01',
+            'end_date' => '2030-08-05',
+        ])
+        ->assertHasNoActionErrors();
+
+    expect(BlockedDate::query()->where('vehicle_id', $vehicleA->id)->count())->toBe(1);
+});
+
 // ─── Availability calendar: UX rebuild ───────────────────────────────────────
 
 it('filters calendar events by the selected vehicle', function () {

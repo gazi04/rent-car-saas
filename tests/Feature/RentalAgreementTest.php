@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\RentalAgreementService;
 use Filament\Facades\Filament;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
@@ -145,6 +146,8 @@ it('renders Albanian heading when booking locale is sq', function () {
     $booking = Booking::factory()->forVehicle($vehicle)->state(['locale' => 'sq'])->create();
 
     app(RentalAgreementService::class)->generate($booking);
+
+    App::setLocale('sq');
     $rendered = view('pdf.rental-agreement', ['booking' => $booking->load('vehicle')])->render();
 
     expect($rendered)->toContain('KONTRATË QIRAJE AUTOMJETI');
@@ -161,9 +164,28 @@ it('renders English heading when booking locale is en', function () {
     $booking = Booking::factory()->forVehicle($vehicle)->state(['locale' => 'en'])->create();
 
     app(RentalAgreementService::class)->generate($booking);
+
+    App::setLocale('en');
     $rendered = view('pdf.rental-agreement', ['booking' => $booking->load('vehicle')])->render();
 
     expect($rendered)->toContain('VEHICLE RENTAL AGREEMENT');
+});
+
+it('restores the previous app locale after generating a PDF in a different booking locale', function () {
+    Storage::fake();
+
+    $tenant = Tenant::factory()->withDomain('localerestore')->create();
+    tenancy()->initialize($tenant);
+    Storage::fake();
+    actingAs(agreementOperatorFor($tenant));
+    $vehicle = Vehicle::factory()->create(['daily_rate' => 50]);
+    $booking = Booking::factory()->forVehicle($vehicle)->state(['locale' => 'en'])->create();
+
+    App::setLocale('sq');
+
+    app(RentalAgreementService::class)->generate($booking);
+
+    expect(App::getLocale())->toBe('sq');
 });
 
 // ── Operator action ───────────────────────────────────────────────────────────
@@ -245,6 +267,38 @@ it('tampered signed URL returns 404', function () {
     $url = URL::temporarySignedRoute('agreement.download', now()->addDays(7), ['booking' => $booking->reference]);
 
     $this->get($url.'&tampered=1')->assertNotFound();
+});
+
+it('valid signed agreement URL for a Pending booking returns 404', function () {
+    Storage::fake();
+
+    $tenant = Tenant::factory()->withDomain('pending-agreement-test')->create();
+    tenancy()->initialize($tenant);
+    Storage::fake();
+    $vehicle = Vehicle::factory()->create(['daily_rate' => 50]);
+    $booking = Booking::factory()->forVehicle($vehicle)->create(); // default status: Pending
+    tenancy()->end();
+
+    URL::forceRootUrl(tenant_url('pending-agreement-test'));
+    $url = URL::temporarySignedRoute('agreement.download', now()->addDays(7), ['booking' => $booking->reference]);
+
+    $this->get($url)->assertNotFound();
+});
+
+it('valid signed agreement URL for a Cancelled booking returns 404', function () {
+    Storage::fake();
+
+    $tenant = Tenant::factory()->withDomain('cancelled-agreement-test')->create();
+    tenancy()->initialize($tenant);
+    Storage::fake();
+    $vehicle = Vehicle::factory()->create(['daily_rate' => 50]);
+    $booking = Booking::factory()->forVehicle($vehicle)->cancelled()->create();
+    tenancy()->end();
+
+    URL::forceRootUrl(tenant_url('cancelled-agreement-test'));
+    $url = URL::temporarySignedRoute('agreement.download', now()->addDays(7), ['booking' => $booking->reference]);
+
+    $this->get($url)->assertNotFound();
 });
 
 it('generates PDF on demand when signed route hit and no stored file exists', function () {

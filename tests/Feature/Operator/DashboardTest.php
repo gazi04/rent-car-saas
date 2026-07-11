@@ -85,6 +85,21 @@ it('computes the four dashboard stats', function () {
         ->and($stats[3]->getValue())->toBe(1); // overdue returns
 });
 
+it('does not double-count a same-day overdue return under both stats', function () {
+    dashboardOperator('doublecountop');
+    $vehicle = Vehicle::factory()->create();
+
+    Booking::factory()->forVehicle($vehicle)->active()->create([
+        'start_date' => now()->subDay(),
+        'end_date' => now()->subHour(),
+    ]);
+
+    $stats = (fn () => $this->getStats())->call(new OperatorStatsOverview);
+
+    expect($stats[1]->getValue())->toBe(0)  // today's returns
+        ->and($stats[3]->getValue())->toBe(1); // overdue returns
+});
+
 it('lists today’s pickups and returns, excluding future bookings', function () {
     dashboardOperator('movementsop');
     $b = seedDashboardBookings();
@@ -92,6 +107,20 @@ it('lists today’s pickups and returns, excluding future bookings', function ()
     Livewire::test(TodaysMovementsWidget::class)
         ->assertCanSeeTableRecords([$b['pickup'], $b['return']])
         ->assertCanNotSeeTableRecords([$b['pending'], $b['overdue']]);
+});
+
+it('labels a same-day active rental as a return, not a pickup', function () {
+    dashboardOperator('samedayop');
+    $vehicle = Vehicle::factory()->create();
+
+    $sameDayActive = Booking::factory()->forVehicle($vehicle)->active()->create([
+        'start_date' => now()->startOfDay()->addHours(8),
+        'end_date' => now()->endOfDay(),
+    ]);
+
+    $isPickup = (fn () => $this->isPickup($sameDayActive))->call(new TodaysMovementsWidget);
+
+    expect($isPickup)->toBeFalse();
 });
 
 it('lists pending and overdue bookings that need attention', function () {

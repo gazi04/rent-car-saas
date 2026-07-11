@@ -114,6 +114,69 @@ it('rejects keys not on the allow-list', function () {
     assertDatabaseMissing('tenant_settings', ['key' => 'evil_key']);
 });
 
+// ── Value-format guard (model layer) ────────────────────────────────────────────
+
+it('rejects a CSS-breakout color value at the model layer, bypassing the Filament form', function () {
+    [$tenant] = brandingSetup('valueguard1');
+
+    $payload = '#000; } body { display:none !important; } *';
+    $tenant->setSetting('color_primary', $payload);
+
+    assertDatabaseMissing('tenant_settings', ['key' => 'color_primary', 'value' => $payload]);
+    expect($tenant->setting('color_primary'))->toBeNull();
+});
+
+it('rejects an invalid color_secondary value at the model layer', function () {
+    [$tenant] = brandingSetup('valueguard2');
+
+    $tenant->setSetting('color_secondary', 'not-a-color');
+
+    assertDatabaseMissing('tenant_settings', ['key' => 'color_secondary', 'value' => 'not-a-color']);
+    expect($tenant->setting('color_secondary'))->toBeNull();
+});
+
+it('rejects an unlisted font_family value at the model layer, bypassing the Filament form', function () {
+    [$tenant] = brandingSetup('valueguard3');
+
+    $tenant->setSetting('font_family', 'EvilFont');
+
+    assertDatabaseMissing('tenant_settings', ['key' => 'font_family', 'value' => 'EvilFont']);
+});
+
+it('still clears a color setting to null via an empty string after adding the format guard', function () {
+    [$tenant] = brandingSetup('valueguard4');
+
+    $tenant->setSetting('color_primary', '#123456');
+    $tenant->setSetting('color_primary', '');
+
+    assertDatabaseHas('tenant_settings', ['tenant_id' => $tenant->id, 'key' => 'color_primary', 'value' => null]);
+});
+
+it('rejects a javascript: social_facebook value at the model layer, bypassing the Filament form', function () {
+    [$tenant] = brandingSetup('valueguard5');
+
+    $tenant->setSetting('social_facebook', 'javascript:alert(1)');
+
+    assertDatabaseMissing('tenant_settings', ['key' => 'social_facebook', 'value' => 'javascript:alert(1)']);
+    expect($tenant->setting('social_facebook'))->toBeNull();
+});
+
+it('rejects a javascript: social_instagram value at the model layer', function () {
+    [$tenant] = brandingSetup('valueguard6');
+
+    $tenant->setSetting('social_instagram', 'javascript:alert(1)');
+
+    assertDatabaseMissing('tenant_settings', ['key' => 'social_instagram', 'value' => 'javascript:alert(1)']);
+});
+
+it('still accepts a valid https social_facebook URL at the model layer', function () {
+    [$tenant] = brandingSetup('valueguard7');
+
+    $tenant->setSetting('social_facebook', 'https://facebook.com/mypage');
+
+    expect($tenant->setting('social_facebook'))->toBe('https://facebook.com/mypage');
+});
+
 // ── Tenant isolation ───────────────────────────────────────────────────────────
 
 it('isolates settings between tenants', function () {
@@ -198,12 +261,34 @@ it('injects tenant color into the public layout CSS vars', function () {
         ->assertSee('--color-primary: #abcdef', false);
 });
 
+it('injects tenant color_secondary into the public layout CSS vars', function () {
+    $tenant = Tenant::factory()->withDomain('css3')->create();
+    tenancy()->initialize($tenant);
+    $tenant->setSetting('color_secondary', '#abcdef');
+    tenancy()->end();
+
+    $this->get(tenant_url('css3', '/'))
+        ->assertOk()
+        ->assertSee('--color-secondary: #abcdef', false);
+});
+
 it('renders public layout with default colors when no settings are saved', function () {
     Tenant::factory()->withDomain('css2')->create();
 
     $this->get(tenant_url('css2', '/'))
         ->assertOk()
         ->assertSee('--color-primary', false);
+});
+
+it('renders a valid social_facebook URL as an href on the public footer', function () {
+    $tenant = Tenant::factory()->withDomain('social1')->create();
+    tenancy()->initialize($tenant);
+    $tenant->setSetting('social_facebook', 'https://facebook.com/mypage');
+    tenancy()->end();
+
+    $this->get(tenant_url('social1', '/'))
+        ->assertOk()
+        ->assertSee('href="https://facebook.com/mypage"', false);
 });
 
 it('shows operator payment_instructions on booking review page', function () {
@@ -250,6 +335,76 @@ it('escapes malicious text in footer_text on render', function () {
         ->assertOk()
         ->assertDontSee('</style><script>', false)
         ->assertSee('&lt;/style&gt;&lt;script&gt;', false);
+});
+
+it('never renders a malformed pre-existing color row into the public style block', function () {
+    $tenant = Tenant::factory()->withDomain('cssguard1')->create();
+    tenancy()->initialize($tenant);
+    // Bypass setSetting() entirely to simulate a row written before this
+    // guard existed (mirrors TenantHomeTest's layout-fallback bypass test).
+    $tenant->tenantSettings()->create([
+        'key' => 'color_primary',
+        'value' => '#000; } body { display:none !important; } *',
+    ]);
+    tenancy()->end();
+
+    $this->get(tenant_url('cssguard1', '/'))
+        ->assertOk()
+        ->assertDontSee('display:none !important', false)
+        ->assertSee('--color-primary: '.config('branding.defaults.color_primary'), false);
+});
+
+it('colorPrimary and colorSecondary fall back to config defaults when unset', function () {
+    $tenant = Tenant::factory()->withDomain('accessor1')->create();
+    tenancy()->initialize($tenant);
+
+    expect($tenant->colorPrimary())->toBe(config('branding.defaults.color_primary'))
+        ->and($tenant->colorSecondary())->toBe(config('branding.defaults.color_secondary'));
+});
+
+it('colorPrimary falls back to the config default when the stored value is malformed', function () {
+    $tenant = Tenant::factory()->withDomain('accessor2')->create();
+    tenancy()->initialize($tenant);
+    $tenant->tenantSettings()->create(['key' => 'color_primary', 'value' => 'javascript:alert(1)']);
+
+    expect($tenant->colorPrimary())->toBe(config('branding.defaults.color_primary'));
+});
+
+it('never renders a malformed pre-existing social_facebook row as a javascript: href', function () {
+    $tenant = Tenant::factory()->withDomain('socialguard1')->create();
+    tenancy()->initialize($tenant);
+    // Bypass setSetting() entirely to simulate a row written before this
+    // guard existed (mirrors the color CSS-breakout bypass test above).
+    $tenant->tenantSettings()->create(['key' => 'social_facebook', 'value' => 'javascript:alert(1)']);
+    tenancy()->end();
+
+    $this->get(tenant_url('socialguard1', '/'))
+        ->assertOk()
+        ->assertDontSee('javascript:alert', false);
+});
+
+it('socialFacebookUrl and socialInstagramUrl return null when unset', function () {
+    $tenant = Tenant::factory()->withDomain('socialaccessor1')->create();
+    tenancy()->initialize($tenant);
+
+    expect($tenant->socialFacebookUrl())->toBeNull()
+        ->and($tenant->socialInstagramUrl())->toBeNull();
+});
+
+it('socialFacebookUrl returns null when the stored value is a dangerous-scheme row', function () {
+    $tenant = Tenant::factory()->withDomain('socialaccessor2')->create();
+    tenancy()->initialize($tenant);
+    $tenant->tenantSettings()->create(['key' => 'social_facebook', 'value' => 'javascript:alert(1)']);
+
+    expect($tenant->socialFacebookUrl())->toBeNull();
+});
+
+it('socialFacebookUrl returns the stored value when it is a valid https URL', function () {
+    $tenant = Tenant::factory()->withDomain('socialaccessor3')->create();
+    tenancy()->initialize($tenant);
+    $tenant->setSetting('social_facebook', 'https://facebook.com/mypage');
+
+    expect($tenant->socialFacebookUrl())->toBe('https://facebook.com/mypage');
 });
 
 // ── Layout settings ────────────────────────────────────────────────────────────

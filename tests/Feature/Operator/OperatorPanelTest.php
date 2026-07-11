@@ -4,7 +4,9 @@ use App\Http\Middleware\ResolveFilamentPanelForSharedRoutes;
 use App\Models\Tenant;
 use App\Models\User;
 use Filament\Facades\Filament;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Notification;
 use Livewire\Livewire;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 
@@ -19,7 +21,7 @@ afterEach(function () {
 /**
  * Create an operator user belonging to the given tenant.
  */
-function operatorFor(Tenant $tenant): User
+function operatorFor(Tenant $tenant, bool $verified = true): User
 {
     $user = new User;
     $user->forceFill([
@@ -28,7 +30,7 @@ function operatorFor(Tenant $tenant): User
         'name' => 'Operator',
         'email' => fake()->unique()->safeEmail(),
         'password' => bcrypt('password'),
-        'email_verified_at' => now(),
+        'email_verified_at' => $verified ? now() : null,
     ])->save();
 
     return $user;
@@ -49,6 +51,24 @@ it('registers an operator as a pending tenant with a domain and user', function 
     assertDatabaseHas('tenants', ['name' => 'Ardi Rent A Car', 'status' => 'pending', 'plan' => 'trial']);
     assertDatabaseHas('domains', ['domain' => tenant_domain('ardi')]);
     assertDatabaseHas('users', ['email' => 'ardi@example.com', 'role' => 'operator']);
+});
+
+it('sends a verification email on registration and leaves the account unverified', function () {
+    Notification::fake();
+
+    Livewire::test('pages::auth.operator-register')
+        ->set('name', 'Ardi Rent A Car')
+        ->set('email', 'ardi@example.com')
+        ->set('subdomain', 'ardi')
+        ->set('password', 'password')
+        ->set('password_confirmation', 'password')
+        ->call('register')
+        ->assertHasNoErrors();
+
+    $operator = User::where('email', 'ardi@example.com')->firstOrFail();
+
+    expect($operator->email_verified_at)->toBeNull();
+    Notification::assertSentTo($operator, VerifyEmail::class);
 });
 
 it('rejects a reserved subdomain on registration', function () {
@@ -87,7 +107,7 @@ it('gates a pending tenant with an under-review message', function () {
     $operator = operatorFor($tenant);
 
     actingAs($operator)->get(tenant_url('ardi', '/dashboard'))
-        ->assertOk()
+        ->assertForbidden()
         ->assertSee('under review');
 });
 
@@ -96,8 +116,19 @@ it('gates a suspended tenant with a support message', function () {
     $operator = operatorFor($tenant);
 
     actingAs($operator)->get(tenant_url('ardi', '/dashboard'))
-        ->assertOk()
+        ->assertForbidden()
         ->assertSee('suspended');
+});
+
+it('blocks an operator with an unverified email even on an approved tenant', function () {
+    $tenant = Tenant::factory()->withDomain('ardi')->create(); // active
+    $operator = operatorFor($tenant, verified: false);
+
+    actingAs($operator)->get(tenant_url('ardi', '/dashboard'))->assertNotFound();
+
+    $operator->markEmailAsVerified();
+
+    actingAs($operator)->get(tenant_url('ardi', '/dashboard'))->assertOk();
 });
 
 it('hides another tenant\'s dashboard behind a 404', function () {

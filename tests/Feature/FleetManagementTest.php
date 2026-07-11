@@ -134,6 +134,50 @@ it('creates a vehicle with custom fields through the operator panel form', funct
         ->and($vehicle->custom_fields)->toBe([['label' => 'GPS', 'value' => 'Included']]);
 });
 
+it('rejects a duplicate plate within the same tenant', function () {
+    [$tenant, $operator] = fleetOperator('ardi.localhost');
+    tenancy()->initialize($tenant);
+    Filament::setCurrentPanel(Filament::getPanel('operator'));
+    actingAs($operator);
+
+    Vehicle::factory()->create(['plate' => 'AA-123-BB']);
+
+    Livewire::test(CreateVehicle::class)
+        ->fillForm(vehicleFormData(['name' => 'Second Car', 'plate' => 'AA-123-BB']))
+        ->call('create')
+        ->assertHasFormErrors(['plate']);
+
+    expect(Vehicle::where('plate', 'AA-123-BB')->count())->toBe(1);
+});
+
+it('allows the same plate across different tenants', function () {
+    [$tenantA] = fleetOperator('a.localhost');
+    tenancy()->initialize($tenantA);
+    Vehicle::factory()->create(['plate' => 'AA-123-BB']);
+    tenancy()->end();
+
+    [$tenantB, $operatorB] = fleetOperator('b.localhost');
+    tenancy()->initialize($tenantB);
+    Filament::setCurrentPanel(Filament::getPanel('operator'));
+    actingAs($operatorB);
+
+    Livewire::test(CreateVehicle::class)
+        ->fillForm(vehicleFormData(['name' => 'Other Tenant Car', 'plate' => 'AA-123-BB']))
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    expect(Vehicle::where('plate', 'AA-123-BB')->count())->toBe(1);
+});
+
+it('leaves plate optional', function () {
+    [$tenant] = fleetOperator('ardi.localhost');
+    tenancy()->initialize($tenant);
+
+    $vehicle = Vehicle::factory()->create(['plate' => null]);
+
+    expect($vehicle->plate)->toBeNull();
+});
+
 it('attaches an uploaded photo on a subdomain and generates a webp conversion', function () {
     [$tenant, $operator] = fleetOperator('ardi.localhost');
     tenancy()->initialize($tenant);

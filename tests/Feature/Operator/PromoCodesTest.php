@@ -72,7 +72,7 @@ it('computes discountFor and validity', function () {
         ->and($fixed->discountFor(8))->toBe(8.0) // capped at amount
         ->and(PromoCode::factory()->inactive()->make()->isCurrentlyValid())->toBeFalse()
         ->and(PromoCode::factory()->expired()->make()->isCurrentlyValid())->toBeFalse()
-        ->and(PromoCode::factory()->make(['max_uses' => 2, 'uses_count' => 2])->isCurrentlyValid())->toBeFalse();
+        ->and(PromoCode::factory()->make(['max_uses' => 0])->isCurrentlyValid())->toBeFalse();
 });
 
 it('lowers the total in PricingService', function () {
@@ -100,7 +100,53 @@ it('applies and records a valid promo on a booking', function () {
 
     expect((float) $booking->discount_amount)->toBe(15.0)
         ->and($booking->promo_code_id)->toBe($promo->id)
-        ->and($promo->fresh()->uses_count)->toBe(1);
+        ->and($promo->fresh()->redeemedUsesCount())->toBe(0); // still Pending — not yet redeemed
+
+    app(BookingService::class)->confirm($booking);
+
+    expect($promo->fresh()->redeemedUsesCount())->toBe(1);
+});
+
+it('does not burn the max_uses cap on a rejected booking', function () {
+    promoTenant('promoreject');
+    $vehicle = Vehicle::factory()->create(['daily_rate' => 50]);
+    $promo = PromoCode::factory()->create(['code' => 'CAPPED', 'max_uses' => 1]);
+
+    $first = app(BookingService::class)->create(promoBookingData($vehicle, [
+        'promo_code' => 'CAPPED',
+        'customer_phone' => '+38344111222',
+        'start_date' => '2030-06-01', 'end_date' => '2030-06-03',
+    ]));
+    app(BookingService::class)->reject($first);
+
+    $second = app(BookingService::class)->create(promoBookingData($vehicle, [
+        'promo_code' => 'CAPPED',
+        'customer_phone' => '+38344999888',
+        'start_date' => '2030-07-01', 'end_date' => '2030-07-03',
+    ]));
+
+    expect($second->promo_code_id)->toBe($promo->id);
+});
+
+it('does not burn the max_uses cap on a cancelled booking', function () {
+    promoTenant('promocancel');
+    $vehicle = Vehicle::factory()->create(['daily_rate' => 50]);
+    $promo = PromoCode::factory()->create(['code' => 'CAPPED2', 'max_uses' => 1]);
+
+    $first = app(BookingService::class)->create(promoBookingData($vehicle, [
+        'promo_code' => 'CAPPED2',
+        'customer_phone' => '+38344111222',
+        'start_date' => '2030-06-01', 'end_date' => '2030-06-03',
+    ]));
+    app(BookingService::class)->cancel($first);
+
+    $second = app(BookingService::class)->create(promoBookingData($vehicle, [
+        'promo_code' => 'CAPPED2',
+        'customer_phone' => '+38344999888',
+        'start_date' => '2030-07-01', 'end_date' => '2030-07-03',
+    ]));
+
+    expect($second->promo_code_id)->toBe($promo->id);
 });
 
 it('rejects an invalid or expired code and creates no booking', function () {
@@ -130,7 +176,7 @@ it('enforces the per-customer limit', function () {
     $vehicle = Vehicle::factory()->create(['daily_rate' => 50]);
     PromoCode::factory()->create(['code' => 'ONCE', 'per_customer_limit' => 1]);
 
-    app(BookingService::class)->create(promoBookingData($vehicle, [
+    $first = app(BookingService::class)->create(promoBookingData($vehicle, [
         'promo_code' => 'ONCE',
         'start_date' => '2030-06-01', 'end_date' => '2030-06-03',
     ]));
@@ -139,6 +185,16 @@ it('enforces the per-customer limit', function () {
         'promo_code' => 'ONCE',
         'start_date' => '2030-07-01', 'end_date' => '2030-07-03', // same phone, different dates
     ])))->toThrow(PromoCodeInvalidException::class);
+
+    // Once the first attempt is rejected, the same customer can reuse the code (M2).
+    app(BookingService::class)->reject($first);
+
+    $second = app(BookingService::class)->create(promoBookingData($vehicle, [
+        'promo_code' => 'ONCE',
+        'start_date' => '2030-07-01', 'end_date' => '2030-07-03',
+    ]));
+
+    expect($second->promo_code_id)->not->toBeNull();
 });
 
 it('previews the promo discount on the public booking component', function () {

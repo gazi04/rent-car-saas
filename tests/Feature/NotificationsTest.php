@@ -12,6 +12,7 @@ use App\Mail\BookingCancelledMail;
 use App\Mail\BookingConfirmedMail;
 use App\Mail\BookingReceivedMail;
 use App\Mail\BookingRejectedMail;
+use App\Mail\BookingReviewRequestMail;
 use App\Mail\NewBookingAlertMail;
 use App\Models\Booking;
 use App\Models\Tenant;
@@ -219,6 +220,60 @@ test('cancel dispatches BookingCancelled event with cancelledBy actor via servic
     Event::assertDispatched(BookingCancelled::class, fn ($e) => $e->cancelledBy === 'customer');
 });
 
+// ── Operator locale (BUG-L10) ────────────────────────────────────────────────
+
+test('new booking alert falls back to sq when the operator has no saved locale', function () {
+    Mail::fake();
+
+    expect($this->operator->locale)->toBeNull();
+
+    $booking = $this->service->create(notifBookingData($this->vehicle));
+
+    $listener = new SendBookingReceivedNotifications;
+    $listener->handle(new BookingCreated($booking));
+
+    Mail::assertQueued(NewBookingAlertMail::class, fn ($m) => $m->hasTo($this->operator->email) && $m->locale === 'sq');
+});
+
+test('new booking alert uses the operator\'s own saved locale', function () {
+    Mail::fake();
+
+    $this->operator->forceFill(['locale' => 'en'])->save();
+
+    $booking = $this->service->create(notifBookingData($this->vehicle));
+
+    $listener = new SendBookingReceivedNotifications;
+    $listener->handle(new BookingCreated($booking));
+
+    Mail::assertQueued(NewBookingAlertMail::class, fn ($m) => $m->hasTo($this->operator->email) && $m->locale === 'en');
+});
+
+test('cancel-by-customer operator mail falls back to sq when the operator has no saved locale', function () {
+    Mail::fake();
+
+    expect($this->operator->locale)->toBeNull();
+
+    $booking = Booking::factory()->create(['vehicle_id' => $this->vehicle->id]);
+
+    $listener = new SendBookingCancelledNotifications;
+    $listener->handle(new BookingCancelled($booking, 'customer'));
+
+    Mail::assertQueued(BookingCancelledMail::class, fn ($m) => $m->hasTo($this->operator->email) && $m->locale === 'sq');
+});
+
+test('cancel-by-customer operator mail uses the operator\'s own saved locale', function () {
+    Mail::fake();
+
+    $this->operator->forceFill(['locale' => 'en'])->save();
+
+    $booking = Booking::factory()->create(['vehicle_id' => $this->vehicle->id]);
+
+    $listener = new SendBookingCancelledNotifications;
+    $listener->handle(new BookingCancelled($booking, 'customer'));
+
+    Mail::assertQueued(BookingCancelledMail::class, fn ($m) => $m->hasTo($this->operator->email) && $m->locale === 'en');
+});
+
 // ── Bilingual ────────────────────────────────────────────────────────────────
 
 test('booking received mailable stores booking locale sq', function () {
@@ -255,6 +310,40 @@ test('booking confirmed email renders an absolute logo URL, not a relative one',
 
     expect($rendered)->toContain('src="'.rtrim(config('app.url'), '/'))
         ->and($rendered)->not->toContain('src="/storage/');
+});
+
+test('every customer-facing booking email renders the operator logo and primary color', function () {
+    Storage::fake('public');
+
+    $this->tenant->addMedia(UploadedFile::fake()->image('logo.png', 200, 200))
+        ->toMediaCollection('logo');
+    $this->tenant->setSetting('color_primary', '#ff5500');
+
+    $booking = Booking::factory()->create(['vehicle_id' => $this->vehicle->id]);
+
+    $mailables = [
+        new BookingReceivedMail($booking),
+        new BookingConfirmedMail($booking),
+        new BookingRejectedMail($booking),
+        new BookingCancelledMail($booking),
+        BookingReviewRequestMail::forTenantDomain($booking),
+    ];
+
+    foreach ($mailables as $mailable) {
+        $rendered = $mailable->render();
+
+        expect($rendered)->toContain('src="'.rtrim(config('app.url'), '/'))
+            ->and($rendered)->not->toContain('src="/storage/')
+            ->and($rendered)->toContain('color: #ff5500');
+    }
+});
+
+test('booking emails fall back to the default primary color when unbranded', function () {
+    $booking = Booking::factory()->create(['vehicle_id' => $this->vehicle->id]);
+
+    $rendered = (new BookingReceivedMail($booking))->render();
+
+    expect($rendered)->toContain('color: '.config('branding.defaults.color_primary'));
 });
 
 // ── Queued, not sync ─────────────────────────────────────────────────────────

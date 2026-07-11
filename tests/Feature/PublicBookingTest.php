@@ -130,6 +130,30 @@ it('returns blocking bookings and blocked dates for a vehicle', function () {
         ->assertJsonCount(0, 'blocked');
 });
 
+it('returns 404 for the availability endpoint on a private (unlisted) vehicle', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+
+    $vehicle = Vehicle::factory()->private()->create();
+
+    tenancy()->end();
+
+    $this->get(tenant_url('ardi', "/vehicles/{$vehicle->id}/availability"))
+        ->assertNotFound();
+});
+
+it('returns 404 for the availability endpoint on a vehicle under maintenance', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+
+    $vehicle = Vehicle::factory()->underMaintenance()->create();
+
+    tenancy()->end();
+
+    $this->get(tenant_url('ardi', "/vehicles/{$vehicle->id}/availability"))
+        ->assertNotFound();
+});
+
 it('returns 404 for availability endpoint on another tenant vehicle', function () {
     $tenantA = publicTenant('aaa');
     $tenantB = publicTenant('bbb');

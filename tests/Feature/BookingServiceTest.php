@@ -1,10 +1,12 @@
 <?php
 
 use App\Enums\BookingStatus;
+use App\Events\BookingCancelled;
 use App\Events\BookingCreated;
 use App\Events\BookingRejected;
 use App\Exceptions\VehicleNotAvailableException;
 use App\Models\Booking;
+use App\Models\Customer;
 use App\Models\Tenant;
 use App\Models\Vehicle;
 use App\Services\BookingService;
@@ -56,6 +58,20 @@ it('throws VehicleNotAvailableException on the re-check under lock', function ()
     // Second create must fail even though no lock is truly contested in SQLite.
     // Documents: true parallel FOR UPDATE guarantee is Postgres-level.
     $this->service->create(bookingData($this->vehicle));
+})->throws(VehicleNotAvailableException::class);
+
+it('throws VehicleNotAvailableException, not InvalidArgumentException, for inverted dates on create', function () {
+    $this->service->create(bookingData($this->vehicle, [
+        'start_date' => '2030-06-04',
+        'end_date' => '2030-06-01',
+    ]));
+})->throws(VehicleNotAvailableException::class);
+
+it('throws VehicleNotAvailableException, not InvalidArgumentException, for inverted dates on createManual', function () {
+    $this->service->createManual(bookingData($this->vehicle, [
+        'start_date' => '2030-06-04',
+        'end_date' => '2030-06-01',
+    ]));
 })->throws(VehicleNotAvailableException::class);
 
 it('fires BookingCreated event on successful create', function () {
@@ -116,6 +132,17 @@ it('throws when cancelling a completed booking', function () {
     $this->service->cancel($booking->fresh());
 })->throws(InvalidArgumentException::class);
 
+it('cancelling an already-cancelled booking is a no-op and does not redispatch BookingCancelled', function () {
+    Event::fake([BookingCancelled::class]);
+
+    $booking = $this->service->create(bookingData($this->vehicle));
+    $this->service->cancel($booking);
+    $this->service->cancel($booking->fresh());
+
+    expect($booking->fresh()->status)->toBe(BookingStatus::Cancelled);
+    Event::assertDispatchedTimes(BookingCancelled::class, 1);
+});
+
 it('booking in tenant A is invisible from tenant B context', function () {
     $this->service->create(bookingData($this->vehicle));
     tenancy()->end();
@@ -141,6 +168,34 @@ it('rejects a concurrent conflicting transition via the status-guarded update', 
 
     expect($stale->refresh()->status)->toBe(BookingStatus::Confirmed);
     Event::assertNotDispatched(BookingRejected::class);
+});
+
+it('recovers from a concurrent unique-constraint conflict on customer phone without crashing', function () {
+    // resolveCustomer()'s Customer::firstOrCreate() delegates to Eloquent's
+    // createOrFirst(), which has no upfront existence check — it always attempts
+    // the insert first. Pre-creating the row forces that insert to collide with
+    // the [tenant_id, phone] unique key, exercising the exact
+    // catch-UniqueConstraintViolationException-and-refetch path a genuine
+    // concurrent request would hit (L2 in docs/consolidated-audit-report.md).
+    $existing = Customer::factory()->create(['phone' => '+38344111111']);
+
+    $resolved = Customer::query()->createOrFirst(
+        ['phone' => '+38344111111'],
+        ['name' => 'Late Arrival', 'email' => null],
+    );
+
+    expect($resolved->is($existing))->toBeTrue()
+        ->and(Customer::query()->where('phone', '+38344111111')->count())->toBe(1);
+});
+
+it('reuses an existing customer by phone when booking a different vehicle, without duplicating', function () {
+    $existing = Customer::factory()->create(['phone' => '+38344222222']);
+    $secondVehicle = Vehicle::factory()->create(['daily_rate' => 40, 'weekly_rate' => null, 'monthly_rate' => null]);
+
+    $booking = $this->service->create(bookingData($secondVehicle, ['customer_phone' => '+38344222222']));
+
+    expect($booking->customer_id)->toBe($existing->id)
+        ->and(Customer::query()->count())->toBe(1);
 });
 
 it('writes status and timestamp in one atomic update on markActive', function () {
