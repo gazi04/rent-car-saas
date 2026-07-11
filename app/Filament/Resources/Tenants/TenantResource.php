@@ -60,14 +60,7 @@ class TenantResource extends Resource
                     ->components([
                         TextEntry::make('name'),
                         TextEntry::make('status')
-                            ->badge()
-                            ->color(fn (string $state): string => match ($state) {
-                                'pending' => 'warning',
-                                'active' => 'success',
-                                'suspended' => 'danger',
-                                'cancelled' => 'gray',
-                                default => 'gray',
-                            }),
+                            ->badge(),
                         TextEntry::make('email')->placeholder('—'),
                         TextEntry::make('phone')->placeholder('—'),
                         TextEntry::make('created_at')->dateTime(),

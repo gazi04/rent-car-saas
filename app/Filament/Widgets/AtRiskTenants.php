@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Enums\TenantStatus;
 use App\Models\Tenant;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -48,7 +49,7 @@ class AtRiskTenants extends TableWidget
         $boundary = now()->addDays((int) config('billing.grace_days'));
 
         return Tenant::query()
-            ->where('status', 'active')
+            ->where('status', TenantStatus::Active->value)
             ->whereNotNull('paid_until')
             ->where('paid_until', '<=', $boundary);
     }

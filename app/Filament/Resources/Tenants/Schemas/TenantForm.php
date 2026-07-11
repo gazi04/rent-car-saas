@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Tenants\Schemas;
 
+use App\Enums\TenantStatus;
 use App\Models\Plan;
 use App\Models\Tenant;
 use Closure;
@@ -46,13 +47,8 @@ class TenantForm
                     ->dehydrated(),
                 Select::make('status')
                     ->required()
-                    ->default('pending')
-                    ->options([
-                        'pending' => 'Pending',
-                        'active' => 'Active',
-                        'suspended' => 'Suspended',
-                        'cancelled' => 'Cancelled',
-                    ]),
+                    ->default(TenantStatus::Pending)
+                    ->options(TenantStatus::class),
                 Select::make('plan')
                     ->options(fn (?Tenant $record): array => Plan::options($record?->plan)),
                 DateTimePicker::make('trial_ends_at'),

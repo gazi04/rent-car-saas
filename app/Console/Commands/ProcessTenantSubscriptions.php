@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\TenantStatus;
 use App\Mail\SubscriptionRenewalReminderMail;
 use App\Models\Tenant;
 use App\Models\User;
@@ -38,7 +39,7 @@ class ProcessTenantSubscriptions extends Command
         // non-generic TenantCollection and drop the model type.
         $tenants = Tenant::query()
             ->whereNotNull('paid_until')
-            ->where('status', 'active')
+            ->where('status', TenantStatus::Active->value)
             ->cursor();
 
         foreach ($tenants as $tenant) {
@@ -78,7 +79,7 @@ class ProcessTenantSubscriptions extends Command
 
     private function suspend(Tenant $tenant): void
     {
-        $tenant->update(['status' => 'suspended']);
+        $tenant->update(['status' => TenantStatus::Suspended]);
 
         $admins = User::query()
             ->where('role', 'admin')

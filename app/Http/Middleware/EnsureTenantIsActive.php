@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\TenantStatus;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,13 +19,13 @@ class EnsureTenantIsActive
     {
         $tenant = tenant();
 
-        if ($tenant !== null && $tenant->status !== 'active') {
+        if ($tenant !== null && $tenant->status !== TenantStatus::Active) {
             $view = str_starts_with((string) $request->route()?->getName(), 'filament.')
                 ? 'tenant.inactive'
                 : 'public.unavailable';
 
             return response()->view($view, [
-                'status' => $tenant->status,
+                'status' => $tenant->status->value,
                 'name' => $tenant->name,
             ], 403);
         }

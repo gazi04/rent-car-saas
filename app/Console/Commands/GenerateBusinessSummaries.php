@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Enums\PlanFeature;
+use App\Enums\TenantStatus;
 use App\Jobs\GenerateBusinessSummaryJob;
 use App\Models\Tenant;
 use Illuminate\Console\Attributes\Description;
@@ -27,7 +28,7 @@ class GenerateBusinessSummaries extends Command
         // cursor() keeps the Tenant generic; ->get() returns stancl's
         // non-generic TenantCollection and drops the model type.
         $tenants = Tenant::query()
-            ->where('status', 'active')
+            ->where('status', TenantStatus::Active->value)
             ->cursor();
 
         foreach ($tenants as $tenant) {

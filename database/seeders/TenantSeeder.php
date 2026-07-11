@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Enums\TenantStatus;
+use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -24,8 +26,8 @@ class TenantSeeder extends Seeder
             [
                 'name' => 'Ardi Rent A Car',
                 'phone' => '+38344123456',
-                'status' => 'active',
-                'plan' => 'trial',
+                'status' => TenantStatus::Active,
+                'plan' => Plan::TRIAL_SLUG,
                 'trial_ends_at' => now()->addDays(30),
             ],
         );

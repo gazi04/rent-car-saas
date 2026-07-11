@@ -46,7 +46,7 @@ class SubscriptionRenewalReminderMail extends Mailable implements ShouldQueue
 
     public function langKey(): string
     {
-        return $this->tenant->plan === 'trial'
+        return $this->tenant->isOnTrial()
             ? 'trial_expiring_reminder'
             : 'subscription_renewal_reminder';
     }

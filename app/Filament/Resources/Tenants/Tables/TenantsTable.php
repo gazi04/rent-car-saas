@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Tenants\Tables;
 
 use App\Enums\PaymentMethod;
+use App\Enums\TenantStatus;
 use App\Filament\Resources\Tenants\Pages\ViewTenant;
 use App\Models\Plan;
 use App\Models\Tenant;
@@ -44,14 +45,7 @@ class TenantsTable
                     ->badge()
                     ->searchable(),
                 TextColumn::make('status')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'pending' => 'warning',
-                        'active' => 'success',
-                        'suspended' => 'danger',
-                        'cancelled' => 'gray',
-                        default => 'gray',
-                    }),
+                    ->badge(),
                 TextColumn::make('plan')
                     ->badge()
                     ->toggleable(),
@@ -71,12 +65,7 @@ class TenantsTable
             ])
             ->filters([
                 SelectFilter::make('status')
-                    ->options([
-                        'pending' => 'Pending',
-                        'active' => 'Active',
-                        'suspended' => 'Suspended',
-                        'cancelled' => 'Cancelled',
-                    ]),
+                    ->options(TenantStatus::class),
             ])
             ->recordActions([
                 self::impersonateAction(),
@@ -148,10 +137,10 @@ class TenantsTable
             ->icon('heroicon-o-check-circle')
             ->color('success')
             ->requiresConfirmation()
-            ->visible(fn (Tenant $record): bool => $record->status === 'pending')
+            ->visible(fn (Tenant $record): bool => $record->status === TenantStatus::Pending)
             ->action(function (Tenant $record): void {
                 $record->update([
-                    'status' => 'active',
+                    'status' => TenantStatus::Active,
                     'paid_until' => $record->paid_until
                         ?? now()->addDays((int) config('billing.trial_days'))->endOfDay(),
                 ]);
@@ -190,7 +179,7 @@ class TenantsTable
             ->label('Record payment')
             ->icon('heroicon-o-banknotes')
             ->color('info')
-            ->visible(fn (Tenant $record): bool => in_array($record->status, ['active', 'suspended'], true))
+            ->visible(fn (Tenant $record): bool => in_array($record->status, [TenantStatus::Active, TenantStatus::Suspended], true))
             ->schema([
                 Select::make('plan')
                     ->options(fn (Tenant $record): array => Plan::options($record->plan))
@@ -233,7 +222,7 @@ class TenantsTable
                     $record->update([
                         'plan' => $data['plan'],
                         'paid_until' => Carbon::parse($data['period_end'])->endOfDay(),
-                        'status' => $record->status === 'suspended' ? 'active' : $record->status,
+                        'status' => $record->status === TenantStatus::Suspended ? TenantStatus::Active : $record->status,
                     ]);
 
                     self::logAdminAction($record, 'recorded_payment', [
@@ -272,7 +261,7 @@ class TenantsTable
             ->label('Extend period')
             ->icon('heroicon-o-clock')
             ->color('info')
-            ->visible(fn (Tenant $record): bool => in_array($record->status, ['active', 'suspended'], true))
+            ->visible(fn (Tenant $record): bool => in_array($record->status, [TenantStatus::Active, TenantStatus::Suspended], true))
             ->schema([
                 Radio::make('mode')
                     ->options([
@@ -303,7 +292,7 @@ class TenantsTable
 
                 $record->update([
                     'paid_until' => $newPaidUntil,
-                    'status' => $record->status === 'suspended' ? 'active' : $record->status,
+                    'status' => $record->status === TenantStatus::Suspended ? TenantStatus::Active : $record->status,
                 ]);
 
                 self::logAdminAction($record, 'extended_period', [
@@ -326,7 +315,7 @@ class TenantsTable
             ->label('Change plan')
             ->icon('heroicon-o-arrow-path')
             ->color('info')
-            ->visible(fn (Tenant $record): bool => in_array($record->status, ['active', 'suspended'], true))
+            ->visible(fn (Tenant $record): bool => in_array($record->status, [TenantStatus::Active, TenantStatus::Suspended], true))
             ->requiresConfirmation()
             ->modalDescription('This changes the tenant\'s enabled features immediately, with no payment recorded.')
             ->schema([
@@ -363,7 +352,7 @@ class TenantsTable
             ->label('Extend trial')
             ->icon('heroicon-o-calendar-days')
             ->color('info')
-            ->visible(fn (Tenant $record): bool => $record->status === 'active' && $record->plan === 'trial')
+            ->visible(fn (Tenant $record): bool => $record->status === TenantStatus::Active && $record->isOnTrial())
             ->schema([
                 TextInput::make('days')
                     ->numeric()
@@ -394,9 +383,9 @@ class TenantsTable
             ->icon('heroicon-o-pause-circle')
             ->color('danger')
             ->requiresConfirmation()
-            ->visible(fn (Tenant $record): bool => $record->status === 'active')
+            ->visible(fn (Tenant $record): bool => $record->status === TenantStatus::Active)
             ->action(function (Tenant $record): void {
-                $record->update(['status' => 'suspended']);
+                $record->update(['status' => TenantStatus::Suspended]);
 
                 self::logAdminAction($record, 'suspended');
             });
@@ -408,9 +397,9 @@ class TenantsTable
             ->icon('heroicon-o-play-circle')
             ->color('success')
             ->requiresConfirmation()
-            ->visible(fn (Tenant $record): bool => $record->status === 'suspended')
+            ->visible(fn (Tenant $record): bool => $record->status === TenantStatus::Suspended)
             ->action(function (Tenant $record): void {
-                $record->update(['status' => 'active']);
+                $record->update(['status' => TenantStatus::Active]);
 
                 self::logAdminAction($record, 'reactivated');
             });
@@ -427,9 +416,9 @@ class TenantsTable
             ->icon('heroicon-o-x-circle')
             ->color('gray')
             ->requiresConfirmation()
-            ->visible(fn (Tenant $record): bool => in_array($record->status, ['pending', 'active', 'suspended'], true))
+            ->visible(fn (Tenant $record): bool => in_array($record->status, [TenantStatus::Pending, TenantStatus::Active, TenantStatus::Suspended], true))
             ->action(function (Tenant $record): void {
-                $record->update(['status' => 'cancelled']);
+                $record->update(['status' => TenantStatus::Cancelled]);
 
                 self::logAdminAction($record, 'rejected');
             });

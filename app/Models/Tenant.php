@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PlanFeature;
+use App\Enums\TenantStatus;
 use Carbon\CarbonImmutable;
 use Database\Factories\TenantFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -17,6 +18,7 @@ use Stancl\Tenancy\Database\Concerns\HasDomains;
 use Stancl\Tenancy\Database\Models\Tenant as BaseTenant;
 
 /**
+ * @property TenantStatus $status
  * @property CarbonImmutable|null $trial_ends_at
  * @property CarbonImmutable|null $paid_until
  */
@@ -55,6 +57,7 @@ class Tenant extends BaseTenant implements HasMedia
     protected function casts(): array
     {
         return [
+            'status' => TenantStatus::class,
             'trial_ends_at' => 'datetime',
             'paid_until' => 'datetime',
         ];
@@ -62,7 +65,12 @@ class Tenant extends BaseTenant implements HasMedia
 
     public function isActive(): bool
     {
-        return $this->status === 'active';
+        return $this->status === TenantStatus::Active;
+    }
+
+    public function isOnTrial(): bool
+    {
+        return $this->plan === Plan::TRIAL_SLUG;
     }
 
     /**
