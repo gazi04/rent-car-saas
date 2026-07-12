@@ -17,7 +17,6 @@ return new class extends Migration
             $table->foreignId('booking_id')->unique()->constrained()->cascadeOnDelete();
             $table->string('path');
             $table->timestamp('generated_at');
-            $table->string('token', 60)->nullable();
             $table->timestamps();
         });
     }

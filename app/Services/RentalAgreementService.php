@@ -7,7 +7,6 @@ use App\Models\Contract;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 
 class RentalAgreementService
 {
@@ -42,7 +41,6 @@ class RentalAgreementService
                 'tenant_id' => $booking->tenant_id,
                 'path' => $path,
                 'generated_at' => now(),
-                'token' => Str::random(40),
             ],
         );
     }
