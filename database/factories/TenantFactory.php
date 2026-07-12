@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Enums\TenantStatus;
+use App\Models\Plan;
 use App\Models\Tenant;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -21,20 +23,25 @@ class TenantFactory extends Factory
             'name' => fake()->company().' Rent A Car',
             'email' => fake()->unique()->companyEmail(),
             'phone' => fake()->phoneNumber(),
-            'status' => 'active',
-            'plan' => 'trial',
+            'status' => TenantStatus::Active,
+            'plan' => Plan::TRIAL_SLUG,
             'trial_ends_at' => now()->addDays(30),
         ];
     }
 
     public function pending(): static
     {
-        return $this->state(fn (array $attributes): array => ['status' => 'pending']);
+        return $this->state(fn (array $attributes): array => ['status' => TenantStatus::Pending]);
     }
 
     public function suspended(): static
     {
-        return $this->state(fn (array $attributes): array => ['status' => 'suspended']);
+        return $this->state(fn (array $attributes): array => ['status' => TenantStatus::Suspended]);
+    }
+
+    public function cancelled(): static
+    {
+        return $this->state(fn (array $attributes): array => ['status' => TenantStatus::Cancelled]);
     }
 
     /**
