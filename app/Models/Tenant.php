@@ -200,6 +200,10 @@ class Tenant extends BaseTenant implements HasMedia
             return array_key_exists($value, config('branding.fonts', []));
         }
 
+        if ($key === 'default_locale') {
+            return in_array($value, ['sq', 'en'], true);
+        }
+
         if (in_array($key, ['social_facebook', 'social_instagram'], true)) {
             $scheme = parse_url($value, PHP_URL_SCHEME);
 

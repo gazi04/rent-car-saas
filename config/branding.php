@@ -46,6 +46,7 @@ return [
         'layout_home',
         'layout_vehicles',
         'layout_vehicle_show',
+        'default_locale',
     ],
 
     /*
@@ -123,5 +124,6 @@ return [
         'layout_home' => 'full-screen',
         'layout_vehicles' => 'card-block',
         'layout_vehicle_show' => 'split-screen',
+        'default_locale' => 'sq',
     ],
 ];

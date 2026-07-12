@@ -119,6 +119,17 @@ class BrandingSettings extends Page
                                             ->options($fontOptions)
                                             ->native(false),
                                     ]),
+
+                                Section::make(__('branding.section_language'))
+                                    ->components([
+                                        Select::make('default_locale')
+                                            ->label(__('branding.default_locale'))
+                                            ->options([
+                                                'sq' => __('branding.content_lang_sq'),
+                                                'en' => __('branding.content_lang_en'),
+                                            ])
+                                            ->native(false),
+                                    ]),
                             ]),
 
                         Tab::make(__('branding.tab_content'))

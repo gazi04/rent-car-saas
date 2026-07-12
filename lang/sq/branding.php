@@ -8,6 +8,7 @@ return [
     'section_logo' => 'Logo',
     'section_colors' => 'Ngjyrat',
     'section_font' => 'Fonti',
+    'section_language' => 'Gjuha e Parazgjedhur',
     'section_contact' => 'Kontakti',
     'section_footer' => 'Footer & Rrjetet sociale',
     'section_payment' => 'Udhëzimet e pagesës',
@@ -18,6 +19,7 @@ return [
     'color_primary' => 'Ngjyra kryesore',
     'color_secondary' => 'Ngjyra dytësore',
     'font_family' => 'Fonti',
+    'default_locale' => 'Gjuha e parazgjedhur e faqes',
 
     'contact_phone' => 'Numri i telefonit',
     'contact_email' => 'Email kontakti',

@@ -8,6 +8,7 @@ return [
     'section_logo' => 'Logo',
     'section_colors' => 'Colors',
     'section_font' => 'Font',
+    'section_language' => 'Default Language',
     'section_contact' => 'Contact',
     'section_footer' => 'Footer & Social media',
     'section_payment' => 'Payment instructions',
@@ -18,6 +19,7 @@ return [
     'color_primary' => 'Primary color',
     'color_secondary' => 'Secondary color',
     'font_family' => 'Font',
+    'default_locale' => 'Storefront default language',
 
     'contact_phone' => 'Phone number',
     'contact_email' => 'Contact email',
