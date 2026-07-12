@@ -86,6 +86,7 @@ return [
     'legend_blocked' => 'E bllokuar',
     'calendar_hint' => 'Kliko një rezervim për ta hapur · kliko një bllokim për ta hequr · zvarrit për të bllokuar data',
     'invalid_vehicle' => 'Automjeti i zgjedhur është i pavlefshëm.',
+    'block_overlaps_booking' => 'Ky automjet ka tashmë një rezervim në atë interval datash. Refuzo ose anulo rezervimin para se t\'i bllokosh këto data.',
 
     // Kufijtë e planit
     'vehicle_limit_reached_title' => 'U arrit kufiri i automjeteve',

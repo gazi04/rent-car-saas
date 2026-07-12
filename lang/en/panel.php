@@ -86,6 +86,7 @@ return [
     'legend_blocked' => 'Blocked',
     'calendar_hint' => 'Click a booking to open it · click a block to remove it · drag to block dates',
     'invalid_vehicle' => 'The selected vehicle is invalid.',
+    'block_overlaps_booking' => 'This vehicle already has a booking in that date range. Reject or cancel the booking before blocking these dates.',
 
     // Plan limits
     'vehicle_limit_reached_title' => 'Vehicle limit reached',
