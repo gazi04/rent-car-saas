@@ -119,6 +119,18 @@ class Tenant extends BaseTenant implements HasMedia
     }
 
     /**
+     * The tenant's operator/staff accounts. User is central (no BelongsToTenant),
+     * but admins have a null tenant_id, so this relation naturally returns only
+     * this tenant's operator + staff rows.
+     *
+     * @return HasMany<User, $this>
+     */
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class, 'tenant_id');
+    }
+
+    /**
      * Returns all settings as a key→value map, cached for the request lifetime.
      *
      * @return array<string, string|null>

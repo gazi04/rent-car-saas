@@ -7,6 +7,7 @@ use App\Filament\Resources\Tenants\Pages\EditTenant;
 use App\Filament\Resources\Tenants\Pages\ListTenants;
 use App\Filament\Resources\Tenants\Pages\ViewTenant;
 use App\Filament\Resources\Tenants\RelationManagers\PaymentsRelationManager;
+use App\Filament\Resources\Tenants\RelationManagers\UsersRelationManager;
 use App\Filament\Resources\Tenants\Schemas\TenantForm;
 use App\Filament\Resources\Tenants\Tables\TenantsTable;
 use App\Models\Booking;
@@ -127,6 +128,7 @@ class TenantResource extends Resource
     public static function getRelations(): array
     {
         return [
+            UsersRelationManager::class,
             PaymentsRelationManager::class,
         ];
     }

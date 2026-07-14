@@ -9,6 +9,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
@@ -50,6 +51,17 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail, Pas
     public function isAdmin(): bool
     {
         return $this->role === 'admin' && $this->tenant_id === null;
+    }
+
+    /**
+     * The tenant this operator/staff account belongs to (null for Super Admins).
+     * Read-only convenience for the admin panel's user management.
+     *
+     * @return BelongsTo<Tenant, $this>
+     */
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
     }
 
     /**
