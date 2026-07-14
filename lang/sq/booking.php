@@ -75,7 +75,7 @@ return [
     // Step 2 — details
     'customer_name' => 'Emri i plotë',
     'customer_phone' => 'Numri i telefonit',
-    'customer_email' => 'Email (opcionale)',
+    'customer_email' => 'Email',
     'pickup_location' => 'Vendi i marrjes (opcionale)',
     'notes' => 'Shënime (opcionale)',
 

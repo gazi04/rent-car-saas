@@ -75,7 +75,7 @@ return [
     // Step 2 — details
     'customer_name' => 'Full name',
     'customer_phone' => 'Phone number',
-    'customer_email' => 'Email (optional)',
+    'customer_email' => 'Email',
     'pickup_location' => 'Pickup location (optional)',
     'notes' => 'Notes (optional)',
 
