@@ -7,6 +7,7 @@ use App\Enums\VehicleStatus;
 use App\Http\Controllers\CancelBookingController;
 use App\Http\Controllers\DownloadAgreementController;
 use App\Http\Middleware\EnsureTenantIsActive;
+use App\Models\BlockedDate;
 use App\Models\Booking;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
@@ -85,14 +86,28 @@ Route::middleware([
 
     // Availability JSON endpoint — feeds Flatpickr disabled ranges.
     // Route-model-bound and tenant-scoped (global scope); no cross-tenant leakage.
+    // Dates are serialised date-only (Y-m-d) on purpose: a UTC datetime ("...Z")
+    // makes Flatpickr parse it as UTC then re-anchor to the viewer's local day,
+    // shifting the whole disabled range a day for visitors west of UTC. A bare
+    // Y-m-d is parsed in local time, so the calendar is correct in every timezone.
     Route::get('/vehicles/{vehicle}/availability', function (Vehicle $vehicle) {
         abort_unless($vehicle->is_public && $vehicle->status === VehicleStatus::Available, 404);
+
+        $toRange = fn (Booking|BlockedDate $row): array => [
+            'start_date' => $row->start_date->toDateString(),
+            'end_date' => $row->end_date->toDateString(),
+        ];
 
         return response()->json([
             'unavailable' => $vehicle->bookings()
                 ->whereIn('status', BookingStatus::blocking())
-                ->get(['start_date', 'end_date']),
-            'blocked' => $vehicle->blockedDates()->get(['start_date', 'end_date']),
+                ->get(['start_date', 'end_date'])
+                ->map($toRange)
+                ->values(),
+            'blocked' => $vehicle->blockedDates()
+                ->get(['start_date', 'end_date'])
+                ->map($toRange)
+                ->values(),
         ]);
     })->name('vehicle.availability');
 });
