@@ -2,10 +2,13 @@
 
 namespace App\Services\Ai;
 
+use App\Ai\Agents\BusinessSummaryAgent;
 use App\Enums\BookingStatus;
+use App\Exceptions\AiRequestFailedException;
 use App\Models\Booking;
 use App\Models\Vehicle;
 use Carbon\CarbonInterface;
+use Throwable;
 
 /**
  * Turns the last summary_period_days of a tenant's booking data into 3-5
@@ -15,10 +18,10 @@ use Carbon\CarbonInterface;
  */
 class BusinessSummaryGenerator
 {
-    public function __construct(private readonly AiChatService $chat) {}
-
     /**
      * @return array{content: string, period_start: CarbonInterface, period_end: CarbonInterface}
+     *
+     * @throws AiRequestFailedException
      */
     public function generate(string $locale): array
     {
@@ -28,18 +31,19 @@ class BusinessSummaryGenerator
 
         $language = $locale === 'sq' ? 'Albanian' : 'English';
 
-        $content = $this->chat->chat(messages: [
-            [
-                'role' => 'system',
-                'content' => "You are a business analyst for a small car-rental company. Write 3-5 short sentences in {$language}, "
-                    .'plain language and no jargon, summarizing how the week went and what needs attention. '
-                    .'Base every statement strictly on the numbers provided; do not invent trends.',
-            ],
-            [
-                'role' => 'user',
-                'content' => json_encode($this->metrics($days, $periodStart), JSON_PRETTY_PRINT),
-            ],
-        ]);
+        try {
+            $response = (new BusinessSummaryAgent($language))->prompt(
+                (string) json_encode($this->metrics($days, $periodStart), JSON_PRETTY_PRINT),
+            );
+        } catch (Throwable $e) {
+            throw AiRequestFailedException::wrap($e);
+        }
+
+        $content = $response->text;
+
+        if (trim($content) === '') {
+            throw AiRequestFailedException::malformedResponse();
+        }
 
         return [
             'content' => $content,

@@ -2,9 +2,13 @@
 
 namespace App\Services\Ai;
 
+use App\Ai\Agents\PricingSuggestionAgent;
 use App\Enums\BookingStatus;
+use App\Exceptions\AiRequestFailedException;
 use App\Models\Booking;
 use App\Models\Vehicle;
+use Laravel\Ai\Responses\StructuredAgentResponse;
+use Throwable;
 
 /**
  * Suggests a daily rate for one vehicle from its ~90-day booking history plus
@@ -16,40 +20,24 @@ class PricingSuggestionService
 {
     private const HISTORY_DAYS = 90;
 
-    public function __construct(private readonly AiChatService $chat) {}
-
     /**
      * @return array{suggested_daily_rate: float, reasoning: string}
+     *
+     * @throws AiRequestFailedException
      */
     public function suggest(Vehicle $vehicle): array
     {
+        try {
+            /** @var StructuredAgentResponse $response */
+            $response = (new PricingSuggestionAgent)->prompt(
+                (string) json_encode($this->pricingData($vehicle), JSON_PRETTY_PRINT),
+            );
+        } catch (Throwable $e) {
+            throw AiRequestFailedException::wrap($e);
+        }
+
         /** @var array{suggested_daily_rate: float|int, reasoning: string} $result */
-        $result = $this->chat->chat(
-            messages: [
-                [
-                    'role' => 'system',
-                    'content' => 'You advise a small car-rental company on pricing. Suggest a realistic daily rate in EUR '
-                        .'based strictly on the data provided (recent demand, current rates, category benchmarks). '
-                        .'Keep the reasoning to 2-3 sentences a non-analyst can follow.',
-                ],
-                [
-                    'role' => 'user',
-                    'content' => json_encode($this->pricingData($vehicle), JSON_PRETTY_PRINT),
-                ],
-            ],
-            jsonSchema: [
-                'name' => 'pricing_suggestion',
-                'schema' => [
-                    'type' => 'object',
-                    'properties' => [
-                        'suggested_daily_rate' => ['type' => 'number'],
-                        'reasoning' => ['type' => 'string'],
-                    ],
-                    'required' => ['suggested_daily_rate', 'reasoning'],
-                    'additionalProperties' => false,
-                ],
-            ],
-        );
+        $result = $response->toArray();
 
         return [
             'suggested_daily_rate' => round((float) $result['suggested_daily_rate'], 2),

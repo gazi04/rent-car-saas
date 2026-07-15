@@ -2,7 +2,12 @@
 
 namespace App\Services\Ai;
 
+use App\Ai\Agents\VehicleListingAgent;
+use App\Exceptions\AiRequestFailedException;
 use App\Models\Vehicle;
+use Laravel\Ai\Files;
+use Laravel\Ai\Responses\StructuredAgentResponse;
+use Throwable;
 
 /**
  * Writes a public rental-listing description from the vehicle form's specs and
@@ -12,10 +17,10 @@ use App\Models\Vehicle;
  */
 class VehicleListingWriter
 {
-    public function __construct(private readonly AiChatService $chat) {}
-
     /**
      * @param  array<string, mixed>  $specs  Current vehicle form state.
+     *
+     * @throws AiRequestFailedException
      */
     public function write(array $specs, ?Vehicle $vehicle, string $locale): string
     {
@@ -52,71 +57,52 @@ class VehicleListingWriter
 
         $facts = implode("\n", $lines);
 
-        $content = [
-            ...$this->photoParts($vehicle),
-            [
-                'type' => 'text',
-                'text' => "Write a listing description in {$language} for this rental vehicle using only these facts"
-                    .($vehicle ? ' and the attached photos' : '').":\n{$facts}",
-            ],
-        ];
+        $prompt = "Write a listing description in {$language} for this rental vehicle using only these facts"
+            .($vehicle ? ' and the attached photos' : '').":\n{$facts}";
+
+        try {
+            /** @var StructuredAgentResponse $response */
+            $response = (new VehicleListingAgent)->prompt(
+                $prompt,
+                attachments: $this->photoAttachments($vehicle),
+            );
+        } catch (Throwable $e) {
+            throw AiRequestFailedException::wrap($e);
+        }
 
         /** @var array{description: string} $result */
-        $result = $this->chat->chat(
-            messages: [
-                [
-                    'role' => 'system',
-                    'content' => 'You write short, appealing descriptions for a car-rental booking website. '
-                        .'2-3 sentences, plain text, no headings or bullet lists, no price, '
-                        .'and never invent features that are not in the provided facts or visible in the photos.',
-                ],
-                ['role' => 'user', 'content' => $content],
-            ],
-            jsonSchema: [
-                'name' => 'vehicle_listing',
-                'schema' => [
-                    'type' => 'object',
-                    'properties' => ['description' => ['type' => 'string']],
-                    'required' => ['description'],
-                    'additionalProperties' => false,
-                ],
-            ],
-        );
+        $result = $response->toArray();
 
         return $result['description'];
     }
 
     /**
-     * Existing vehicle photos as base64 image parts (webp "web" conversion —
-     * smaller than the originals, plenty for describing the car).
+     * Existing vehicle photos as image attachments (webp "web" conversion —
+     * smaller than the originals, plenty for describing the car). The SDK
+     * handles reading + encoding each local file.
      *
-     * @return list<array<string, mixed>>
+     * @return list<Files\Image>
      */
-    private function photoParts(?Vehicle $vehicle): array
+    private function photoAttachments(?Vehicle $vehicle): array
     {
         if ($vehicle === null) {
             return [];
         }
 
-        $parts = $vehicle->getMedia('vehicle_photos')
+        $attachments = $vehicle->getMedia('vehicle_photos')
             ->take((int) config('ai.max_photos'))
-            ->map(function ($media): ?array {
+            ->map(function ($media): ?Files\Image {
                 $path = $media->hasGeneratedConversion('web') ? $media->getPath('web') : $media->getPath();
 
                 if (! is_file($path)) {
                     return null;
                 }
 
-                return [
-                    'type' => 'image_url',
-                    'image_url' => [
-                        'url' => 'data:image/webp;base64,'.base64_encode((string) file_get_contents($path)),
-                    ],
-                ];
+                return Files\Image::fromPath($path);
             })
             ->filter()
             ->all();
 
-        return array_values($parts);
+        return array_values($attachments);
     }
 }
