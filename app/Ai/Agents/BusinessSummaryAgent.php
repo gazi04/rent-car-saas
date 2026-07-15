@@ -2,6 +2,7 @@
 
 namespace App\Ai\Agents;
 
+use App\Ai\Contracts\ReportsAiUsage;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\JsonSchema\Types\Type;
 use Laravel\Ai\Attributes\Model;
@@ -19,9 +20,14 @@ use Laravel\Ai\Promptable;
  */
 #[Provider('github')]
 #[Model('openai/gpt-4.1')]
-class BusinessSummaryAgent implements Agent, HasStructuredOutput
+class BusinessSummaryAgent implements Agent, HasStructuredOutput, ReportsAiUsage
 {
     use Promptable;
+
+    public function aiFeature(): string
+    {
+        return 'summary';
+    }
 
     public function instructions(): string
     {

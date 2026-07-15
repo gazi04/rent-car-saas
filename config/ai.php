@@ -186,4 +186,28 @@ return [
     /** How many days of data the weekly business summary covers. */
     'summary_period_days' => 7,
 
+    /*
+    |--------------------------------------------------------------------------
+    | AI usage pricing (estimated € per 1,000,000 tokens, per model)
+    |--------------------------------------------------------------------------
+    |
+    | Cost is computed app-side (providers return token counts only, never a
+    | price) by AiCostEstimator using this formula:
+    |
+    |   non_cached_input = prompt_tokens − cache_read_input_tokens
+    |   cost = non_cached_input           / 1e6 * input
+    |        + cache_read_input_tokens     / 1e6 * (cached_input ?? input)
+    |        + (completion + reasoning)    / 1e6 * output
+    |
+    | Beta runs on GitHub Models (openai/gpt-4.1, free) — no row here, so cost
+    | resolves to 0 while usage tokens are still recorded. Add a row (keyed by
+    | the exact model string the agent reports) when a paid model is wired; no
+    | code change is needed. Prices are in EUR — verify against live provider
+    | pricing and apply the current USD→EUR rate before relying on them.
+    |
+    */
+    'pricing' => [
+        // 'gpt-5-mini' => ['input' => 0.00, 'cached_input' => 0.00, 'output' => 0.00],
+    ],
+
 ];
