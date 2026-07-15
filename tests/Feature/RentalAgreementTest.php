@@ -10,6 +10,7 @@ use App\Models\Vehicle;
 use App\Services\RentalAgreementService;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
@@ -73,7 +74,9 @@ it('generates a PDF stored at the tenant path and creates a Contract row', funct
         ->and($contract->booking_id)->toBe($booking->id)
         ->and($contract->tenant_id)->toBe($tenant->id)
         ->and($contract->path)->toBe($expectedPath)
-        ->and($contract->generated_at)->not->toBeNull();
+        ->and($contract->generated_at)->not->toBeNull()
+        // A5: the dead `token` column was dropped — it must not come back.
+        ->and(Schema::hasColumn('contracts', 'token'))->toBeFalse();
 
     Storage::assertExists($expectedPath);
 });

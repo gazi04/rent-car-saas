@@ -46,7 +46,7 @@ it('reactivates a suspended tenant when its period is extended', function () {
         ->callTableAction('extend_period', $tenant, data: ['mode' => 'add_days', 'days' => 30])
         ->assertHasNoTableActionErrors();
 
-    expect($tenant->refresh()->status)->toBe('active');
+    expect($tenant->refresh()->status->value)->toBe('active');
 });
 
 it('records an extended_period audit entry with no payment row', function () {

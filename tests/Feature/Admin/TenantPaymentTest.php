@@ -73,7 +73,7 @@ it('reactivates a suspended tenant when a payment is recorded', function () {
         ->callTableAction('record_payment', $tenant, data: paymentData())
         ->assertHasNoTableActionErrors();
 
-    expect($tenant->refresh()->status)->toBe('active');
+    expect($tenant->refresh()->status->value)->toBe('active');
 });
 
 it('updates the tenant plan when a different plan is paid for', function () {

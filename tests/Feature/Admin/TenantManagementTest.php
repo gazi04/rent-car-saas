@@ -90,7 +90,7 @@ it('approves a pending tenant and starts its 30-day trial period', function () {
 
     $tenant->refresh();
 
-    expect($tenant->status)->toBe('active')
+    expect($tenant->status->value)->toBe('active')
         ->and($tenant->paid_until->toDateString())
         ->toBe(now()->addDays(config('billing.trial_days'))->toDateString());
 });
@@ -111,10 +111,10 @@ it('suspends and reactivates a tenant', function () {
     $tenant = Tenant::factory()->create(['status' => 'active']);
 
     Livewire::test(ListTenants::class)->callTableAction('suspend', $tenant);
-    expect($tenant->refresh()->status)->toBe('suspended');
+    expect($tenant->refresh()->status->value)->toBe('suspended');
 
     Livewire::test(ListTenants::class)->callTableAction('reactivate', $tenant);
-    expect($tenant->refresh()->status)->toBe('active');
+    expect($tenant->refresh()->status->value)->toBe('active');
 });
 
 it('rejects a tenant', function () {
@@ -123,5 +123,5 @@ it('rejects a tenant', function () {
 
     Livewire::test(ListTenants::class)->callTableAction('reject', $tenant);
 
-    expect($tenant->refresh()->status)->toBe('cancelled');
+    expect($tenant->refresh()->status->value)->toBe('cancelled');
 });

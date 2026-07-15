@@ -82,7 +82,7 @@ it('keeps a tenant active inside the 7-day grace period', function () {
 
     artisan('tenants:process-subscriptions')->assertSuccessful();
 
-    expect($tenant->refresh()->status)->toBe('active');
+    expect($tenant->refresh()->status->value)->toBe('active');
     Notification::assertNothingSent();
 });
 
@@ -92,7 +92,7 @@ it('suspends a tenant past the grace period and notifies the admins', function (
 
     artisan('tenants:process-subscriptions')->assertSuccessful();
 
-    expect($tenant->refresh()->status)->toBe('suspended');
+    expect($tenant->refresh()->status->value)->toBe('suspended');
 
     Notification::assertSentTo($admin, TenantSubscriptionSuspended::class);
     // Filament's bell entry also goes through the notification system, so the
@@ -105,7 +105,7 @@ it('skips tenants that are not enrolled (paid_until null)', function () {
 
     artisan('tenants:process-subscriptions')->assertSuccessful();
 
-    expect($tenant->refresh()->status)->toBe('active');
+    expect($tenant->refresh()->status->value)->toBe('active');
     Mail::assertNothingQueued();
     Notification::assertNothingSent();
 });

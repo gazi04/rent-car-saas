@@ -143,6 +143,14 @@ it('rejects an unlisted font_family value at the model layer, bypassing the Fila
     assertDatabaseMissing('tenant_settings', ['key' => 'font_family', 'value' => 'EvilFont']);
 });
 
+it('rejects an unlisted default_locale value at the model layer, bypassing the Filament form', function () {
+    [$tenant] = brandingSetup('valueguard8');
+
+    $tenant->setSetting('default_locale', 'de');
+
+    assertDatabaseMissing('tenant_settings', ['key' => 'default_locale', 'value' => 'de']);
+});
+
 it('still clears a color setting to null via an empty string after adding the format guard', function () {
     [$tenant] = brandingSetup('valueguard4');
 
@@ -246,6 +254,17 @@ it('rejects font not in the allow-list', function () {
         ->call('save');
 
     assertDatabaseMissing('tenant_settings', ['key' => 'font_family', 'value' => 'EvilFont']);
+});
+
+it('saves default_locale via the save action', function () {
+    [$tenant] = brandingSetup('page5');
+
+    Livewire::test(BrandingSettings::class)
+        ->set('data.default_locale', 'en')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    assertDatabaseHas('tenant_settings', ['tenant_id' => $tenant->id, 'key' => 'default_locale', 'value' => 'en']);
 });
 
 // ── Public layout CSS vars ─────────────────────────────────────────────────────

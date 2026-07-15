@@ -67,7 +67,7 @@ it('shows the content for the visitor\'s chosen language', function () {
     $tenant->setSetting('home_hero_heading_en', 'Drive in style');
     tenancy()->end();
 
-    // Session locale defaults to sq.
+    // No session locale and no tenant default_locale set — falls through to sq.
     $this->get(tenant_url('homelang', '/'))
         ->assertOk()
         ->assertSee('Vozit me stil')
@@ -78,6 +78,34 @@ it('shows the content for the visitor\'s chosen language', function () {
         ->assertOk()
         ->assertSee('Drive in style')
         ->assertDontSee('Vozit me stil');
+});
+
+it('uses the tenant\'s configured default locale when the visitor has no session override', function () {
+    $tenant = homeTenant('homelocaledefault');
+
+    tenancy()->initialize($tenant);
+    $tenant->setSetting('default_locale', 'en');
+    tenancy()->end();
+
+    // No session locale set — falls through to the tenant's configured default.
+    $this->get(tenant_url('homelocaledefault', '/'))
+        ->assertOk()
+        ->assertSee(trans('booking.home_hero_heading', [], 'en'))
+        ->assertDontSee(trans('booking.home_hero_heading', [], 'sq'));
+});
+
+it('lets an explicit session locale win over the tenant default', function () {
+    $tenant = homeTenant('homelocalesession');
+
+    tenancy()->initialize($tenant);
+    $tenant->setSetting('default_locale', 'en');
+    tenancy()->end();
+
+    $this->withSession(['locale' => 'sq'])
+        ->get(tenant_url('homelocalesession', '/'))
+        ->assertOk()
+        ->assertSee(trans('booking.home_hero_heading', [], 'sq'))
+        ->assertDontSee(trans('booking.home_hero_heading', [], 'en'));
 });
 
 it('falls back to the other language when only one is filled', function () {

@@ -10,6 +10,7 @@ use App\Models\Customer;
 use App\Models\Tenant;
 use App\Models\Vehicle;
 use App\Services\BookingService;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Event;
 
 beforeEach(function () {
@@ -210,4 +211,30 @@ it('writes status and timestamp in one atomic update on markActive', function ()
         ->and($fresh->started_at)->not->toBeNull()
         ->and($fresh->start_odometer)->toBe(12345)
         ->and($booking->status)->toBe(BookingStatus::Active); // in-memory model synced
+});
+
+// A4 — reference is unique per-tenant, not globally.
+it('lets two different tenants hold the same booking reference', function () {
+    $reference = 'BK-2026-SAME01';
+
+    // tenant A is already initialized by beforeEach.
+    $bookingA = Booking::factory()->create(['reference' => $reference]);
+
+    $tenantB = Tenant::factory()->create();
+    tenancy()->end();
+    tenancy()->initialize($tenantB);
+    $bookingB = Booking::factory()->create(['reference' => $reference]);
+
+    expect($bookingA->reference)->toBe($reference)
+        ->and($bookingB->reference)->toBe($reference)
+        ->and($bookingB->tenant_id)->toBe($tenantB->id)
+        ->and($bookingB->tenant_id)->not->toBe($bookingA->tenant_id);
+});
+
+it('still rejects a duplicate booking reference within the same tenant', function () {
+    $reference = 'BK-2026-DUP001';
+    Booking::factory()->create(['reference' => $reference]);
+
+    expect(fn () => Booking::factory()->create(['reference' => $reference]))
+        ->toThrow(QueryException::class);
 });

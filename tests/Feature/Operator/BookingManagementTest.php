@@ -308,6 +308,68 @@ it('requires both dates and rejects end before start when blocking dates', funct
     expect(BlockedDate::query()->count())->toBe(0);
 });
 
+// ─── Availability calendar: block dates reject an overlapping booking ─────────
+
+it('rejects blocking a range that overlaps an existing booking', function () {
+    [, , $vehicle] = bookingOperatorFor('calbookoverlap');
+
+    Booking::factory()->forVehicle($vehicle)->confirmed()->create([
+        'start_date' => '2030-09-10',
+        'end_date' => '2030-09-15',
+    ]);
+
+    Livewire::test(AvailabilityCalendar::class)
+        ->callAction('create', data: [
+            'vehicle_id' => $vehicle->id,
+            'start_date' => '2030-09-12',
+            'end_date' => '2030-09-18',
+            'reason' => 'maintenance',
+        ])
+        ->assertHasActionErrors(['end_date']);
+
+    expect(BlockedDate::query()->count())->toBe(0);
+});
+
+it('allows blocking a range that starts exactly when a booking ends (no overlap)', function () {
+    [, , $vehicle] = bookingOperatorFor('calbookadjacent');
+
+    Booking::factory()->forVehicle($vehicle)->confirmed()->create([
+        'start_date' => '2030-09-10',
+        'end_date' => '2030-09-15',
+    ]);
+
+    Livewire::test(AvailabilityCalendar::class)
+        ->callAction('create', data: [
+            'vehicle_id' => $vehicle->id,
+            'start_date' => '2030-09-15',
+            'end_date' => '2030-09-20',
+            'reason' => 'maintenance',
+        ])
+        ->assertHasNoActionErrors();
+
+    expect(BlockedDate::query()->where('vehicle_id', $vehicle->id)->count())->toBe(1);
+});
+
+it('allows blocking over a cancelled booking (freed range)', function () {
+    [, , $vehicle] = bookingOperatorFor('calbookcancelled');
+
+    Booking::factory()->forVehicle($vehicle)->cancelled()->create([
+        'start_date' => '2030-09-10',
+        'end_date' => '2030-09-15',
+    ]);
+
+    Livewire::test(AvailabilityCalendar::class)
+        ->callAction('create', data: [
+            'vehicle_id' => $vehicle->id,
+            'start_date' => '2030-09-11',
+            'end_date' => '2030-09-14',
+            'reason' => 'maintenance',
+        ])
+        ->assertHasNoActionErrors();
+
+    expect(BlockedDate::query()->where('vehicle_id', $vehicle->id)->count())->toBe(1);
+});
+
 // ─── Availability calendar: block dates reject a cross-tenant vehicle (M6) ────
 
 it('rejects blocking a vehicle that belongs to another tenant', function () {

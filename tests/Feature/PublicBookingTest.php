@@ -130,6 +130,32 @@ it('returns blocking bookings and blocked dates for a vehicle', function () {
         ->assertJsonCount(0, 'blocked');
 });
 
+it('serialises availability dates as date-only Y-m-d, not UTC datetimes', function () {
+    // A "...T00:00:00Z" payload makes Flatpickr re-anchor the disabled range to the
+    // viewer's local day, shifting the calendar a day for visitors west of UTC.
+    // Bare Y-m-d is parsed in local time and stays correct in every timezone.
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+
+    $vehicle = publicVehicle();
+
+    Booking::factory()->forVehicle($vehicle)->confirmed()->create([
+        'start_date' => '2030-06-01',
+        'end_date' => '2030-06-05',
+    ]);
+
+    tenancy()->end();
+
+    $response = $this->get(tenant_url('ardi', "/vehicles/{$vehicle->id}/availability"))
+        ->assertOk();
+
+    $range = $response->json('unavailable.0');
+
+    expect($range['start_date'])->toBe('2030-06-01')
+        ->and($range['end_date'])->toBe('2030-06-05')
+        ->and($range['start_date'])->toMatch('/^\d{4}-\d{2}-\d{2}$/');
+});
+
 it('returns 404 for the availability endpoint on a private (unlisted) vehicle', function () {
     $tenant = publicTenant('ardi');
     tenancy()->initialize($tenant);
@@ -180,6 +206,7 @@ it('creates a pending booking on submit and redirects to confirmation', function
         ->call('nextStep')           // advance to step 2
         ->set('customerName', 'Gazi Halili')
         ->set('customerPhone', '+38344123456')
+        ->set('customerEmail', 'gazi@example.com')
         ->call('nextStep')           // advance to step 3
         ->call('submit')
         ->assertRedirect();
@@ -248,6 +275,26 @@ it('blocks advancing from step 2 when required details are missing', function ()
         ->assertSet('step', 2);
 });
 
+it('requires a customer email to advance from step 2', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+    $vehicle = publicVehicle();
+
+    Livewire::test('pages::public.vehicle-booking', ['vehicle' => $vehicle])
+        ->set('startDate', '2030-06-01')
+        ->set('endDate', '2030-06-04')
+        ->set('step', 2)
+        ->set('customerName', 'Gazi Halili')
+        ->set('customerPhone', '+38344123456')
+        ->call('nextStep')                     // email still empty
+        ->assertHasErrors(['customerEmail'])
+        ->assertSet('step', 2)
+        ->set('customerEmail', 'gazi@example.com')
+        ->call('nextStep')                     // now valid
+        ->assertHasNoErrors()
+        ->assertSet('step', 3);
+});
+
 it('bounces to step 1 and shows slot-taken flash on double booking', function () {
     $tenant = publicTenant('ardi');
     tenancy()->initialize($tenant);
@@ -263,6 +310,7 @@ it('bounces to step 1 and shows slot-taken flash on double booking', function ()
         ->set('endDate', '2030-06-04')
         ->set('customerName', 'Test Renter')
         ->set('customerPhone', '+38344000000')
+        ->set('customerEmail', 'renter@example.com')
         ->set('step', 3)
         ->call('submit')
         ->assertSet('slotTaken', true)
