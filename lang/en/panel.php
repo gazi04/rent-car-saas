@@ -97,6 +97,7 @@ return [
     'ai_generated' => 'Generated with AI',
     'ai_error' => 'The AI request failed. Please try again.',
     'ai_suggest_price' => 'Suggest a rate with AI',
+    'ai_suggest_price_confirm' => 'Generate an AI price suggestion for this vehicle? The current rate won\'t change until you review and save.',
     'ai_apply_rate' => 'Apply this rate',
     'unauthorized' => 'You are not authorized to perform this action.',
     'ai_suggested_rate' => 'Suggested daily rate: €:rate',

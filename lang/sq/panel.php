@@ -97,6 +97,7 @@ return [
     'ai_generated' => 'U gjenerua me AI',
     'ai_error' => 'Kërkesa me AI dështoi. Ju lutemi provoni përsëri.',
     'ai_suggest_price' => 'Sugjero një çmim me AI',
+    'ai_suggest_price_confirm' => 'Të gjenerohet një sugjerim çmimi me AI për këtë automjet? Çmimi aktual nuk ndryshon derisa ta rishikoni dhe ta ruani.',
     'ai_apply_rate' => 'Apliko këtë çmim',
     'unauthorized' => 'Nuk jeni i autorizuar të kryeni këtë veprim.',
     'ai_suggested_rate' => 'Çmimi ditor i sugjeruar: €:rate',

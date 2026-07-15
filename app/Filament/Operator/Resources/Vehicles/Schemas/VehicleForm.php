@@ -23,7 +23,6 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Facades\Cache;
 
 class VehicleForm
 {
@@ -92,24 +91,14 @@ class VehicleForm
                                         && (tenant()?->allowsFeature(PlanFeature::AiPricingSuggestions) ?? (bool) PlanFeature::AiPricingSuggestions->default()))
                                     ->requiresConfirmation()
                                     ->modalHeading(__('panel.ai_suggest_price'))
+                                    ->modalDescription(__('panel.ai_suggest_price_confirm'))
                                     ->modalSubmitActionLabel(__('panel.ai_apply_rate'))
-                                    ->modalDescription(function (Vehicle $record): string {
-                                        try {
-                                            $suggestion = self::pricingSuggestion($record);
-                                        } catch (AiRequestFailedException) {
-                                            return __('panel.ai_error');
-                                        }
-
-                                        return __('panel.ai_suggested_rate', [
-                                            'rate' => number_format($suggestion['suggested_daily_rate'], 2),
-                                        ])."\n\n".$suggestion['reasoning'];
-                                    })
+                                    // The AI runs only on confirm — never on modal mount — so
+                                    // the confirmation modal opens instantly instead of hanging
+                                    // on the multi-second AI round-trip.
                                     ->action(function (Vehicle $record, Set $set): void {
-                                        // Reuse the suggestion the modal computed on mount; the
-                                        // cache bridges the two requests so this never fires a
-                                        // second (possibly divergent) AI call.
                                         try {
-                                            $suggestion = self::pricingSuggestion($record);
+                                            $suggestion = app(PricingSuggestionService::class)->suggest($record);
                                         } catch (AiRequestFailedException) {
                                             Notification::make()->title(__('panel.ai_error'))->danger()->send();
 
@@ -117,6 +106,14 @@ class VehicleForm
                                         }
 
                                         $set('daily_rate', $suggestion['suggested_daily_rate']);
+
+                                        Notification::make()
+                                            ->title(__('panel.ai_suggested_rate', [
+                                                'rate' => number_format($suggestion['suggested_daily_rate'], 2),
+                                            ]))
+                                            ->body($suggestion['reasoning'])
+                                            ->success()
+                                            ->send();
                                     })
                             ),
                         TextInput::make('hourly_rate')
@@ -230,31 +227,5 @@ class VehicleForm
                             ),
                     ]),
             ]);
-    }
-
-    /**
-     * Compute (and briefly cache) the AI pricing suggestion for a vehicle. The
-     * confirmation modal and the Confirm action run in two separate requests;
-     * caching keyed by vehicle id makes them share a single AI call so the
-     * applied rate always matches the one the operator saw.
-     *
-     * @return array{suggested_daily_rate: float, reasoning: string}
-     *
-     * @throws AiRequestFailedException
-     */
-    protected static function pricingSuggestion(Vehicle $vehicle): array
-    {
-        $key = 'ai_pricing_suggestion:'.tenant()?->getTenantKey().':'.$vehicle->id;
-
-        // Resolve the default store directly instead of going through the Cache
-        // facade: the tenancy CacheManager tag-wraps every facade cache call, and
-        // non-tagging stores (database/file) throw "does not support tagging".
-        // The key already scopes by tenant + globally-unique vehicle id, so
-        // isolation is preserved without the tenancy tag.
-        return Cache::store()->remember(
-            $key,
-            now()->addMinutes(10),
-            fn (): array => app(PricingSuggestionService::class)->suggest($vehicle),
-        );
     }
 }
