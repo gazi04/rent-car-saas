@@ -8,6 +8,7 @@ use App\Exceptions\AiRequestFailedException;
 use App\Models\Booking;
 use App\Models\Vehicle;
 use Carbon\CarbonInterface;
+use Laravel\Ai\Responses\StructuredAgentResponse;
 use Throwable;
 
 /**
@@ -19,34 +20,37 @@ use Throwable;
 class BusinessSummaryGenerator
 {
     /**
-     * @return array{content: string, period_start: CarbonInterface, period_end: CarbonInterface}
+     * @return array{content: array{en: string, sq: string}, period_start: CarbonInterface, period_end: CarbonInterface}
      *
      * @throws AiRequestFailedException
      */
-    public function generate(string $locale): array
+    public function generate(): array
     {
         $days = (int) config('ai.summary_period_days');
         $periodStart = now()->subDays($days)->startOfDay();
         $periodEnd = now()->startOfDay();
 
-        $language = $locale === 'sq' ? 'Albanian' : 'English';
-
         try {
-            $response = (new BusinessSummaryAgent($language))->prompt(
+            /** @var StructuredAgentResponse $response */
+            $response = (new BusinessSummaryAgent)->prompt(
                 (string) json_encode($this->metrics($days, $periodStart), JSON_PRETTY_PRINT),
             );
         } catch (Throwable $e) {
             throw AiRequestFailedException::wrap($e);
         }
 
-        $content = $response->text;
+        /** @var array{en?: string, sq?: string} $result */
+        $result = $response->toArray();
 
-        if (trim($content) === '') {
+        $en = trim((string) ($result['en'] ?? ''));
+        $sq = trim((string) ($result['sq'] ?? ''));
+
+        if ($en === '' || $sq === '') {
             throw AiRequestFailedException::malformedResponse();
         }
 
         return [
-            'content' => $content,
+            'content' => ['en' => $en, 'sq' => $sq],
             'period_start' => $periodStart,
             'period_end' => $periodEnd,
         ];

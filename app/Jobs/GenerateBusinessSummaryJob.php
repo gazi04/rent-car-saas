@@ -39,7 +39,7 @@ class GenerateBusinessSummaryJob implements ShouldQueue
         tenancy()->initialize($this->tenant);
 
         try {
-            $summary = $generator->generate($this->tenant->operatorLocale());
+            $summary = $generator->generate();
 
             AiBusinessSummary::query()->updateOrCreate(
                 [

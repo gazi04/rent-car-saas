@@ -20,7 +20,7 @@ class AiBusinessSummaryFactory extends Factory
         $periodStart = now()->subDays(7)->startOfDay();
 
         return [
-            'content' => $this->faker->paragraph(),
+            'content' => ['en' => $this->faker->paragraph(), 'sq' => $this->faker->paragraph()],
             'period_start' => $periodStart,
             'period_end' => now()->startOfDay(),
         ];

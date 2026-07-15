@@ -244,8 +244,15 @@ class VehicleForm
      */
     protected static function pricingSuggestion(Vehicle $vehicle): array
     {
-        return Cache::remember(
-            "ai_pricing_suggestion:{$vehicle->id}",
+        $key = 'ai_pricing_suggestion:'.tenant()?->getTenantKey().':'.$vehicle->id;
+
+        // Resolve the default store directly instead of going through the Cache
+        // facade: the tenancy CacheManager tag-wraps every facade cache call, and
+        // non-tagging stores (database/file) throw "does not support tagging".
+        // The key already scopes by tenant + globally-unique vehicle id, so
+        // isolation is preserved without the tenancy tag.
+        return Cache::store()->remember(
+            $key,
             now()->addMinutes(10),
             fn (): array => app(PricingSuggestionService::class)->suggest($vehicle),
         );

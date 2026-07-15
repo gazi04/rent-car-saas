@@ -29,7 +29,7 @@
 
         @if ($summary)
             <p class="whitespace-pre-line text-sm leading-6 text-gray-950 dark:text-white">
-                {{ $summary->content }}
+                {{ $summary->contentFor() }}
             </p>
             <p class="mt-3 text-xs text-gray-500 dark:text-gray-400">
                 {{ __('panel.ai_summary_period', [
