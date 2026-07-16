@@ -14,13 +14,17 @@ use Laravel\Ai\Promptable;
 /**
  * Suggests a daily rate (EUR) plus short reasoning for one vehicle. The pricing
  * data is passed as the prompt; structured output guarantees a numeric rate and
- * a reasoning string. Routed to the GitHub Models "github" provider (see config/ai.php).
+ * a reasoning string. The reasoning is shown to the operator immediately, so it
+ * is written in the operator's current UI language (passed via the constructor).
+ * Routed to the GitHub Models "github" provider (see config/ai.php).
  */
 #[Provider('github')]
 #[Model('openai/gpt-4.1')]
 class PricingSuggestionAgent implements Agent, HasStructuredOutput, ReportsAiUsage
 {
     use Promptable;
+
+    public function __construct(public string $language = 'English') {}
 
     public function aiFeature(): string
     {
@@ -31,7 +35,7 @@ class PricingSuggestionAgent implements Agent, HasStructuredOutput, ReportsAiUsa
     {
         return 'You advise a small car-rental company on pricing. Suggest a realistic daily rate in EUR '
             .'based strictly on the data provided (recent demand, current rates, category benchmarks). '
-            .'Keep the reasoning to 2-3 sentences a non-analyst can follow.';
+            ."Keep the reasoning to 2-3 sentences a non-analyst can follow, written in {$this->language}.";
     }
 
     /**

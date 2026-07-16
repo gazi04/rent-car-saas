@@ -25,11 +25,13 @@ class PricingSuggestionService
      *
      * @throws AiRequestFailedException
      */
-    public function suggest(Vehicle $vehicle): array
+    public function suggest(Vehicle $vehicle, string $locale = 'en'): array
     {
+        $language = $locale === 'sq' ? 'Albanian' : 'English';
+
         try {
             /** @var StructuredAgentResponse $response */
-            $response = (new PricingSuggestionAgent)->prompt(
+            $response = (new PricingSuggestionAgent($language))->prompt(
                 (string) json_encode($this->pricingData($vehicle), JSON_PRETTY_PRINT),
             );
         } catch (Throwable $e) {
