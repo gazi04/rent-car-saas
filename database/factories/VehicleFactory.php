@@ -42,7 +42,7 @@ class VehicleFactory extends Factory
             'discount_value' => null,
             'mileage_limit' => fake()->randomElement([null, 150, 200, 300]),
             'deposit' => fake()->randomElement([null, 100, 200, 300]),
-            'description' => fake()->optional()->sentence(),
+            'description' => ['en' => fake()->sentence(), 'sq' => fake()->sentence()],
             'custom_fields' => null,
             'status' => VehicleStatus::Available,
             'is_public' => true,

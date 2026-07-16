@@ -52,6 +52,7 @@ class Vehicle extends Model implements HasMedia
             'transmission' => Transmission::class,
             'status' => VehicleStatus::class,
             'custom_fields' => 'array',
+            'description' => 'array',
             'is_public' => 'boolean',
             'daily_rate' => 'decimal:2',
             'hourly_rate' => 'decimal:2',
@@ -60,6 +61,20 @@ class Vehicle extends Model implements HasMedia
             'discount_value' => 'decimal:2',
             'deposit' => 'decimal:2',
         ];
+    }
+
+    /**
+     * Resolve the vehicle description for a locale, falling back to English and
+     * then to whatever language is stored. `description` holds a bilingual
+     * {en, sq} payload; the public storefront picks by the visitor's locale.
+     */
+    public function descriptionFor(?string $locale = null): string
+    {
+        /** @var array<string, string> $content */
+        $content = $this->description ?? [];
+        $locale ??= app()->getLocale();
+
+        return $content[$locale] ?? $content['en'] ?? (reset($content) ?: '');
     }
 
     public function registerMediaCollections(): void

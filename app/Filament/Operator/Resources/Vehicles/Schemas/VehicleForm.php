@@ -98,7 +98,7 @@ class VehicleForm
                                     // on the multi-second AI round-trip.
                                     ->action(function (Vehicle $record, Set $set): void {
                                         try {
-                                            $suggestion = app(PricingSuggestionService::class)->suggest($record);
+                                            $suggestion = app(PricingSuggestionService::class)->suggest($record, app()->getLocale());
                                         } catch (AiRequestFailedException) {
                                             Notification::make()->title(__('panel.ai_error'))->danger()->send();
 
@@ -191,9 +191,11 @@ class VehicleForm
                             ->options(VehicleStatus::class)
                             ->default(VehicleStatus::Available->value)
                             ->required(),
-                        Textarea::make('description')
-                            ->label(__('panel.description'))
+                        Textarea::make('description.en')
+                            ->label(__('panel.description_en'))
                             ->columnSpanFull()
+                            // The AI writer fills both language boxes from one call, so the
+                            // "generate" action lives on the English field and sets both.
                             ->hintAction(
                                 Action::make('generateDescription')
                                     ->label(__('panel.ai_generate'))
@@ -212,7 +214,6 @@ class VehicleForm
                                                     'custom_fields' => $get('custom_fields'),
                                                 ],
                                                 vehicle: $record,
-                                                locale: app()->getLocale(),
                                             );
                                         } catch (AiRequestFailedException) {
                                             Notification::make()->title(__('panel.ai_error'))->danger()->send();
@@ -220,11 +221,15 @@ class VehicleForm
                                             return;
                                         }
 
-                                        $set('description', $description);
+                                        $set('description.en', $description['en']);
+                                        $set('description.sq', $description['sq']);
 
                                         Notification::make()->title(__('panel.ai_generated'))->success()->send();
                                     })
                             ),
+                        Textarea::make('description.sq')
+                            ->label(__('panel.description_sq'))
+                            ->columnSpanFull(),
                     ]),
             ]);
     }

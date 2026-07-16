@@ -71,6 +71,8 @@ return [
     'is_public' => 'Show on public booking page',
     'public' => 'Public',
     'description' => 'Description',
+    'description_en' => 'Description (English)',
+    'description_sq' => 'Description (Albanian)',
 
     // Availability calendar
     'availability_calendar' => 'Availability calendar',

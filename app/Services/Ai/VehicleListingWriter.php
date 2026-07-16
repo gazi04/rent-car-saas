@@ -12,20 +12,19 @@ use Throwable;
 /**
  * Writes a public rental-listing description from the vehicle form's specs and
  * (when the vehicle already exists) up to config('ai.max_photos') photos.
- * Generates in the operator's current panel language; nothing is persisted —
- * the result fills the form field for the operator to review and save.
+ * Generates both English and Albanian in one call; nothing is persisted — the
+ * result fills the two form fields for the operator to review and save.
  */
 class VehicleListingWriter
 {
     /**
      * @param  array<string, mixed>  $specs  Current vehicle form state.
+     * @return array{en: string, sq: string}
      *
      * @throws AiRequestFailedException
      */
-    public function write(array $specs, ?Vehicle $vehicle, string $locale): string
+    public function write(array $specs, ?Vehicle $vehicle): array
     {
-        $language = $locale === 'sq' ? 'Albanian' : 'English';
-
         $rawFacts = [
             'name' => $specs['name'] ?? null,
             'category' => $specs['category'] ?? null,
@@ -57,7 +56,7 @@ class VehicleListingWriter
 
         $facts = implode("\n", $lines);
 
-        $prompt = "Write a listing description in {$language} for this rental vehicle using only these facts"
+        $prompt = 'Write a listing description for this rental vehicle using only these facts'
             .($vehicle ? ' and the attached photos' : '').":\n{$facts}";
 
         try {
@@ -70,10 +69,17 @@ class VehicleListingWriter
             throw AiRequestFailedException::wrap($e);
         }
 
-        /** @var array{description: string} $result */
+        /** @var array{en?: string, sq?: string} $result */
         $result = $response->toArray();
 
-        return $result['description'];
+        $en = trim((string) ($result['en'] ?? ''));
+        $sq = trim((string) ($result['sq'] ?? ''));
+
+        if ($en === '' || $sq === '') {
+            throw AiRequestFailedException::malformedResponse();
+        }
+
+        return ['en' => $en, 'sq' => $sq];
     }
 
     /**

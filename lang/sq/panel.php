@@ -71,6 +71,8 @@ return [
     'is_public' => 'Shfaq në faqen publike të rezervimeve',
     'public' => 'Publik',
     'description' => 'Përshkrimi',
+    'description_en' => 'Përshkrimi (Anglisht)',
+    'description_sq' => 'Përshkrimi (Shqip)',
 
     // Kalendari i disponueshmërisë
     'availability_calendar' => 'Kalendari i disponueshmërisë',

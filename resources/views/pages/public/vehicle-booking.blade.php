@@ -206,8 +206,9 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
                 <span>{{ $vehicle->fuel_type->getLabel() }}</span>
                 <span>{{ $vehicle->transmission->getLabel() }}</span>
             </div>
-            @if ($vehicle->description)
-                <p class="text-sm text-gray-600 mt-2">{{ $vehicle->description }}</p>
+            @php($vehicleDescription = $vehicle->descriptionFor())
+            @if ($vehicleDescription !== '')
+                <p class="text-sm text-gray-600 mt-2">{{ $vehicleDescription }}</p>
             @endif
         </div>
     </div>
