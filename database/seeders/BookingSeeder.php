@@ -4,6 +4,8 @@ namespace Database\Seeders;
 
 use App\Models\BlockedDate;
 use App\Models\Booking;
+use App\Models\Customer;
+use App\Models\PromoCode;
 use App\Models\Tenant;
 use App\Models\Vehicle;
 use Illuminate\Database\Seeder;
@@ -33,11 +35,20 @@ class BookingSeeder extends Seeder
             return;
         }
 
+        $customer = Customer::first();
+        $promoCode = PromoCode::where('is_active', true)->first();
+
         // A mix of statuses across vehicles.
-        Booking::factory()->forVehicle($vehicles->first())->confirmed()->create();
+        Booking::factory()->forVehicle($vehicles->first())->confirmed()->create([
+            'customer_id' => $customer?->id,
+        ]);
         Booking::factory()->forVehicle($vehicles->first())->active()->create();
-        Booking::factory()->forVehicle($vehicles->get(1))->create();
-        Booking::factory()->forVehicle($vehicles->get(1))->completed()->create();
+        Booking::factory()->forVehicle($vehicles->get(1))->create([
+            'promo_code_id' => $promoCode?->id,
+        ]);
+        Booking::factory()->forVehicle($vehicles->get(1))->completed()->create([
+            'customer_id' => $customer?->id,
+        ]);
         Booking::factory()->forVehicle($vehicles->get(2))->cancelled()->create();
 
         // One manual maintenance block.

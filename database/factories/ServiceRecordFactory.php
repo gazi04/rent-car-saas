@@ -51,4 +51,11 @@ class ServiceRecordFactory extends Factory
             'next_due_on' => now()->subDay()->startOfDay(),
         ]);
     }
+
+    public function forVehicle(Vehicle $vehicle): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'vehicle_id' => $vehicle->id,
+        ]);
+    }
 }

@@ -16,7 +16,16 @@ class DatabaseSeeder extends Seeder
             PlanSeeder::class,
             TenantSeeder::class,
             VehicleSeeder::class,
+            CustomerSeeder::class,
+            PromoCodeSeeder::class,
             BookingSeeder::class,
+            ServiceRecordSeeder::class,
+            ContractSeeder::class,
+            ReviewSeeder::class,
+            TenantSettingSeeder::class,
+            TenantPaymentSeeder::class,
+            AiUsageLogSeeder::class,
+            AiBusinessSummarySeeder::class,
         ]);
     }
 }
