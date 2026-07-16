@@ -38,6 +38,18 @@ jobs:
       - name: Install Dependencies
         run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: npm
+
+      - name: Install NPM Dependencies
+        run: npm ci
+
+      - name: Build assets
+        run: npm run build
+
       - name: Prepare Environment
         run: |
           cp .env.example .env
