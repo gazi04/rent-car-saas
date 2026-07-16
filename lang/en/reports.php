@@ -17,4 +17,10 @@ return [
     'utilisation_percent' => 'Utilisation',
     'no_vehicles' => 'No vehicles yet.',
     'no_bookings' => 'No bookings in this date range.',
+    'heatmap' => 'Occupancy heatmap',
+    'heatmap_demand' => 'Fleet demand',
+    'heatmap_range_too_long' => 'Select 31 days or fewer to see the day-by-day grid.',
+    'heatmap_no_occupancy' => 'No bookings or blocked dates in this range.',
+    'heatmap_free' => 'Available',
+    'legend_completed' => 'Completed',
 ];

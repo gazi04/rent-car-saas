@@ -17,4 +17,10 @@ return [
     'utilisation_percent' => 'Shfrytëzimi',
     'no_vehicles' => 'Ende nuk ka automjete.',
     'no_bookings' => 'Nuk ka rezervime në këtë periudhë.',
+    'heatmap' => 'Harta e shfrytëzimit',
+    'heatmap_demand' => 'Kërkesa e flotës',
+    'heatmap_range_too_long' => 'Zgjidhni 31 ditë ose më pak për të parë rrjetën ditore.',
+    'heatmap_no_occupancy' => 'Nuk ka rezervime ose data të bllokuara në këtë periudhë.',
+    'heatmap_free' => 'I lirë',
+    'legend_completed' => 'Të përfunduara',
 ];

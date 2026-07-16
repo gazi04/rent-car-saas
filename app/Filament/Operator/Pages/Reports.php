@@ -7,6 +7,7 @@ use App\Enums\PlanFeature;
 use App\Filament\Support\HelpAction;
 use App\Models\Booking;
 use App\Models\Vehicle;
+use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
@@ -27,11 +28,28 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class Reports extends Page
 {
+    /**
+     * Column cap for the occupancy heatmap. The page defaults to the current
+     * month (~28-31 days), so the cap is invisible in normal use; beyond it a
+     * day-column grid stops being readable and the payload grows with
+     * days x fleet size. Long ranges are answered by utilisation() above.
+     */
+    public const MAX_HEATMAP_DAYS = 31;
+
     protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedChartBar;
 
     protected static ?int $navigationSort = 9;
 
     protected string $view = 'filament.operator.pages.reports';
+
+    /**
+     * Memoized heatmap payload. Deliberately private: a public property would be
+     * serialized into every Livewire request payload, and this is a days x fleet
+     * matrix.
+     *
+     * @var array<string, mixed>|null
+     */
+    private ?array $heatmapCache = null;
 
     /**
      * Owner-only + plan-gated: hidden and 404 for staff accounts, and when the
@@ -146,6 +164,245 @@ class Reports extends Page
             $percent < 30 => 'danger',
             $percent < 70 => 'warning',
             default => 'success',
+        };
+    }
+
+    /**
+     * Per-vehicle x calendar-day occupancy grid for the selected range, plus the
+     * fleet-wide demand aggregate per day.
+     *
+     * Two deliberate divergences from utilisation() above — both disclosed to the
+     * operator in help.reports.body:
+     *
+     * 1. Day math is CALENDAR DAYS TOUCHED (09:00 Mon -> 09:00 Wed occupies three
+     *    day cells), where utilisation() measures rental DURATION via ceil(hours/24)
+     *    (48h = 2 days). Both are correct for their own question.
+     * 2. Completed bookings are included, or every past range would render blank —
+     *    utilisation() counts only BookingStatus::blocking().
+     *
+     * Every date crossing to the view is a bare Y-m-d, never an ISO-8601 instant:
+     * a cell is a calendar day, and a "...Z" datetime lets the browser re-anchor it
+     * to the viewer's local day and shift the whole grid a column west of UTC. Same
+     * rule as the public availability endpoint (routes/tenant.php).
+     *
+     * @return array{
+     *     truncated: bool,
+     *     fleet_size: int<0, max>,
+     *     days: list<array{date: string, day: string, dow: string, is_weekend: bool}>,
+     *     rows: list<array{
+     *         vehicle: string,
+     *         occupied_days: int<0, max>,
+     *         cells: list<array{kind: 'free'|'booking'|'block', color: string|null, label: string|null}>,
+     *     }>,
+     *     demand: list<array{date: string, occupied: int<0, max>, percent: int<0, 100>}>,
+     * }
+     */
+    public function heatmap(): array
+    {
+        if ($this->heatmapCache !== null) {
+            /** @var array{truncated: bool, fleet_size: int<0, max>, days: list<array{date: string, day: string, dow: string, is_weekend: bool}>, rows: list<array{vehicle: string, occupied_days: int<0, max>, cells: list<array{kind: 'free'|'booking'|'block', color: string|null, label: string|null}>}>, demand: list<array{date: string, occupied: int<0, max>, percent: int<0, 100>}>} */
+            return $this->heatmapCache;
+        }
+
+        [$rangeStart, $rangeEnd] = $this->range();
+
+        $days = $this->heatmapDays($rangeStart, $rangeEnd);
+
+        // Guard before any query: a long range can't render as day columns.
+        if (count($days) > self::MAX_HEATMAP_DAYS) {
+            return $this->heatmapCache = [
+                'truncated' => true,
+                'fleet_size' => 0,
+                'days' => [],
+                'rows' => [],
+                'demand' => [],
+            ];
+        }
+
+        /** @var array<string, int> $dayIndex Y-m-d => column position. */
+        $dayIndex = array_flip(array_column($days, 'date'));
+        $columns = count($days);
+
+        $vehicles = Vehicle::query()
+            ->with([
+                'bookings' => fn ($query) => $query
+                    ->where('status', '!=', BookingStatus::Cancelled)
+                    ->where('start_date', '<=', $rangeEnd)
+                    ->where('end_date', '>=', $rangeStart),
+                'blockedDates' => fn ($query) => $query
+                    ->where('start_date', '<=', $rangeEnd)
+                    ->where('end_date', '>=', $rangeStart),
+            ])
+            ->get();
+
+        $rows = [];
+
+        foreach ($vehicles as $vehicle) {
+            /** @var list<array{kind: 'free'|'booking'|'block', color: string|null, label: string|null}> $cells */
+            $cells = array_fill(0, $columns, ['kind' => 'free', 'color' => null, 'label' => null]);
+            $rank = array_fill(0, $columns, -1);
+
+            // Blocks first, then bookings — a later write wins, so a booking
+            // naturally takes precedence over a block on the same day without
+            // an explicit branch. Committed revenue outranks a self-made note.
+            foreach ($vehicle->blockedDates as $block) {
+                foreach ($this->touchedColumns($block->start_date, $block->end_date, $rangeStart, $rangeEnd, $dayIndex) as $i) {
+                    $cells[$i] = [
+                        'kind' => 'block',
+                        'color' => '#9ca3af',
+                        'label' => __('panel.legend_blocked').($block->reason !== null ? " — {$block->reason}" : ''),
+                    ];
+                    $rank[$i] = 0;
+                }
+            }
+
+            foreach ($vehicle->bookings as $booking) {
+                $bookingRank = $this->bookingRank($booking->status);
+
+                foreach ($this->touchedColumns($booking->start_date, $booking->end_date, $rangeStart, $rangeEnd, $dayIndex) as $i) {
+                    // Same-day turnover: the most-committed booking owns the cell.
+                    if ($rank[$i] >= $bookingRank && $cells[$i]['kind'] === 'booking') {
+                        continue;
+                    }
+
+                    $cells[$i] = [
+                        'kind' => 'booking',
+                        'color' => $booking->status->calendarColor(),
+                        'label' => "{$booking->reference} — {$booking->status->getLabel()}",
+                    ];
+                    $rank[$i] = $bookingRank;
+                }
+            }
+
+            $rows[] = [
+                'vehicle' => $vehicle->name,
+                'occupied_days' => count(array_filter($cells, fn (array $cell): bool => $cell['kind'] !== 'free')),
+                'cells' => $cells,
+            ];
+        }
+
+        $fleetSize = $vehicles->count();
+
+        // Demand is the column-wise reduction of the grid above: a single
+        // vehicle-day is binary, but "how much of the fleet is out" has real
+        // magnitude, so this is the only layer where intensity means anything.
+        $demand = [];
+
+        foreach ($days as $i => $day) {
+            $occupied = count(array_filter(
+                $rows,
+                fn (array $row): bool => $row['cells'][$i]['kind'] !== 'free',
+            ));
+
+            $demand[] = [
+                'date' => $day['date'],
+                'occupied' => $occupied,
+                // Clamped so the 0..100 bound holds and fleet_size = 0 is safe.
+                'percent' => $fleetSize > 0
+                    ? max(0, min(100, (int) round($occupied / $fleetSize * 100)))
+                    : 0,
+            ];
+        }
+
+        return $this->heatmapCache = [
+            'truncated' => false,
+            'fleet_size' => $fleetSize,
+            'days' => $days,
+            'rows' => $rows,
+            'demand' => $demand,
+        ];
+    }
+
+    /** Intensity bucket for a fleet-demand cell. Mirrors utilisationColor()'s thresholds. */
+    public function demandClass(int $percent): string
+    {
+        return match (true) {
+            $percent === 0 => 'bg-gray-100 dark:bg-white/5',
+            $percent < 30 => 'bg-success-200 dark:bg-success-500/30',
+            $percent < 70 => 'bg-warning-300 dark:bg-warning-500/40',
+            default => 'bg-danger-400 dark:bg-danger-500/60',
+        };
+    }
+
+    /**
+     * The range's calendar days as bare Y-m-d column descriptors.
+     *
+     * @return list<array{date: string, day: string, dow: string, is_weekend: bool}>
+     */
+    protected function heatmapDays(CarbonInterface $rangeStart, CarbonInterface $rangeEnd): array
+    {
+        $days = [];
+        $cursor = CarbonImmutable::parse($rangeStart->toDateString());
+        $last = $rangeEnd->toDateString();
+
+        // Cap the walk itself: a multi-year range would otherwise build a huge
+        // array only to be thrown away by the caller's truncation guard.
+        while ($cursor->toDateString() <= $last && count($days) <= self::MAX_HEATMAP_DAYS) {
+            $days[] = [
+                'date' => $cursor->toDateString(),
+                'day' => $cursor->format('j'),
+                'dow' => $cursor->isoFormat('dd'),
+                'is_weekend' => $cursor->isWeekend(),
+            ];
+            $cursor = $cursor->addDay();
+        }
+
+        return $days;
+    }
+
+    /**
+     * Column positions an interval touches, clamped to the range. Day bucketing
+     * happens here in PHP (UTC) on Y-m-d strings — never in the browser.
+     *
+     * Inclusive on both ends, so a booking returning at 00:00 still marks that
+     * day. That one-day overcount is deliberate: it matches the public
+     * availability endpoint, which blocks the same day for customers.
+     *
+     * @param  array<string, int>  $dayIndex
+     * @return list<int>
+     */
+    protected function touchedColumns(
+        CarbonInterface $start,
+        CarbonInterface $end,
+        CarbonInterface $rangeStart,
+        CarbonInterface $rangeEnd,
+        array $dayIndex,
+    ): array {
+        $from = $start->greaterThan($rangeStart) ? $start : $rangeStart;
+        $to = $end->lessThan($rangeEnd) ? $end : $rangeEnd;
+
+        if ($from->greaterThan($to)) {
+            return [];
+        }
+
+        $columns = [];
+        $cursor = $from->toDateString();
+        $last = $to->toDateString();
+
+        // Y-m-d is lexicographically ordered, so string comparison is safe here.
+        while ($cursor <= $last) {
+            if (isset($dayIndex[$cursor])) {
+                $columns[] = $dayIndex[$cursor];
+            }
+
+            $cursor = CarbonImmutable::parse($cursor)->addDay()->toDateString();
+        }
+
+        return $columns;
+    }
+
+    /**
+     * How committed a booking is, for deciding which one owns a shared day cell.
+     * Local to this page on purpose — the enum is a shared contract and this
+     * ordering is only meaningful to the heatmap.
+     */
+    protected function bookingRank(BookingStatus $status): int
+    {
+        return match ($status) {
+            BookingStatus::Active => 3,
+            BookingStatus::Confirmed => 2,
+            BookingStatus::Pending => 1,
+            default => 0,
         };
     }
 

@@ -31,6 +31,8 @@ return [
             'Revenue only counts active and completed bookings — pending, rejected, and cancelled bookings are excluded.',
             'Utilisation is booked days ÷ days in the range, per vehicle — low percentages point to idle cars worth promoting or repricing.',
             'Export CSV downloads every booking overlapping the selected range, including reference, customer, vehicle, dates, status, and total.',
+            'The occupancy heatmap shows which vehicle was taken on which day. Booking colours match the availability calendar, and grey hatching marks dates you blocked manually. The bottom row is fleet demand — how much of your fleet was out that day.',
+            'The heatmap and the utilisation table above answer different questions, so their numbers differ on purpose. The heatmap counts calendar days touched (a car out 09:00 Monday to 09:00 Wednesday touches 3 days), while the table counts rental duration (48 hours = 2 days). The heatmap also includes completed bookings so past months are not blank, while the table counts only pending, confirmed, and active ones.',
         ],
     ],
 

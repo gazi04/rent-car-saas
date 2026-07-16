@@ -31,6 +31,8 @@ return [
             'Të ardhurat llogarisin vetëm rezervimet aktive dhe të përfunduara — ato në pritje, të refuzuara dhe të anuluara nuk përfshihen.',
             'Shfrytëzimi është ditët e rezervuara ÷ ditët në periudhë, për secilin automjet — përqindjet e ulëta tregojnë makina joaktive që ia vlen të promovohen ose t\'u ndryshohet çmimi.',
             'Eksporto CSV shkarkon çdo rezervim që përputhet me periudhën e zgjedhur, përfshirë referencën, klientin, automjetin, datat, statusin dhe totalin.',
+            'Harta e shfrytëzimit tregon cili automjet ishte i zënë në cilën ditë. Ngjyrat e rezervimeve përputhen me kalendarin e disponueshmërisë, ndërsa vijat e pjerrëta gri shënojnë datat që i keni bllokuar manualisht. Rreshti i fundit është kërkesa e flotës — sa nga flota juaj ishte jashtë atë ditë.',
+            'Harta dhe tabela e shfrytëzimit më lart u përgjigjen pyetjeve të ndryshme, prandaj shifrat e tyre ndryshojnë qëllimisht. Harta numëron ditët kalendarike që preken (një makinë e marrë të hënën në 09:00 dhe e kthyer të mërkurën në 09:00 prek 3 ditë), ndërsa tabela numëron kohëzgjatjen e qirasë (48 orë = 2 ditë). Harta përfshin gjithashtu rezervimet e përfunduara që muajt e kaluar të mos dalin bosh, ndërsa tabela numëron vetëm ato në pritje, të konfirmuara dhe aktive.',
         ],
     ],
 
