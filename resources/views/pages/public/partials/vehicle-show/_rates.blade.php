@@ -1,4 +1,6 @@
-{{-- Rate table + Book Now CTA. --}}
+{{-- Rate table + Book Now CTA. The CTA is swapped for an "unavailable" notice when
+     the vehicle is off the road (backlog #3): the page still renders so the stock
+     alert below it can be joined, but the booking page would 404 anyway. --}}
 <div class="bg-white rounded-lg border border-gray-200 p-6">
     <h2 class="text-lg font-semibold text-gray-900 mb-4">{{ __('booking.rates_heading') }}</h2>
 
@@ -33,8 +35,14 @@
         @endif
     </dl>
 
-    <a href="{{ route('public.vehicle.book', $vehicle) }}"
-       class="mt-6 block text-center rounded-md bg-primary px-4 py-3 text-base font-semibold text-white hover:bg-secondary transition-colors">
-        {{ __('booking.book_now') }}
-    </a>
+    @if ($isBookable ?? true)
+        <a href="{{ route('public.vehicle.book', $vehicle) }}"
+           class="mt-6 block text-center rounded-md bg-primary px-4 py-3 text-base font-semibold text-white hover:bg-secondary transition-colors">
+            {{ __('booking.book_now') }}
+        </a>
+    @else
+        <div class="mt-6 rounded-md bg-gray-100 px-4 py-3 text-center text-sm font-medium text-gray-500">
+            {{ __('booking.vehicle_unavailable_notice') }}
+        </div>
+    @endif
 </div>

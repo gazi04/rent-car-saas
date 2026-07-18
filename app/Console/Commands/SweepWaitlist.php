@@ -11,17 +11,19 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
 /**
- * Daily fan-out for the waitlist (backlog #2): queues one SweepWaitlistJob per
- * active tenant whose plan enables the feature.
+ * Daily fan-out for the waitlist (backlog #2) and the stock alert (#3): queues one
+ * SweepWaitlistJob per active tenant whose plan enables either feature. The job
+ * decides which of its two passes actually run — the features are gated
+ * independently, so a tenant can have one without the other.
  *
- * The event listener notifies immediately; this sweep is what makes it honest
- * over time. It offers a slot to the next person in line when the first never
- * booked, catches dates freed by anything other than a cancellation (a removed
- * maintenance block, say), covers any missed event, and retires entries that
- * can no longer serve anyone.
+ * The event listeners notify immediately; this sweep is what makes both features
+ * honest over time. It offers a slot to the next person in line when the first
+ * never booked, catches dates freed by anything other than a cancellation (a
+ * removed maintenance block, say), covers any missed event, and retires entries
+ * that can no longer serve anyone.
  */
 #[Signature('waitlist:sweep')]
-#[Description('Notify waitlisted customers whose vehicle is now bookable, for every eligible tenant')]
+#[Description('Notify waitlisted and stock-alert customers whose vehicle is now bookable, for every eligible tenant')]
 class SweepWaitlist extends Command
 {
     public function handle(): int
@@ -35,7 +37,7 @@ class SweepWaitlist extends Command
             ->cursor();
 
         foreach ($tenants as $tenant) {
-            if (! $tenant->allowsFeature(PlanFeature::Waitlist)) {
+            if (! $tenant->allowsFeature(PlanFeature::Waitlist) && ! $tenant->allowsFeature(PlanFeature::StockAlert)) {
                 continue;
             }
 

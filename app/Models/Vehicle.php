@@ -6,6 +6,7 @@ use App\Enums\FuelType;
 use App\Enums\Transmission;
 use App\Enums\VehicleCategory;
 use App\Enums\VehicleStatus;
+use App\Events\VehicleBecameAvailable;
 use Database\Factories\VehicleFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -61,6 +62,30 @@ class Vehicle extends Model implements HasMedia
             'discount_value' => 'decimal:2',
             'deposit' => 'decimal:2',
         ];
+    }
+
+    /**
+     * Announce a vehicle becoming bookable again, for the stock alert (#3).
+     *
+     * The app's convention is an explicit Event::dispatch() from a service —
+     * BookingService does exactly that for its four events. There is no
+     * VehicleService to host one, and status/is_public are written from two
+     * unrelated places (the Filament form and ProcessVehicleMaintenanceJob), so a
+     * dispatch at either call site would be a rule half-applied that the next
+     * write path silently opts out of. A model hook is the only total one.
+     *
+     * Both fields matter: an operator can hide a vehicle while people are already
+     * waiting on it, so is_public flipping back is as much a republish as status is.
+     */
+    protected static function booted(): void
+    {
+        static::updated(function (Vehicle $vehicle): void {
+            $becamePublic = $vehicle->wasChanged('status') || $vehicle->wasChanged('is_public');
+
+            if ($becamePublic && $vehicle->is_public && $vehicle->status === VehicleStatus::Available) {
+                VehicleBecameAvailable::dispatch($vehicle);
+            }
+        });
     }
 
     /**

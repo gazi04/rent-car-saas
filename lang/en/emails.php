@@ -114,4 +114,12 @@ return [
         'no_hold' => 'We have not reserved it for you — the vehicle goes to whoever books first, so do not wait too long.',
         'outro' => 'Thank you for choosing :operator.',
     ],
+    'vehicle_back_in_stock' => [
+        'subject' => 'The :vehicle is available again at :operator',
+        'greeting' => 'Hello :name,',
+        'intro' => 'Good news — the :vehicle is back on the road and ready to book.',
+        'button' => 'See the vehicle',
+        'no_hold' => 'Everyone who asked about this vehicle has been told, and we have not reserved it for anyone — it goes to whoever books first.',
+        'outro' => 'Thank you for choosing :operator.',
+    ],
 ];

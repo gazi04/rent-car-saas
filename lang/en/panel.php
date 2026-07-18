@@ -223,4 +223,7 @@ return [
     'waitlist_state' => 'State',
     'waitlist_waiting' => 'Waiting',
     'waitlist_notified' => 'Notified',
+    'waitlist_type' => 'Type',
+    'waitlist_type_dates' => 'Wanted dates',
+    'waitlist_type_stock_alert' => 'Waiting for the vehicle',
 ];

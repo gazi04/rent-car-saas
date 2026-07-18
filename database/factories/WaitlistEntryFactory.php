@@ -51,4 +51,13 @@ class WaitlistEntryFactory extends Factory
             'end_date' => now()->subDay()->startOfDay(),
         ]);
     }
+
+    /** Dateless: waiting on the vehicle itself, not a window (stock-alert shape). */
+    public function stockAlert(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'start_date' => null,
+            'end_date' => null,
+        ]);
+    }
 }

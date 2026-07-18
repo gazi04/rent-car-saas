@@ -1,9 +1,12 @@
 @php
     /** Shared vehicle card. $horizontal=true renders image beside content instead of above. */
     $horizontal = $horizontal ?? false;
+    /** Off-the-road vehicles are listed too (backlog #3) — dimmed, and the CTA
+        goes to the page to join the stock alert rather than promising a booking. */
+    $isBookable = $vehicle->status === \App\Enums\VehicleStatus::Available;
 @endphp
 
-<div class="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow {{ $horizontal ? 'sm:flex' : '' }}">
+<div class="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow {{ $horizontal ? 'sm:flex' : '' }} {{ $isBookable ? '' : 'opacity-75' }}">
     {{-- Cover photo --}}
     <div class="{{ $horizontal ? 'sm:w-64 sm:shrink-0 aspect-video sm:aspect-auto' : 'aspect-video' }} bg-gray-100 overflow-hidden">
         @if ($vehicle->getFirstMedia('vehicle_photos'))
@@ -34,6 +37,12 @@
                 <span>{{ $vehicle->fuel_type->getLabel() }}</span>
                 <span>{{ $vehicle->transmission->getLabel() }}</span>
             </div>
+
+            @unless ($isBookable)
+                <p class="mb-3 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+                    {{ __('booking.vehicle_unavailable_badge') }}
+                </p>
+            @endunless
         </div>
 
         <div class="flex items-center justify-between">
@@ -42,8 +51,8 @@
                 <span class="text-xs text-gray-500 ml-1">{{ __('booking.per_day') }}</span>
             </div>
             <a href="{{ route('public.vehicle', $vehicle) }}"
-               class="inline-flex items-center rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-white hover:bg-secondary transition-colors">
-                {{ __('booking.book_now') }}
+               class="inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium transition-colors {{ $isBookable ? 'bg-primary text-white hover:bg-secondary' : 'border border-gray-300 text-gray-700 hover:bg-gray-50' }}">
+                {{ $isBookable ? __('booking.book_now') : __('booking.stock_alert_submit') }}
             </a>
         </div>
     </div>

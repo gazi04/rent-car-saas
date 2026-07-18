@@ -116,4 +116,13 @@ return [
         'no_hold' => 'Nuk e kemi rezervuar për ju — automjetin e merr kush e rezervon i pari, prandaj mos prisni gjatë.',
         'outro' => 'Faleminderit që zgjodhët :operator.',
     ],
+    // Njoftim kur automjeti kthehet në dispozicion
+    'vehicle_back_in_stock' => [
+        'subject' => ':vehicle është sërish në dispozicion te :operator',
+        'greeting' => 'Përshëndetje :name,',
+        'intro' => 'Lajm i mirë — :vehicle është kthyer në rrugë dhe gati për rezervim.',
+        'button' => 'Shiko automjetin',
+        'no_hold' => 'Të gjithë ata që pyetën për këtë automjet janë njoftuar dhe nuk e kemi rezervuar për askënd — e merr kush e rezervon i pari.',
+        'outro' => 'Faleminderit që zgjodhët :operator.',
+    ],
 ];

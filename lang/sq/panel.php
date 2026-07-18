@@ -223,4 +223,7 @@ return [
     'waitlist_state' => 'Statusi',
     'waitlist_waiting' => 'Në pritje',
     'waitlist_notified' => 'Të njoftuar',
+    'waitlist_type' => 'Lloji',
+    'waitlist_type_dates' => 'Datat e kërkuara',
+    'waitlist_type_stock_alert' => 'Në pritje të automjetit',
 ];

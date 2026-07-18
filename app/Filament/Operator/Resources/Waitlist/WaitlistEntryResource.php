@@ -11,9 +11,9 @@ use Filament\Resources\Resource;
 use Filament\Tables\Table;
 
 /**
- * Demand the operator would otherwise never see: who wanted which vehicle,
- * when (backlog #2). Owner-only + plan-gated. Tenant isolation is automatic
- * via BelongsToTenant on WaitlistEntry.
+ * Demand the operator would otherwise never see: who wanted which vehicle, when
+ * (backlog #2), and who is waiting for one to come back (#3). Owner-only +
+ * plan-gated. Tenant isolation is automatic via BelongsToTenant on WaitlistEntry.
  *
  * Read-only by design — entries come from the public site, so there is no create
  * or edit page, only list + delete.
@@ -33,14 +33,27 @@ class WaitlistEntryResource extends Resource
         return __('panel.nav_waitlist');
     }
 
-    /** Owner-only + plan-gated: hidden and 404 for staff, and when the plan lacks the feature. */
+    /**
+     * Owner-only + plan-gated: hidden and 404 for staff, and when the plan enables
+     * neither feature.
+     *
+     * Either toggle opens it, because both entry types live in this one list —
+     * requiring Waitlist alone would leave a StockAlert-only tenant collecting
+     * entries they could never read.
+     */
     public static function canAccess(): bool
     {
         if (! (auth()->user()?->isOwner() ?? false)) {
             return false;
         }
 
-        return tenant()?->allowsFeature(PlanFeature::Waitlist) ?? (bool) PlanFeature::Waitlist->default();
+        return self::allowsFeature(PlanFeature::Waitlist)
+            || self::allowsFeature(PlanFeature::StockAlert);
+    }
+
+    private static function allowsFeature(PlanFeature $feature): bool
+    {
+        return tenant()?->allowsFeature($feature) ?? (bool) $feature->default();
     }
 
     public static function table(Table $table): Table

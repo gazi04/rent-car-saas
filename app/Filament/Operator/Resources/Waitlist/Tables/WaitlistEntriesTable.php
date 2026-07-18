@@ -60,6 +60,20 @@ class WaitlistEntriesTable
                         'notified' => $query->whereNotNull('notified_at'),
                         default => $query,
                     }),
+                // The two entry types answer different questions — "when is my
+                // fleet oversubscribed" vs "which car do people miss" — and a
+                // null start_date is what separates them.
+                SelectFilter::make('type')
+                    ->label(__('panel.waitlist_type'))
+                    ->options([
+                        'dates' => __('panel.waitlist_type_dates'),
+                        'stock_alert' => __('panel.waitlist_type_stock_alert'),
+                    ])
+                    ->query(fn ($query, array $data) => match ($data['value'] ?? null) {
+                        'dates' => $query->whereNotNull('start_date'),
+                        'stock_alert' => $query->whereNull('start_date'),
+                        default => $query,
+                    }),
             ])
             ->recordActions([
                 DeleteAction::make(),

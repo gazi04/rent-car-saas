@@ -16,11 +16,26 @@ use Livewire\Component;
 new #[Layout('layouts.public')] #[Title('Vehicle Details')] class extends Component {
     public Vehicle $vehicle;
 
+    /**
+     * Only is_public gates the page — status does not (backlog #3).
+     *
+     * An unavailable vehicle still has a real page, because that page is the only
+     * place a visitor can ask to hear when it comes back. is_public stays absolute:
+     * hiding a vehicle is a deliberate act and must keep meaning hidden, so there
+     * is nothing to subscribe to. The booking page and the availability endpoint
+     * keep the strict check — you can look, but you cannot book.
+     */
     public function mount(Vehicle $vehicle): void
     {
-        abort_unless($vehicle->is_public && $vehicle->status === VehicleStatus::Available, 404);
+        abort_unless($vehicle->is_public, 404);
 
         $this->vehicle = $vehicle;
+    }
+
+    #[Computed]
+    public function isBookable(): bool
+    {
+        return $this->vehicle->status === VehicleStatus::Available;
     }
 
     /** @return array<int, array{web: string, thumb: string}> */
@@ -87,11 +102,17 @@ new #[Layout('layouts.public')] #[Title('Vehicle Details')] class extends Compon
 
     public ?string $waitlistError = null;
 
+    /**
+     * A waitlist is about dates, so it only makes sense while the vehicle is
+     * actually on the road. Once it is off, dates are moot and the stock alert
+     * takes over — the two panels are never shown together.
+     */
     #[Computed]
     public function showsWaitlist(): bool
     {
-        return tenant()?->allowsFeature(PlanFeature::Waitlist)
-            ?? (bool) PlanFeature::Waitlist->default();
+        return $this->isBookable
+            && (tenant()?->allowsFeature(PlanFeature::Waitlist)
+                ?? (bool) PlanFeature::Waitlist->default());
     }
 
     /**
@@ -149,12 +170,79 @@ new #[Layout('layouts.public')] #[Title('Vehicle Details')] class extends Compon
         $this->waitlistJoined = true;
         $this->waitlistError = null;
     }
+
+    // ── Stock alert (backlog #3) ────────────────────────────────────────────────
+
+    public string $stockAlertName = '';
+
+    public string $stockAlertEmail = '';
+
+    public string $stockAlertPhone = '';
+
+    public bool $stockAlertJoined = false;
+
+    public ?string $stockAlertError = null;
+
+    #[Computed]
+    public function showsStockAlert(): bool
+    {
+        return ! $this->isBookable
+            && (tenant()?->allowsFeature(PlanFeature::StockAlert)
+                ?? (bool) PlanFeature::StockAlert->default());
+    }
+
+    /**
+     * No dates asked for: the want here is the vehicle itself, whenever it returns.
+     * That is what a null range means in waitlist_entries.
+     */
+    public function joinStockAlert(): void
+    {
+        // Re-assert the gate server-side. Unlike Filament — which re-checks
+        // Page::canAccess() on every hydration and refuses to mount a hidden
+        // action — a public Livewire SFC has no authorization hook, so this
+        // method is directly callable over the wire and hiding the panel proves
+        // nothing. This also covers a bookable vehicle, where the panel is gone
+        // but the wire call would otherwise still land.
+        abort_unless($this->showsStockAlert, 404);
+
+        $key = 'stock-alert-join:'.$this->vehicle->id.':'.request()->ip();
+
+        if (RateLimiter::tooManyAttempts($key, maxAttempts: 5)) {
+            $this->stockAlertError = __('booking.stock_alert_throttled');
+
+            return;
+        }
+
+        $this->validate([
+            'stockAlertName' => ['required', 'string', 'max:255'],
+            'stockAlertEmail' => ['required', 'email', 'max:255'],
+            'stockAlertPhone' => ['nullable', 'string', 'max:50'],
+        ]);
+
+        RateLimiter::hit($key, decaySeconds: 3600);
+
+        try {
+            app(WaitlistService::class)->joinStockAlert($this->vehicle, [
+                'name' => $this->stockAlertName,
+                'email' => $this->stockAlertEmail,
+                'phone' => $this->stockAlertPhone ?: null,
+                'locale' => app()->getLocale(),
+            ]);
+        } catch (UniqueConstraintViolationException) {
+            // Already waiting on this vehicle. Show the same thank-you rather than
+            // confirming the address is on the list.
+        }
+
+        $this->stockAlertJoined = true;
+        $this->stockAlertError = null;
+    }
 }; ?>
 
 <div>
     @php
         $vehicle = $this->vehicle;
         $photos = $this->photos;
+        $isBookable = $this->isBookable;
     @endphp
 
     @include('pages.public.partials.vehicle-show.' . $this->pageLayout)
@@ -163,5 +251,9 @@ new #[Layout('layouts.public')] #[Title('Vehicle Details')] class extends Compon
 
     @if ($this->showsWaitlist)
         @include('pages.public.partials.vehicle-show._waitlist')
+    @endif
+
+    @if ($this->showsStockAlert)
+        @include('pages.public.partials.vehicle-show._stock-alert')
     @endif
 </div>

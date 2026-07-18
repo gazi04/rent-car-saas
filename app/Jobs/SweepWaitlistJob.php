@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Enums\PlanFeature;
 use App\Models\Tenant;
 use App\Models\Vehicle;
 use App\Services\WaitlistService;
@@ -11,11 +12,15 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
- * Re-offers freed slots to the waitlist (backlog #2), for one tenant.
+ * Re-offers freed slots to the waitlist (backlog #2) and catches vehicles that
+ * came back without the event firing (#3), for one tenant.
  *
  * Dispatched from the central waitlist:sweep command, so the
  * QueueTenancyBootstrapper does NOT re-initialize tenancy for us — the job
  * initializes (and always ends) tenancy itself.
+ *
+ * The two features are gated independently, so each pass checks its own toggle:
+ * the command only guarantees at least one of them is on.
  */
 class SweepWaitlistJob implements ShouldQueue
 {
@@ -34,15 +39,45 @@ class SweepWaitlistJob implements ShouldQueue
         try {
             $waitlist->purgeExpired();
 
-            // Only vehicles someone is actually waiting on.
-            Vehicle::query()
-                ->whereHas('waitlistEntries', fn ($query) => $query->whereNull('notified_at')->whereNotNull('start_date'))
-                ->each(function (Vehicle $vehicle) use ($waitlist): void {
-                    $waitlist->notifyMatching($vehicle);
-                });
+            if ($this->tenant->allowsFeature(PlanFeature::Waitlist)) {
+                $this->sweepWaitlist($waitlist);
+            }
+
+            if ($this->tenant->allowsFeature(PlanFeature::StockAlert)) {
+                $this->sweepStockAlerts($waitlist);
+            }
         } finally {
             tenancy()->end();
         }
+    }
+
+    /**
+     * Notifies with no freed range, i.e. re-examines every pending entry against
+     * real availability. That is what moves the offer down the line when the person
+     * told first never booked.
+     */
+    private function sweepWaitlist(WaitlistService $waitlist): void
+    {
+        // Only vehicles someone is actually waiting on.
+        Vehicle::query()
+            ->whereHas('waitlistEntries', fn ($query) => $query->whereNull('notified_at')->whereNotNull('start_date'))
+            ->each(function (Vehicle $vehicle) use ($waitlist): void {
+                $waitlist->notifyMatching($vehicle);
+            });
+    }
+
+    /**
+     * The republish event covers this in the normal case; this pass is the safety
+     * net for one that never reached the queue. notifyStockAlerts() re-checks that
+     * the vehicle really is bookable, so no filter on that is needed here.
+     */
+    private function sweepStockAlerts(WaitlistService $waitlist): void
+    {
+        Vehicle::query()
+            ->whereHas('waitlistEntries', fn ($query) => $query->whereNull('notified_at')->whereNull('start_date'))
+            ->each(function (Vehicle $vehicle) use ($waitlist): void {
+                $waitlist->notifyStockAlerts($vehicle);
+            });
     }
 
     /**

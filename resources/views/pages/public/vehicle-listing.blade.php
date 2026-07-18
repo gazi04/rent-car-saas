@@ -41,12 +41,18 @@ new #[Layout('layouts.public')] #[Title('Browse Fleet')] class extends Component
         $this->resetPage();
     }
 
+    /**
+     * Unavailable vehicles are listed, not hidden (backlog #3) — their page is
+     * where the stock alert lives, so removing them from the fleet would leave
+     * nothing to click. They sort last so the bookable fleet still leads, and
+     * their cards say plainly that they cannot be booked. is_public still hides.
+     */
     #[Computed]
     public function vehicles(): LengthAwarePaginator
     {
         return Vehicle::query()
             ->where('is_public', true)
-            ->where('status', VehicleStatus::Available)
+            ->orderByRaw('CASE WHEN status = ? THEN 0 ELSE 1 END', [VehicleStatus::Available->value])
             ->with('media')
             ->when($this->category, fn ($q) => $q->where('category', $this->category))
             ->when($this->transmission, fn ($q) => $q->where('transmission', $this->transmission))
