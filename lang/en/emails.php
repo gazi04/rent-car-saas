@@ -106,4 +106,12 @@ return [
         'button' => 'Leave a Review',
         'outro' => 'Thank you for choosing :operator.',
     ],
+    'waitlist_slot_open' => [
+        'subject' => 'Your dates just opened up at :operator',
+        'greeting' => 'Hello :name,',
+        'intro' => 'Good news — the :vehicle is now free from :start to :end, the dates you asked about.',
+        'button' => 'Book these dates',
+        'no_hold' => 'We have not reserved it for you — the vehicle goes to whoever books first, so do not wait too long.',
+        'outro' => 'Thank you for choosing :operator.',
+    ],
 ];

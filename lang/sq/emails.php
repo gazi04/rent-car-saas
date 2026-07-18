@@ -107,4 +107,13 @@ return [
         'button' => 'Lini një vlerësim',
         'outro' => 'Faleminderit që zgjodhët :operator.',
     ],
+    // Njoftim kur lirohen datat e pritjes
+    'waitlist_slot_open' => [
+        'subject' => 'Datat tuaja sapo u liruan te :operator',
+        'greeting' => 'Përshëndetje :name,',
+        'intro' => 'Lajm i mirë — :vehicle është tani i lirë nga :start deri më :end, datat që kërkuat.',
+        'button' => 'Rezervo këto data',
+        'no_hold' => 'Nuk e kemi rezervuar për ju — automjetin e merr kush e rezervon i pari, prandaj mos prisni gjatë.',
+        'outro' => 'Faleminderit që zgjodhët :operator.',
+    ],
 ];
