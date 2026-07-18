@@ -8,7 +8,7 @@
     @php
         $counts = $this->bookingCounts();
         $utilisation = $this->utilisation();
-        $heatmap = $this->heatmap();
+        $heatmap = $this->showsHeatmap() ? $this->heatmap() : null;
     @endphp
 
     <style>
@@ -121,7 +121,8 @@
             @endif
         </x-filament::section>
 
-        {{-- Occupancy heatmap --}}
+        {{-- Occupancy heatmap — plan-gated separately from the rest of the page. --}}
+        @if ($heatmap !== null)
         <x-filament::section :heading="__('reports.heatmap')">
             @if ($heatmap['truncated'])
                 <p class="text-sm text-gray-500 dark:text-gray-400">{{ __('reports.heatmap_range_too_long') }}</p>
@@ -210,5 +211,6 @@
                 </div>
             @endif
         </x-filament::section>
+        @endif
     </div>
 </x-filament-panels::page>

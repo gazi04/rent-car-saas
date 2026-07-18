@@ -168,6 +168,18 @@ class Reports extends Page
     }
 
     /**
+     * Whether this tenant's plan includes the heatmap. Separate from the page's
+     * own Reports gate — a plan can have Reports without the heatmap. The
+     * heatmap lives on this page, so it is unreachable when Reports is off,
+     * whatever this returns (the plan-editor label says so).
+     */
+    public function showsHeatmap(): bool
+    {
+        return tenant()?->allowsFeature(PlanFeature::FleetHeatmap)
+            ?? (bool) PlanFeature::FleetHeatmap->default();
+    }
+
+    /**
      * Per-vehicle x calendar-day occupancy grid for the selected range, plus the
      * fleet-wide demand aggregate per day.
      *

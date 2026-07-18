@@ -19,6 +19,7 @@ enum PlanFeature: string implements HasLabel
     case VehicleLimit = 'vehicle_limit';
     case PhotosPerVehicle = 'photos_per_vehicle';
     case Reports = 'reports';
+    case FleetHeatmap = 'fleet_heatmap';
     case Branding = 'branding';
     case AiListingWriter = 'ai_listing_writer';
     case AiBusinessSummary = 'ai_business_summary';
@@ -33,7 +34,7 @@ enum PlanFeature: string implements HasLabel
     {
         return match ($this) {
             self::VehicleLimit, self::PhotosPerVehicle, self::StaffSeatLimit => PlanFeatureType::Limit,
-            self::Reports, self::Branding, self::Templates, self::PromoCodes, self::MaintenanceReminders,
+            self::Reports, self::FleetHeatmap, self::Branding, self::Templates, self::PromoCodes, self::MaintenanceReminders,
             self::Reviews, self::AiListingWriter, self::AiBusinessSummary, self::AiPricingSuggestions => PlanFeatureType::Toggle,
         };
     }
@@ -44,6 +45,7 @@ enum PlanFeature: string implements HasLabel
             self::VehicleLimit => 'Max vehicles',
             self::PhotosPerVehicle => 'Max photos per vehicle',
             self::Reports => 'Reports page + CSV export',
+            self::FleetHeatmap => 'Fleet utilization heatmap (requires Reports page)',
             self::Branding => 'Branding customization',
             self::AiListingWriter => 'AI vehicle listing writer',
             self::AiBusinessSummary => 'AI weekly business summary',
