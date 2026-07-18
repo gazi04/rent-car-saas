@@ -149,4 +149,17 @@ return [
     'stock_alert_joined_heading' => 'You are on the list',
     'stock_alert_joined_body' => 'We will email you as soon as this vehicle is available again.',
     'stock_alert_throttled' => 'Too many requests. Please try again later.',
+
+    // AI storefront FAQ concierge (#4)
+    'concierge_launcher' => 'Ask a question',
+    'concierge_title' => 'Questions?',
+    'concierge_close' => 'Close',
+    'concierge_greeting' => 'Hi! Ask me about deposits, cancellation, required documents or opening hours.',
+    'concierge_placeholder' => 'Type your question…',
+    'concierge_send' => 'Send',
+    'concierge_thinking' => 'Typing…',
+    'concierge_fallback' => 'I\'m not sure about that one — please contact the operator directly.',
+    'concierge_fallback_with_contact' => 'I\'m not sure about that one — please contact the operator directly: :contact',
+    'concierge_throttled' => 'We are getting a lot of questions right now — please try again a bit later, or contact the operator directly.',
+    'concierge_error' => 'Something went wrong answering that. Please try again in a moment.',
 ];

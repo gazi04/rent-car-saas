@@ -122,4 +122,14 @@ return [
             'Regjistrimet vijnë vetëm nga faqja juaj publike; nuk mund t\'i krijoni këtu. Fshini ato që nuk doni t\'i mbani.',
         ],
     ],
+
+    'concierge' => [
+        'title' => 'Concierge FAQ',
+        'body' => [
+            'Një bisedë në faqen tuaj publike që u përgjigjet pyetjeve të vizitorëve — depozita, anulimi, dokumentet e nevojshme, orari — duke përdorur vetëm tekstin FAQ që shkruani këtu. Nuk shpik kurrë politika: kur përgjigjja nuk është në tekstin tuaj, i thotë vizitorit t\'ju kontaktojë drejtpërdrejt.',
+            'Shkruani çdo politikë me fjalë të thjeshta, në shqip dhe/ose anglisht. Sa më shumë të mbuloni, aq më shumë mund të përgjigjet asistenti vetë; lëreni një gjuhë bosh për ta anashkaluar. Pa asnjë tekst FAQ në asnjë gjuhë, biseda nuk shfaqet fare.',
+            'Përgjigjet janë vetëm aq të mira sa ajo që shkruani, prandaj mbajeni këtë të saktë dhe të përditësuar — një shifër e vjetër depozite këtu është ajo që do t\'i thuhet vizitorit.',
+            'Ky funksion është i disponueshëm vetëm në planet që e përfshijnë.',
+        ],
+    ],
 ];

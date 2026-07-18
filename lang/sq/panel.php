@@ -163,6 +163,14 @@ return [
     'tmpl_save' => 'Ruaj shabllonet',
     'tmpl_saved' => 'Shabllonet u ruajtën',
 
+    // AI storefront FAQ concierge (#4)
+    'nav_concierge' => 'Concierge FAQ',
+    'concierge_faq' => 'Baza e njohurive FAQ',
+    'concierge_faq_hint' => 'Shkruani politikat tuaja me fjalë të thjeshta — depozita, anulimi, dokumentet e nevojshme, orari. Biseda në faqe u përgjigjet vizitorëve vetëm nga ky tekst dhe thotë "na kontaktoni" kur përgjigjja nuk është këtu. Lëreni një gjuhë bosh për ta anashkaluar.',
+    'concierge_faq_placeholder' => "Depozita: €200, kthehet në dorëzim.\nAnulimi: falas deri 48 orë para marrjes.\nDokumentet: patentë e vlefshme + letërnjoftim.\nOrari: Hën–Sht 08:00–18:00.",
+    'concierge_save' => 'Ruaj FAQ',
+    'concierge_saved' => 'FAQ u ruajt',
+
     // Kodet promocionale
     'nav_promo_codes' => 'Kodet promocionale',
     'promo_section' => 'Kodi promocional',

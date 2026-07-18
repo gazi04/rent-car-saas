@@ -75,6 +75,7 @@ class PlanSeeder extends Seeder
                     PlanFeature::AiListingWriter->value => true,
                     PlanFeature::AiBusinessSummary->value => true,
                     PlanFeature::AiPricingSuggestions->value => true,
+                    PlanFeature::AiConcierge->value => true,
                 ],
                 'sort_order' => 3,
             ],

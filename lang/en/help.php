@@ -122,4 +122,14 @@ return [
             'Entries are added from your public site only; you cannot create them here. Delete any you no longer want to keep.',
         ],
     ],
+
+    'concierge' => [
+        'title' => 'FAQ Concierge',
+        'body' => [
+            'A chat widget on your public site that answers visitor questions — deposit, cancellation, required documents, opening hours — using only the FAQ text you write here. It never invents policy: when the answer is not in your text it tells the visitor to contact you directly.',
+            'Write each policy in plain language, in Albanian and/or English. The more you cover, the more the assistant can answer on its own; leave a language blank to skip it. With no FAQ text in either language, the widget does not appear at all.',
+            'Answers are only as good as what you write, so keep this accurate and up to date — a stale deposit figure here is what a visitor will be told.',
+            'This feature is only available on plans that include it.',
+        ],
+    ],
 ];

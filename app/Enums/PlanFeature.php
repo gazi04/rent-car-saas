@@ -31,6 +31,7 @@ enum PlanFeature: string implements HasLabel
     case Reviews = 'reviews';
     case Waitlist = 'waitlist';
     case StockAlert = 'stock_alert';
+    case AiConcierge = 'ai_concierge';
 
     public function type(): PlanFeatureType
     {
@@ -38,7 +39,8 @@ enum PlanFeature: string implements HasLabel
             self::VehicleLimit, self::PhotosPerVehicle, self::StaffSeatLimit => PlanFeatureType::Limit,
             self::Reports, self::FleetHeatmap, self::Branding, self::Templates, self::PromoCodes,
             self::MaintenanceReminders, self::Reviews, self::Waitlist, self::StockAlert,
-            self::AiListingWriter, self::AiBusinessSummary, self::AiPricingSuggestions => PlanFeatureType::Toggle,
+            self::AiListingWriter, self::AiBusinessSummary, self::AiPricingSuggestions,
+            self::AiConcierge => PlanFeatureType::Toggle,
         };
     }
 
@@ -60,6 +62,7 @@ enum PlanFeature: string implements HasLabel
             self::Reviews => 'Review request email + home showcase',
             self::Waitlist => 'Waitlist for booked-out dates',
             self::StockAlert => 'Stock alert for unavailable vehicles',
+            self::AiConcierge => 'AI storefront FAQ concierge',
         };
     }
 
@@ -67,7 +70,7 @@ enum PlanFeature: string implements HasLabel
     {
         // AI features cost real API money per call — unlike the rest, a plan
         // that doesn't mention them (or a tenant with no plan row) gets them OFF.
-        if (in_array($this, [self::AiListingWriter, self::AiBusinessSummary, self::AiPricingSuggestions], true)) {
+        if (in_array($this, [self::AiListingWriter, self::AiBusinessSummary, self::AiPricingSuggestions, self::AiConcierge], true)) {
             return false;
         }
 

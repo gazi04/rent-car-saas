@@ -163,6 +163,14 @@ return [
     'tmpl_save' => 'Save templates',
     'tmpl_saved' => 'Templates saved',
 
+    // AI storefront FAQ concierge (#4)
+    'nav_concierge' => 'FAQ Concierge',
+    'concierge_faq' => 'FAQ knowledge base',
+    'concierge_faq_hint' => 'Write your policies in plain language — deposit, cancellation, required documents, opening hours. The storefront chat answers visitors strictly from this text and says "contact us" when the answer is not here. Leave a language blank to skip it.',
+    'concierge_faq_placeholder' => "Deposit: €200, refunded on return.\nCancellation: free up to 48h before pickup.\nDocuments: valid driving licence + ID.\nOpening hours: Mon–Sat 08:00–18:00.",
+    'concierge_save' => 'Save FAQ',
+    'concierge_saved' => 'FAQ saved',
+
     // Promo codes
     'nav_promo_codes' => 'Promo codes',
     'promo_section' => 'Promo code',

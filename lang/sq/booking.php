@@ -149,4 +149,17 @@ return [
     'stock_alert_joined_heading' => 'Jeni në listë',
     'stock_alert_joined_body' => 'Ju dërgojmë email sapo ky automjet të jetë sërish i disponueshëm.',
     'stock_alert_throttled' => 'Shumë kërkesa. Ju lutemi provoni më vonë.',
+
+    // AI storefront FAQ concierge (#4)
+    'concierge_launcher' => 'Bëni një pyetje',
+    'concierge_title' => 'Pyetje?',
+    'concierge_close' => 'Mbyll',
+    'concierge_greeting' => 'Përshëndetje! Më pyesni për depozitën, anulimin, dokumentet e nevojshme ose orarin.',
+    'concierge_placeholder' => 'Shkruani pyetjen tuaj…',
+    'concierge_send' => 'Dërgo',
+    'concierge_thinking' => 'Duke shkruar…',
+    'concierge_fallback' => 'Nuk jam i sigurt për këtë — ju lutemi kontaktoni operatorin drejtpërdrejt.',
+    'concierge_fallback_with_contact' => 'Nuk jam i sigurt për këtë — ju lutemi kontaktoni operatorin drejtpërdrejt: :contact',
+    'concierge_throttled' => 'Po marrim shumë pyetje për momentin — ju lutemi provoni pak më vonë, ose kontaktoni operatorin drejtpërdrejt.',
+    'concierge_error' => 'Diçka shkoi keq gjatë përgjigjes. Ju lutemi provoni sërish pas pak.',
 ];

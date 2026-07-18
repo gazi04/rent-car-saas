@@ -186,6 +186,14 @@ return [
     /** How many days of data the weekly business summary covers. */
     'summary_period_days' => 7,
 
+    /**
+     * Max FAQ-concierge questions one tenant may answer per rolling 24h. The
+     * brake a per-IP limit cannot be against rotating IPs — on cap the visitor
+     * gets the fallback line, never an error. (Anonymous storefront traffic is
+     * the only AI feature with no manual-click ceiling.)
+     */
+    'concierge_daily_cap' => 200,
+
     /*
     |--------------------------------------------------------------------------
     | AI usage pricing (estimated € per 1,000,000 tokens, per model)

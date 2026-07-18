@@ -146,6 +146,8 @@
         </div>
     </footer>
 
+    <livewire:faq-concierge />
+
     @stack('scripts')
 </body>
 </html>
