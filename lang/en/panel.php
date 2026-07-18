@@ -209,4 +209,18 @@ return [
     'review_submitted_at' => 'Submitted',
     'review_action_approve' => 'Approve',
     'review_action_hide' => 'Hide',
+
+    // Waitlist
+    'nav_waitlist' => 'Waitlist',
+    'waitlist_vehicle' => 'Vehicle',
+    'waitlist_name' => 'Name',
+    'waitlist_email' => 'Email',
+    'waitlist_phone' => 'Phone',
+    'waitlist_dates' => 'Wanted dates',
+    'waitlist_any_dates' => 'Any dates',
+    'waitlist_notified_at' => 'Notified',
+    'waitlist_joined_at' => 'Joined',
+    'waitlist_state' => 'State',
+    'waitlist_waiting' => 'Waiting',
+    'waitlist_notified' => 'Notified',
 ];

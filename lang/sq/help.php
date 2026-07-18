@@ -111,4 +111,14 @@ return [
             'Kjo veçori është e disponueshme vetëm në planet që e përfshijnë.',
         ],
     ],
+
+    'waitlist' => [
+        'title' => 'Lista e pritjes',
+        'body' => [
+            'Personat që kërkuan një nga automjetet tuaja në data që ishin tashmë të zëna, sipas radhës së regjistrimit. Kalendari juaj i rezervimeve i fsheh datat e zëna, prandaj pa këtë listë nuk do ta merrnit vesh kurrë këtë kërkesë.',
+            'Kur një rezervim anulohet ose refuzohet, personi i parë në radhë për ato data njoftohet automatikisht me email. Personat që presin për data që nuk mbivendosen njoftohen të gjithë, sepse nuk konkurrojnë për të njëjtën periudhë.',
+            'Njoftimi nuk e rezervon automjetin — e merr kush e rezervon i pari. Nëse personi i parë nuk rezervon, datat i ofrohen të nesërmit personit tjetër në radhë.',
+            'Regjistrimet vijnë vetëm nga faqja juaj publike; nuk mund t\'i krijoni këtu. Fshini ato që nuk doni t\'i mbani.',
+        ],
+    ],
 ];

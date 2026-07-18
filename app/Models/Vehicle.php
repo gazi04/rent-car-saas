@@ -106,6 +106,12 @@ class Vehicle extends Model implements HasMedia
         return $this->hasMany(ServiceRecord::class);
     }
 
+    /** @return HasMany<WaitlistEntry, $this> */
+    public function waitlistEntries(): HasMany
+    {
+        return $this->hasMany(WaitlistEntry::class);
+    }
+
     /** @return HasMany<Review, $this> */
     public function reviews(): HasMany
     {

@@ -29,13 +29,15 @@ enum PlanFeature: string implements HasLabel
     case PromoCodes = 'promo_codes';
     case MaintenanceReminders = 'maintenance_reminders';
     case Reviews = 'reviews';
+    case Waitlist = 'waitlist';
 
     public function type(): PlanFeatureType
     {
         return match ($this) {
             self::VehicleLimit, self::PhotosPerVehicle, self::StaffSeatLimit => PlanFeatureType::Limit,
-            self::Reports, self::FleetHeatmap, self::Branding, self::Templates, self::PromoCodes, self::MaintenanceReminders,
-            self::Reviews, self::AiListingWriter, self::AiBusinessSummary, self::AiPricingSuggestions => PlanFeatureType::Toggle,
+            self::Reports, self::FleetHeatmap, self::Branding, self::Templates, self::PromoCodes,
+            self::MaintenanceReminders, self::Reviews, self::Waitlist,
+            self::AiListingWriter, self::AiBusinessSummary, self::AiPricingSuggestions => PlanFeatureType::Toggle,
         };
     }
 
@@ -55,6 +57,7 @@ enum PlanFeature: string implements HasLabel
             self::PromoCodes => 'Promo codes',
             self::MaintenanceReminders => 'Maintenance reminders + auto-block',
             self::Reviews => 'Review request email + home showcase',
+            self::Waitlist => 'Waitlist for booked-out dates',
         };
     }
 

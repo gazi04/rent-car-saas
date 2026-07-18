@@ -111,4 +111,14 @@ return [
             'This feature is only available on plans that include it.',
         ],
     ],
+
+    'waitlist' => [
+        'title' => 'Waitlist',
+        'body' => [
+            'People who wanted one of your vehicles on dates that were already taken, in the order they asked. Your booking calendar hides taken dates, so without this you would never hear about this demand at all.',
+            'When a booking is cancelled or rejected, the earliest person waiting for those dates is emailed automatically. People waiting for dates that do not overlap each other are all emailed, since they are not competing for the same slot.',
+            'Being notified does not reserve the vehicle — whoever books first gets it. If the first person never books, the next in line is offered the dates on the following day\'s sweep.',
+            'Entries are added from your public site only; you cannot create them here. Delete any you no longer want to keep.',
+        ],
+    ],
 ];

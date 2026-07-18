@@ -209,4 +209,18 @@ return [
     'review_submitted_at' => 'Dërguar më',
     'review_action_approve' => 'Aprovo',
     'review_action_hide' => 'Fshih',
+
+    // Lista e pritjes
+    'nav_waitlist' => 'Lista e pritjes',
+    'waitlist_vehicle' => 'Automjeti',
+    'waitlist_name' => 'Emri',
+    'waitlist_email' => 'Email',
+    'waitlist_phone' => 'Telefoni',
+    'waitlist_dates' => 'Datat e kërkuara',
+    'waitlist_any_dates' => 'Çdo datë',
+    'waitlist_notified_at' => 'Njoftuar',
+    'waitlist_joined_at' => 'Regjistruar',
+    'waitlist_state' => 'Statusi',
+    'waitlist_waiting' => 'Në pritje',
+    'waitlist_notified' => 'Të njoftuar',
 ];
