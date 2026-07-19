@@ -17,4 +17,17 @@ trait ThrottlesMailQueue
     {
         return [new RateLimited('mail')];
     }
+
+    /**
+     * A rate-limiter release consumes an attempt just like a real failure does
+     * (DatabaseQueue::release() carries the incremented attempts count forward),
+     * so under `--tries=1` a single throttle release is enough to fail the job
+     * before it ever sends. retryUntil() takes precedence over maxTries in the
+     * worker's stale-attempt check, so throttled mail gets a real time budget
+     * to drain through the 1/sec limiter instead of being killed by attempt count.
+     */
+    public function retryUntil(): \DateTimeInterface
+    {
+        return now()->addMinutes(10);
+    }
 }
