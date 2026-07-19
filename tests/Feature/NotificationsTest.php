@@ -346,6 +346,27 @@ test('booking emails fall back to the default primary color when unbranded', fun
     expect($rendered)->toContain('color: '.config('branding.defaults.color_primary'));
 });
 
+test('cancelled/rejected emails show the operator-entered reason when present', function () {
+    $booking = Booking::factory()->create([
+        'vehicle_id' => $this->vehicle->id,
+        'cancellation_reason' => 'Vehicle was in an accident and is unavailable.',
+    ]);
+
+    foreach ([new BookingCancelledMail($booking), new BookingRejectedMail($booking)] as $mailable) {
+        expect($mailable->render())->toContain('Vehicle was in an accident and is unavailable.');
+    }
+});
+
+test('cancelled/rejected emails omit the reason row when none was given', function () {
+    $booking = Booking::factory()->create([
+        'vehicle_id' => $this->vehicle->id,
+        'cancellation_reason' => null,
+    ]);
+
+    expect((new BookingCancelledMail($booking))->render())->not->toContain(__('emails.booking_cancelled.reason_label'))
+        ->and((new BookingRejectedMail($booking))->render())->not->toContain(__('emails.booking_rejected.reason_label'));
+});
+
 // ── Queued, not sync ─────────────────────────────────────────────────────────
 
 test('all mailables implement ShouldQueue', function () {

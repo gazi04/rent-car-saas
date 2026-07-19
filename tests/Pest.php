@@ -1,5 +1,9 @@
 <?php
 
+use App\Models\Tenant;
+use App\Models\User;
+use App\Models\Vehicle;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -111,4 +115,46 @@ function tenant_domain(string $subdomain): string
 function tenant_url(string $subdomain, string $path = ''): string
 {
     return 'http://'.tenant_domain($subdomain).$path;
+}
+
+/**
+ * A tenant + signed-in operator + one vehicle, with tenancy initialized and the
+ * operator panel current. Shared by the Reports page suites (ReportsTest,
+ * ReportsHeatmapTest) — lives here rather than in one of them because a helper
+ * declared inside a test file only resolves cross-file by Pest's load order,
+ * which breaks under --filter.
+ *
+ * @return array{0: Tenant, 1: User, 2: Vehicle}
+ */
+function reportsOperatorFor(string $domain): array
+{
+    $tenant = Tenant::factory()->withDomain($domain)->create();
+
+    $operator = new User;
+    $operator->forceFill([
+        'tenant_id' => $tenant->id,
+        'role' => 'operator',
+        'name' => 'Operator',
+        'email' => fake()->unique()->safeEmail(),
+        'password' => bcrypt('password'),
+        'email_verified_at' => now(),
+    ])->save();
+
+    tenancy()->initialize($tenant);
+    Filament::setCurrentPanel(Filament::getPanel('operator'));
+    Pest\Laravel\actingAs($operator);
+
+    $vehicle = Vehicle::factory()->create(['daily_rate' => 50]);
+
+    return [$tenant, $operator, $vehicle];
+}
+
+/**
+ * The default Reports date range used across the reports suites: all of June 2030.
+ *
+ * @return array{start_date: string, end_date: string}
+ */
+function reportRange(): array
+{
+    return ['start_date' => '2030-06-01', 'end_date' => '2030-06-30'];
 }

@@ -32,15 +32,17 @@ it('shows vehicle details with specs, rates and description', function () {
     tenancy()->initialize($tenant);
     $vehicle = showVehicle([
         'name' => 'BMW 320d',
-        'description' => 'Great highway cruiser.',
+        'description' => ['en' => 'Great highway cruiser.', 'sq' => 'Kryqëzues i shkëlqyer autostrade.'],
         'custom_fields' => [['label' => 'Color', 'value' => 'Black']],
     ]);
     tenancy()->end();
 
+    // Storefront defaults to Albanian (branding.defaults.default_locale), so the
+    // sq description is shown without a language switch.
     $this->get(tenant_url('showok', "/vehicles/{$vehicle->id}"))
         ->assertOk()
         ->assertSee('BMW 320d')
-        ->assertSee('Great highway cruiser.')
+        ->assertSee('Kryqëzues i shkëlqyer autostrade.')
         ->assertSee('Color')
         ->assertSee('Black')
         ->assertSee('€50.00')
@@ -48,6 +50,27 @@ it('shows vehicle details with specs, rates and description', function () {
         ->assertSee('€100.00')
         ->assertSee($vehicle->category->getLabel())
         ->assertSee($vehicle->transmission->getLabel());
+});
+
+it('shows the vehicle description in the visitor language', function () {
+    $tenant = showTenant('showlocale');
+
+    tenancy()->initialize($tenant);
+    $vehicle = showVehicle([
+        'description' => ['en' => 'Great highway cruiser.', 'sq' => 'Kryqëzues i shkëlqyer autostrade.'],
+    ]);
+    tenancy()->end();
+
+    $url = tenant_url('showlocale', "/vehicles/{$vehicle->id}");
+
+    // English visitor sees the en text; Albanian visitor sees the sq text.
+    $this->withSession(['locale' => 'en'])->get($url)
+        ->assertSee('Great highway cruiser.')
+        ->assertDontSee('Kryqëzues i shkëlqyer autostrade.');
+
+    $this->withSession(['locale' => 'sq'])->get($url)
+        ->assertSee('Kryqëzues i shkëlqyer autostrade.')
+        ->assertDontSee('Great highway cruiser.');
 });
 
 it('links to the booking wizard at /vehicles/{id}/book', function () {
@@ -87,15 +110,19 @@ it('returns 404 for a private vehicle', function () {
         ->assertNotFound();
 });
 
-it('returns 404 for a vehicle under maintenance', function () {
+it('renders a vehicle under maintenance without a booking CTA', function () {
     $tenant = showTenant('showmaint');
 
     tenancy()->initialize($tenant);
     $vehicle = Vehicle::factory()->underMaintenance()->create();
     tenancy()->end();
 
+    // This 404'd until the stock alert (#3): the page has to exist for the
+    // "notify me when it is back" panel to have somewhere to live. Booking is
+    // still refused — see the booking-page guard below.
     $this->get(tenant_url('showmaint', "/vehicles/{$vehicle->id}"))
-        ->assertNotFound();
+        ->assertOk()
+        ->assertSee(__('booking.vehicle_unavailable_notice'));
 });
 
 it('returns 404 when requesting another tenant vehicle', function () {

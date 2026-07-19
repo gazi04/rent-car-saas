@@ -3,47 +3,16 @@
 use App\Filament\Operator\Pages\Reports;
 use App\Models\Booking;
 use App\Models\Tenant;
-use App\Models\User;
 use App\Models\Vehicle;
 use Filament\Facades\Filament;
 use Livewire\Livewire;
 
-use function Pest\Laravel\actingAs;
+// reportsOperatorFor() and reportRange() are global helpers in tests/Pest.php,
+// shared with ReportsHeatmapTest.
 
 afterEach(function () {
     tenancy()->end();
 });
-
-/**
- * @return array{0: Tenant, 1: User, 2: Vehicle}
- */
-function reportsOperatorFor(string $domain): array
-{
-    $tenant = Tenant::factory()->withDomain($domain)->create();
-
-    $operator = new User;
-    $operator->forceFill([
-        'tenant_id' => $tenant->id,
-        'role' => 'operator',
-        'name' => 'Operator',
-        'email' => fake()->unique()->safeEmail(),
-        'password' => bcrypt('password'),
-        'email_verified_at' => now(),
-    ])->save();
-
-    tenancy()->initialize($tenant);
-    Filament::setCurrentPanel(Filament::getPanel('operator'));
-    actingAs($operator);
-
-    $vehicle = Vehicle::factory()->create(['daily_rate' => 50]);
-
-    return [$tenant, $operator, $vehicle];
-}
-
-function reportRange(): array
-{
-    return ['start_date' => '2030-06-01', 'end_date' => '2030-06-30'];
-}
 
 it('counts bookings and revenue for the selected range', function () {
     [, , $vehicle] = reportsOperatorFor('reports');

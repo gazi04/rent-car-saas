@@ -33,12 +33,15 @@ function publicVehicle(array $attrs = []): Vehicle
 
 // ── Listing ──────────────────────────────────────────────────────────────────
 
-it('shows only public + available vehicles on the listing', function () {
+it('shows public vehicles on the listing and hides private ones', function () {
     $tenant = publicTenant('ardi');
     tenancy()->initialize($tenant);
 
     $visible = publicVehicle(['name' => 'Toyota Corolla']);
     Vehicle::factory()->private()->create(['name' => 'Hidden Car']);
+    // Listed since the stock alert (#3) — its page is where you ask to hear when
+    // it comes back, so removing it would leave nothing to click. It carries an
+    // "unavailable" badge instead of a booking CTA.
     Vehicle::factory()->underMaintenance()->create(['name' => 'Broken Car']);
 
     tenancy()->end();
@@ -46,8 +49,10 @@ it('shows only public + available vehicles on the listing', function () {
     $this->get(tenant_url('ardi', '/vehicles'))
         ->assertOk()
         ->assertSee('Toyota Corolla')
-        ->assertDontSee('Hidden Car')
-        ->assertDontSee('Broken Car');
+        ->assertSee('Broken Car')
+        ->assertSee(__('booking.vehicle_unavailable_badge'))
+        // is_public stays absolute: hiding a vehicle keeps meaning hidden.
+        ->assertDontSee('Hidden Car');
 });
 
 it('does not show tenant B vehicles on tenant A subdomain', function () {

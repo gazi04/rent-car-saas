@@ -103,6 +103,8 @@ it('blocks creating staff beyond the plan seat cap', function () {
 });
 
 it('allows unlimited staff when the plan sets no cap', function () {
+    // No planSlug => no plans row => the subscriptionPlan === null branch.
+    // The sibling test below covers the other route to "unlimited".
     [$tenant] = staffTenant('staffunlimited');
     makeStaff($tenant);
     makeStaff($tenant);
@@ -113,6 +115,65 @@ it('allows unlimited staff when the plan sets no cap', function () {
         ->assertHasNoFormErrors();
 
     expect(User::query()->where('tenant_id', $tenant->id)->where('role', 'staff')->count())->toBe(3);
+});
+
+it('allows unlimited staff when a real plan row omits the seat limit', function () {
+    // Distinct branch from the test above: a plan row EXISTS but has no
+    // staff_seat_limit key, so Plan::limit() falls through to default() => null.
+    // Live in production — PlanSeeder seeds Trial with features => [].
+    [$tenant] = staffTenant('staffomitted', [], 'omitsseat');
+    makeStaff($tenant);
+    makeStaff($tenant);
+
+    Livewire::test(CreateStaff::class)
+        ->fillForm(['name' => 'Third', 'email' => 'omitted@example.com', 'password' => 'secret123'])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    expect(User::query()->where('tenant_id', $tenant->id)->where('role', 'staff')->count())->toBe(3);
+});
+
+it('keeps existing staff when a downgrade puts the tenant over the seat cap', function () {
+    // Staff twin of the vehicle downgrade test in PlanEnforcementTest: a tenant
+    // that drops to a 1-seat plan with 3 staff already keeps all 3 — the cap
+    // blocks new seats, it never revokes existing ones.
+    [$tenant] = staffTenant('staffdowngrade', [PlanFeature::StaffSeatLimit->value => 1], 'downgraded');
+    makeStaff($tenant);
+    makeStaff($tenant);
+    makeStaff($tenant);
+
+    Livewire::test(CreateStaff::class)
+        ->fillForm(['name' => 'Fourth', 'email' => 'fourth@example.com', 'password' => 'secret123'])
+        ->call('create');
+
+    expect(User::query()->where('tenant_id', $tenant->id)->where('role', 'staff')->count())->toBe(3);
+});
+
+it('does not count the owner against the seat cap', function () {
+    // PlanSeeder gives Basic StaffSeatLimit => 1, so owner + 1 staff must be
+    // legal or every Basic tenant would be capped at zero staff. Guards the
+    // where('role', 'staff') filter in the seat count.
+    [$tenant] = staffTenant('staffowner', [PlanFeature::StaffSeatLimit->value => 1], 'oneseat');
+
+    Livewire::test(CreateStaff::class)
+        ->fillForm(['name' => 'Only', 'email' => 'only@example.com', 'password' => 'secret123'])
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    expect(User::query()->where('tenant_id', $tenant->id)->where('role', 'staff')->count())->toBe(1)
+        ->and(User::query()->where('tenant_id', $tenant->id)->count())->toBe(2); // owner + staff
+});
+
+it('blocks every staff account on a zero-seat plan', function () {
+    // 0 is not null, so the cap engages and 0 >= 0 blocks the first seat.
+    // Pins that a zero cap means zero, rather than being read as "unlimited".
+    [$tenant] = staffTenant('staffzero', [PlanFeature::StaffSeatLimit->value => 0], 'zeroseat');
+
+    Livewire::test(CreateStaff::class)
+        ->fillForm(['name' => 'Nobody', 'email' => 'nobody@example.com', 'password' => 'secret123'])
+        ->call('create');
+
+    expect(User::query()->where('tenant_id', $tenant->id)->where('role', 'staff')->count())->toBe(0);
 });
 
 it('scopes the staff list to the tenant and hides the owner', function () {

@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\PlanFeature;
+use App\Enums\VehicleStatus;
 use App\Filament\Operator\Resources\ServiceRecords\Pages\CreateServiceRecord;
 use App\Filament\Operator\Resources\ServiceRecords\Pages\ListServiceRecords;
 use App\Filament\Operator\Resources\ServiceRecords\ServiceRecordResource;
@@ -121,20 +122,37 @@ it('sends a reminder once for a due-soon record and does not resend on the next 
 });
 
 it('skips reminder and auto-block when the plan disables maintenance reminders', function () {
-    Mail::fake();
-
     [$tenant] = maintenanceTenant('maintoff', [PlanFeature::MaintenanceReminders->value => false], 'offplan');
     $vehicle = Vehicle::factory()->create();
     ServiceRecord::factory()->overdue()->create(['vehicle_id' => $vehicle->id]);
 
-    // The command is the actual gate — it never dispatches for this tenant —
-    // but confirm the job itself stays inert if called directly, too.
+    // The command is the gate: it never dispatches the job for this tenant.
+    // (This test used to also assert Mail::assertNothingQueued() and a null
+    // blocked_date_id "to confirm the job stays inert if called directly" — but
+    // it never called the job, and under Queue::fake() nothing could have run,
+    // so those assertions held against any job body. See the test below for what
+    // the job actually does.)
     Queue::fake();
     $this->artisan('maintenance:process-due')->assertSuccessful();
-    Queue::assertNotPushed(ProcessVehicleMaintenanceJob::class);
 
-    Mail::assertNothingQueued();
-    expect(ServiceRecord::query()->first()->blocked_date_id)->toBeNull();
+    Queue::assertNotPushed(ProcessVehicleMaintenanceJob::class);
+});
+
+it('does not re-check the plan inside the maintenance job — the command is the only gate', function () {
+    [$tenant] = maintenanceTenant('maintjobdirect', [PlanFeature::MaintenanceReminders->value => false], 'offplanjob');
+    $vehicle = Vehicle::factory()->create();
+    $record = ServiceRecord::factory()->overdue()->create(['vehicle_id' => $vehicle->id]);
+
+    (new ProcessVehicleMaintenanceJob($tenant))->handle();
+
+    // KNOWN GAP, pinned deliberately: the job has no plan check, so a job already
+    // queued when a tenant is downgraded still runs the gated behaviour — here it
+    // blocks the vehicle and flips it to under-maintenance despite the plan
+    // disabling reminders. Narrow (only the dispatch window), but real — see
+    // docs/remaining-bugs-status.md. If a guard is ever added, this test fails,
+    // which is the point: the change should be conscious, not incidental.
+    expect($record->refresh()->blocked_date_id)->not->toBeNull()
+        ->and($vehicle->refresh()->status)->toBe(VehicleStatus::UnderMaintenance);
 });
 
 it('clears the vehicle\'s active maintenance block when a new service record is logged', function () {

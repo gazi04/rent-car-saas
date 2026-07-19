@@ -120,7 +120,20 @@ it('reject action transitions Pending to Cancelled', function () {
     Livewire::test(ListBookings::class)
         ->callTableAction('reject', $booking);
 
-    expect($booking->fresh()->status)->toBe(BookingStatus::Cancelled);
+    expect($booking->fresh()->status)->toBe(BookingStatus::Cancelled)
+        ->and($booking->fresh()->cancellation_reason)->toBeNull();
+});
+
+it('reject action records an optional reason', function () {
+    [$tenant, $operator, $vehicle] = bookingOperatorFor('ardi');
+    $booking = Booking::factory()->forVehicle($vehicle)->create();
+
+    Livewire::test(ListBookings::class)
+        ->callTableAction('reject', $booking, data: [
+            'reason' => 'No valid driving license provided.',
+        ]);
+
+    expect($booking->fresh()->cancellation_reason)->toBe('No valid driving license provided.');
 });
 
 it('mark_active action transitions Confirmed to Active with odometer', function () {
@@ -162,7 +175,20 @@ it('cancel action transitions a Confirmed booking to Cancelled', function () {
     Livewire::test(ListBookings::class)
         ->callTableAction('cancel', $booking);
 
-    expect($booking->fresh()->status)->toBe(BookingStatus::Cancelled);
+    expect($booking->fresh()->status)->toBe(BookingStatus::Cancelled)
+        ->and($booking->fresh()->cancellation_reason)->toBeNull();
+});
+
+it('cancel action records an optional reason', function () {
+    [$tenant, $operator, $vehicle] = bookingOperatorFor('ardi');
+    $booking = Booking::factory()->forVehicle($vehicle)->confirmed()->create();
+
+    Livewire::test(ListBookings::class)
+        ->callTableAction('cancel', $booking, data: [
+            'reason' => 'Vehicle was in an accident and is unavailable.',
+        ]);
+
+    expect($booking->fresh()->cancellation_reason)->toBe('Vehicle was in an accident and is unavailable.');
 });
 
 it('cancel action is not visible for Completed bookings', function () {

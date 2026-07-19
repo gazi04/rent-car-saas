@@ -1,6 +1,8 @@
 <?php
 
+use App\Enums\PlanFeature;
 use App\Filament\Operator\Pages\BrandingSettings;
+use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\User;
 use Filament\Facades\Filament;
@@ -112,6 +114,30 @@ it('rejects keys not on the allow-list', function () {
     $tenant->setSetting('evil_key', 'bad value');
 
     assertDatabaseMissing('tenant_settings', ['key' => 'evil_key']);
+});
+
+it('does not plan-gate setSetting — the page gate is the only branding gate', function () {
+    [$tenant] = brandingSetup('guardplan');
+
+    $plan = Plan::factory()->create([
+        'slug' => 'nobranding',
+        'features' => [PlanFeature::Branding->value => false],
+    ]);
+    $tenant->update(['plan' => $plan->slug]);
+
+    expect($tenant->refresh()->allowsFeature(PlanFeature::Branding))->toBeFalse();
+
+    $tenant->setSetting('color_primary', '#ff0000');
+
+    // KNOWN GAP, pinned deliberately: setSetting's allow-list is a KEY allow-list
+    // (branding keys ∪ template keys), not a plan check — it cannot tell a
+    // Branding-gated tenant from a Templates-gated one. Latent today: the only
+    // two callers are BrandingSettings/TemplateSettings, each looping its own
+    // narrower config list behind a page whose canAccess() Filament re-checks on
+    // every hydration. Any third caller (command, import, API) inherits zero plan
+    // enforcement. See docs/remaining-bugs-status.md. If a plan check is added,
+    // this test fails — which is the point.
+    assertDatabaseHas('tenant_settings', ['key' => 'color_primary', 'value' => '#ff0000']);
 });
 
 // ── Value-format guard (model layer) ────────────────────────────────────────────

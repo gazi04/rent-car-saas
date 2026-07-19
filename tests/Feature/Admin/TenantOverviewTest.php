@@ -22,7 +22,7 @@ beforeEach(function () {
  */
 function infolistEntryValue(string $html, string $label): string
 {
-    preg_match('/'.preg_quote($label, '/').'.*?fi-in-text">\s*(.*?)\s*</s', $html, $matches);
+    preg_match('/'.preg_quote($label, '/').'.*?class="[^"]*\bfi-in-text\b[^"]*">\s*(.*?)\s*</s', $html, $matches);
 
     return trim($matches[1] ?? '');
 }

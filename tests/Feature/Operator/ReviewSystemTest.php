@@ -229,6 +229,27 @@ it('queues one review request per eligible booking and does not resend on rerun'
     Mail::assertNothingQueued();
 });
 
+it('does not re-check the plan inside the review job — the command is the only gate', function () {
+    Mail::fake();
+
+    [$tenant] = reviewTenant('revjobdirect', [PlanFeature::Reviews->value => false], 'revoffjob');
+    $vehicle = Vehicle::factory()->create();
+    $booking = Booking::factory()->forVehicle($vehicle)->completed()->create([
+        'completed_at' => now()->subDay(),
+        'customer_email' => 'direct@example.com',
+    ]);
+
+    (new RequestReviewsJob($tenant))->handle();
+
+    // KNOWN GAP, pinned deliberately — same shape as the maintenance job: only
+    // the reviews:request-pending command checks the plan, so a job already
+    // queued when a tenant is downgraded still emails the customer. Narrow (the
+    // dispatch window), but real. See docs/remaining-bugs-status.md. A guard here
+    // would fail this test, which is the point: make the change conscious.
+    Mail::assertQueued(BookingReviewRequestMail::class);
+    expect($booking->fresh()->review_requested_at)->not->toBeNull();
+});
+
 it('does not request a review for a booking with no email or already reviewed', function () {
     Mail::fake();
 

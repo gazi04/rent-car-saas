@@ -2,6 +2,7 @@
 
 use App\Enums\PlanFeature;
 use App\Exceptions\PromoCodeInvalidException;
+use App\Filament\Operator\Resources\Bookings\Pages\CreateBooking;
 use App\Filament\Operator\Resources\PromoCodes\Pages\CreatePromoCode;
 use App\Filament\Operator\Resources\PromoCodes\Pages\ListPromoCodes;
 use App\Filament\Operator\Resources\PromoCodes\PromoCodeResource;
@@ -250,4 +251,51 @@ it('gates the promo resource by owner and plan', function () {
     $staff = User::factory()->staff()->create(['tenant_id' => $tenant->id]);
     actingAs($staff);
     expect(PromoCodeResource::canAccess())->toBeFalse();
+});
+
+it('hides the promo resource from an owner whose plan disables it', function () {
+    // The test above only ever passes PromoCodes => true and then swaps role, so
+    // it proves the owner half and nothing about the plan half. Stay the owner
+    // here so the role check can't be what fails it.
+    promoTenant('promogateoff', [PlanFeature::PromoCodes->value => false], 'offpromo');
+
+    expect(PromoCodeResource::canAccess())->toBeFalse();
+});
+
+it('hides the promo field on the manual booking form when the plan disables it', function () {
+    promoTenant('promoform', [PlanFeature::PromoCodes->value => false], 'formpromo');
+    Vehicle::factory()->create(['daily_rate' => 50]);
+
+    Livewire::test(CreateBooking::class)
+        ->assertFormFieldHidden('promo_code');
+});
+
+it('shows the promo field on the manual booking form when the plan enables it', function () {
+    // Pairs with the test above: without an ON case, that one would still pass
+    // if the field were deleted outright.
+    promoTenant('promoformon', [PlanFeature::PromoCodes->value => true], 'formpromoon');
+    Vehicle::factory()->create(['daily_rate' => 50]);
+
+    Livewire::test(CreateBooking::class)
+        ->assertFormFieldVisible('promo_code');
+});
+
+it('hides the promo input on the public booking page when the plan disables it', function () {
+    [$tenant] = promoTenant('promopublicoff', [PlanFeature::PromoCodes->value => false], 'offpublicpromo');
+    tenancy()->end();
+
+    tenancy()->initialize($tenant);
+    $vehicle = Vehicle::factory()->create(['daily_rate' => 50, 'is_public' => true]);
+    PromoCode::factory()->create(['code' => 'SAVE10', 'type' => 'percentage', 'value' => 10]);
+
+    // The public promo tests above all use a ghost plan, which defaults the
+    // feature ON — so the blade's gate-off branch was never exercised.
+    Livewire::test('pages::public.vehicle-booking', ['vehicle' => $vehicle])
+        ->dispatch('dates-selected', start: '2030-06-01 10:00', end: '2030-06-04 10:00')
+        ->assertDontSee(__('booking.promo_label'))
+        ->set('promoCode', 'SAVE10')
+        ->call('applyPromo')
+        // A real, valid code — silently ignored, because the component's own
+        // gate bails before the code is ever looked up.
+        ->assertSet('priceBreakdown.total', 150.0);
 });

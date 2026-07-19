@@ -1,5 +1,8 @@
 <?php
 
+use App\Ai\Agents\BusinessSummaryAgent;
+use App\Ai\Agents\PricingSuggestionAgent;
+use App\Ai\Agents\VehicleListingAgent;
 use App\Enums\PlanFeature;
 use App\Exceptions\AiRequestFailedException;
 use App\Filament\Operator\Resources\Vehicles\Pages\CreateVehicle;
@@ -11,15 +14,12 @@ use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vehicle;
-use App\Services\Ai\AiChatService;
 use App\Services\Ai\BusinessSummaryGenerator;
 use Filament\Facades\Filament;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
-use OpenAI\Laravel\Facades\OpenAI;
-use OpenAI\Responses\Chat\CreateResponse;
 
 use function Pest\Laravel\actingAs;
 
@@ -57,24 +57,34 @@ function aiOperator(string $domain, array $planFeatures = [], string $role = 'op
     return [$tenant, $operator];
 }
 
-/** Fake a single chat completion returning $content. */
-function fakeChat(string $content): void
-{
-    OpenAI::fake([
-        CreateResponse::fake([
-            'choices' => [
-                ['message' => ['role' => 'assistant', 'content' => $content]],
-            ],
-        ]),
-    ]);
-}
-
 it('hides the listing writer action without the plan feature', function () {
     aiOperator('nolisting');
     $vehicle = Vehicle::factory()->create();
 
     Livewire::test(EditVehicle::class, ['record' => $vehicle->getRouteKey()])
-        ->assertFormComponentActionDoesNotExist('description', 'generateDescription');
+        ->assertFormComponentActionDoesNotExist('description.en', 'generateDescription');
+});
+
+it('hides the listing writer for a plan that explicitly disables it', function () {
+    // The test above passes a plan with features => [], so it only exercises
+    // the AI default() === false branch. This pins the explicit-false path.
+    aiOperator('nolistingexplicit', [PlanFeature::AiListingWriter->value => false]);
+    $vehicle = Vehicle::factory()->create();
+
+    Livewire::test(EditVehicle::class, ['record' => $vehicle->getRouteKey()])
+        ->assertFormComponentActionDoesNotExist('description.en', 'generateDescription');
+});
+
+it('hides the pricing suggestion action when the plan disables it', function () {
+    aiOperator('nopricing', [PlanFeature::AiPricingSuggestions->value => false]);
+
+    // A real record matters: suggestPrice's predicate is
+    // `$record !== null && allowsFeature(...)`. Testing on CreateVehicle would
+    // pass on the record half and prove nothing about the plan half.
+    $vehicle = Vehicle::factory()->create();
+
+    Livewire::test(EditVehicle::class, ['record' => $vehicle->getRouteKey()])
+        ->assertFormComponentActionDoesNotExist('daily_rate', 'suggestPrice');
 });
 
 it('shows the listing writer action with the plan feature', function () {
@@ -82,33 +92,75 @@ it('shows the listing writer action with the plan feature', function () {
     $vehicle = Vehicle::factory()->create();
 
     Livewire::test(EditVehicle::class, ['record' => $vehicle->getRouteKey()])
-        ->assertFormComponentActionVisible('description', 'generateDescription');
+        ->assertFormComponentActionVisible('description.en', 'generateDescription');
 });
 
-it('fills the description from the AI response', function () {
+it('fills both description languages from the AI response', function () {
     aiOperator('fills', [PlanFeature::AiListingWriter->value => true]);
     $vehicle = Vehicle::factory()->create();
 
-    fakeChat(json_encode(['description' => 'A crisp, reliable ride for city trips.']));
+    VehicleListingAgent::fake([[
+        'en' => 'A crisp, reliable ride for city trips.',
+        'sq' => 'Një makinë e besueshme për udhëtimet në qytet.',
+    ]]);
 
     Livewire::test(EditVehicle::class, ['record' => $vehicle->getRouteKey()])
-        ->callFormComponentAction('description', 'generateDescription')
-        ->assertFormSet(['description' => 'A crisp, reliable ride for city trips.']);
+        ->callFormComponentAction('description.en', 'generateDescription')
+        ->assertFormSet([
+            'description' => [
+                'en' => 'A crisp, reliable ride for city trips.',
+                'sq' => 'Një makinë e besueshme për udhëtimet në qytet.',
+            ],
+        ]);
 });
 
 it('applies the suggested daily rate on confirm and hides pricing on create', function () {
     aiOperator('pricing', [PlanFeature::AiPricingSuggestions->value => true]);
     $vehicle = Vehicle::factory()->create(['daily_rate' => 40]);
 
-    fakeChat(json_encode(['suggested_daily_rate' => 57.5, 'reasoning' => 'Strong recent demand.']));
+    PricingSuggestionAgent::fake([['suggested_daily_rate' => 57.5, 'reasoning' => 'Strong recent demand.']]);
 
+    // The AI runs on confirm (not modal mount), sets the rate, and reports the
+    // suggested value + reasoning back to the operator.
     Livewire::test(EditVehicle::class, ['record' => $vehicle->getRouteKey()])
         ->callFormComponentAction('daily_rate', 'suggestPrice')
-        ->assertFormSet(['daily_rate' => 57.5]);
+        ->assertFormSet(['daily_rate' => 57.5])
+        ->assertNotified();
 
     // The action is only offered once the vehicle exists — absent on create.
     Livewire::test(CreateVehicle::class)
         ->assertFormComponentActionDoesNotExist('daily_rate', 'suggestPrice');
+});
+
+it('suggests a price on a cache store that does not support tagging', function () {
+    // The pricing action must work on a non-tagging store (database/file in
+    // production). The tenancy CacheManager tag-wraps every facade cache call and
+    // such stores throw "does not support tagging"; the array store used elsewhere
+    // in tests hides that. (The action no longer caches, but keep this guard so a
+    // future reintroduction of a Cache:: call here can't silently break.)
+    config(['cache.default' => 'file']);
+
+    aiOperator('pricingcache', [PlanFeature::AiPricingSuggestions->value => true]);
+    $vehicle = Vehicle::factory()->create(['daily_rate' => 40]);
+
+    PricingSuggestionAgent::fake([['suggested_daily_rate' => 61.0, 'reasoning' => 'Demand up.']]);
+
+    Livewire::test(EditVehicle::class, ['record' => $vehicle->getRouteKey()])
+        ->callFormComponentAction('daily_rate', 'suggestPrice')
+        ->assertFormSet(['daily_rate' => 61.0]);
+});
+
+it('leaves the rate unchanged and warns when the pricing AI fails', function () {
+    aiOperator('pricingfail', [PlanFeature::AiPricingSuggestions->value => true]);
+    $vehicle = Vehicle::factory()->create(['daily_rate' => 40]);
+
+    // A throwing agent is wrapped into AiRequestFailedException by the service.
+    PricingSuggestionAgent::fake([fn () => throw new RuntimeException('AI down')]);
+
+    Livewire::test(EditVehicle::class, ['record' => $vehicle->getRouteKey()])
+        ->callFormComponentAction('daily_rate', 'suggestPrice')
+        ->assertNotified()
+        ->assertFormSet(['daily_rate' => 40]);
 });
 
 it('hides the summary widget without the plan feature', function () {
@@ -120,7 +172,10 @@ it('hides the summary widget without the plan feature', function () {
 it('generates and renders a tenant-scoped summary from the widget', function () {
     [$tenant] = aiOperator('haswidget', [PlanFeature::AiBusinessSummary->value => true]);
 
-    fakeChat('Bookings held steady this week; two returns are overdue.');
+    BusinessSummaryAgent::fake([[
+        'en' => 'Bookings held steady this week; two returns are overdue.',
+        'sq' => 'Rezervimet mbetën të qëndrueshme këtë javë; dy kthime janë vonuar.',
+    ]]);
 
     Livewire::test(BusinessSummaryWidget::class)
         ->call('generate');
@@ -129,7 +184,16 @@ it('generates and renders a tenant-scoped summary from the widget', function () 
 
     expect($summary)->not->toBeNull()
         ->and($summary->tenant_id)->toBe($tenant->id)
-        ->and($summary->content)->toBe('Bookings held steady this week; two returns are overdue.');
+        ->and($summary->contentFor('en'))->toBe('Bookings held steady this week; two returns are overdue.')
+        ->and($summary->contentFor('sq'))->toBe('Rezervimet mbetën të qëndrueshme këtë javë; dy kthime janë vonuar.');
+});
+
+it('serves the summary in the current locale and falls back to English', function () {
+    $summary = new AiBusinessSummary(['content' => ['en' => 'English text.', 'sq' => 'Tekst shqip.']]);
+
+    expect($summary->contentFor('sq'))->toBe('Tekst shqip.')
+        ->and($summary->contentFor('en'))->toBe('English text.')
+        ->and($summary->contentFor('de'))->toBe('English text.'); // unknown locale → English fallback
 });
 
 it('hides the summary widget from staff even with the plan feature', function () {
@@ -138,10 +202,14 @@ it('hides the summary widget from staff even with the plan feature', function ()
     expect(BusinessSummaryWidget::canView())->toBeFalse();
 });
 
-it('blocks staff from calling generate directly, bypassing canView', function () {
+it('blocks staff from calling generate directly, not just hiding the widget', function () {
+    // Renamed from "bypassing canView": canView() is not bypassable. Filament's
+    // widget CanAuthorizeAccess trait re-checks it on every hydration, so the
+    // wire call 403s before generate() runs. What this pins is the outcome — a
+    // staff member cannot generate a summary by calling the method directly.
     aiOperator('staffgenerate', [PlanFeature::AiBusinessSummary->value => true], role: 'staff');
 
-    fakeChat('Should never be reached.');
+    BusinessSummaryAgent::fake([['en' => 'Should never be reached.', 'sq' => 'S’duhet arritur kurrë.']]);
 
     Livewire::test(BusinessSummaryWidget::class)
         ->call('generate');
@@ -149,11 +217,36 @@ it('blocks staff from calling generate directly, bypassing canView', function ()
     expect(AiBusinessSummary::query()->count())->toBe(0);
 });
 
-it('wraps SDK and JSON failures in AiRequestFailedException', function () {
-    // Empty/malformed content triggers the malformedResponse path.
-    fakeChat('');
+it('blocks an owner without the plan feature from calling generate directly', function () {
+    // The outcome that matters: an owner whose plan lacks the feature cannot
+    // spend API money by poking generate() over the wire. The staff test above
+    // only pins the role half — generate()'s guard is
+    // `! isOwner() || ! allowsFeature(...)`, and staff short-circuits on the
+    // left operand, so the plan half never evaluates there.
+    //
+    // Two gates defend this, verified by mutation: Filament\Widgets\Widget uses
+    // CanAuthorizeAccess, whose hydrateCanAuthorizeAccess() aborts 403 unless
+    // canView() — so the wire call never even reaches generate(). The in-code
+    // re-check inside generate() is a redundant backstop for a non-Livewire
+    // caller. Breaking either alone leaves this test green; breaking both makes
+    // it fail, which is the guarantee worth having.
+    aiOperator('ownergenerate', [PlanFeature::AiBusinessSummary->value => false]);
 
-    expect(fn () => app(AiChatService::class)->chat([['role' => 'user', 'content' => 'hi']]))
+    BusinessSummaryAgent::fake([['en' => 'Should never be reached.', 'sq' => 'S’duhet arritur kurrë.']]);
+
+    Livewire::test(BusinessSummaryWidget::class)
+        ->call('generate');
+
+    expect(AiBusinessSummary::query()->count())->toBe(0);
+});
+
+it('wraps AI failures in AiRequestFailedException', function () {
+    aiOperator('wrapsfail', [PlanFeature::AiBusinessSummary->value => true]);
+
+    // An empty response triggers the malformedResponse path.
+    BusinessSummaryAgent::fake([['en' => '', 'sq' => '']]);
+
+    expect(fn () => app(BusinessSummaryGenerator::class)->generate())
         ->toThrow(AiRequestFailedException::class);
 });
 
@@ -188,7 +281,7 @@ it('queues summary jobs only for active tenants with the feature enabled', funct
 it('creates a tenant-scoped summary when the job runs directly', function () {
     [$tenant] = aiOperator('jobruns', [PlanFeature::AiBusinessSummary->value => true]);
 
-    fakeChat('Steady week overall.');
+    BusinessSummaryAgent::fake([['en' => 'Steady week overall.', 'sq' => 'Javë e qëndrueshme në përgjithësi.']]);
 
     (new GenerateBusinessSummaryJob($tenant))->handle(app(BusinessSummaryGenerator::class));
 
@@ -196,20 +289,35 @@ it('creates a tenant-scoped summary when the job runs directly', function () {
 
     expect($summary)->not->toBeNull()
         ->and($summary->tenant_id)->toBe($tenant->id)
-        ->and($summary->content)->toBe('Steady week overall.');
+        ->and($summary->contentFor('en'))->toBe('Steady week overall.');
+});
+
+it('does not re-check the plan inside the summary job — the command is the only gate', function () {
+    [$tenant] = aiOperator('jobnoplan', [PlanFeature::AiBusinessSummary->value => false]);
+
+    BusinessSummaryAgent::fake([['en' => 'Ran anyway.', 'sq' => 'U ekzekutua gjithsesi.']]);
+
+    (new GenerateBusinessSummaryJob($tenant))->handle(app(BusinessSummaryGenerator::class));
+
+    // KNOWN GAP, pinned deliberately: only ai:business-summaries checks the plan
+    // before dispatching. A job already queued when a tenant is downgraded still
+    // runs — and unlike the maintenance/review jobs, this one spends real AI API
+    // money. Narrow (the dispatch window), but the costliest of the three. See
+    // docs/remaining-bugs-status.md.
+    expect(AiBusinessSummary::query()->count())->toBe(1);
 });
 
 it('regenerating within the same period updates the existing row instead of duplicating it', function () {
     aiOperator('regenerate', [PlanFeature::AiBusinessSummary->value => true]);
 
-    fakeChat('First pass.');
+    BusinessSummaryAgent::fake([['en' => 'First pass.', 'sq' => 'Kalimi i parë.']]);
     Livewire::test(BusinessSummaryWidget::class)->call('generate');
 
-    fakeChat('Second pass, same window.');
+    BusinessSummaryAgent::fake([['en' => 'Second pass, same window.', 'sq' => 'Kalimi i dytë, e njëjta dritare.']]);
     Livewire::test(BusinessSummaryWidget::class)->call('generate');
 
     expect(AiBusinessSummary::query()->count())->toBe(1)
-        ->and(AiBusinessSummary::query()->first()->content)->toBe('Second pass, same window.');
+        ->and(AiBusinessSummary::query()->first()->contentFor('en'))->toBe('Second pass, same window.');
 });
 
 it('rejects a duplicate summary row for the same tenant and period at the database level', function () {
