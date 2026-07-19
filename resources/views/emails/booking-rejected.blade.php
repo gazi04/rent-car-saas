@@ -22,6 +22,9 @@
 | **{{ __('emails.booking_rejected.reference_label') }}** | {{ $booking->reference }} |
 | **{{ __('emails.booking_rejected.vehicle_label') }}** | {{ $booking->vehicle->name }} |
 | **{{ __('emails.booking_rejected.dates_label') }}** | {{ $booking->start_date->format('d M Y') }} – {{ $booking->end_date->format('d M Y') }} |
+@if($booking->cancellation_reason)
+| **{{ __('emails.booking_rejected.reason_label') }}** | {{ $booking->cancellation_reason }} |
+@endif
 
 {{ $outro }}
 </x-mail::message>

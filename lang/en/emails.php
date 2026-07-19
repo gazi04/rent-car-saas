@@ -51,6 +51,7 @@ return [
         'reference_label' => 'Reference',
         'vehicle_label' => 'Vehicle',
         'dates_label' => 'Dates',
+        'reason_label' => 'Reason',
         'outro' => 'Please try booking different dates or contact :operator directly.',
     ],
 
@@ -63,6 +64,7 @@ return [
         'reference_label' => 'Reference',
         'vehicle_label' => 'Vehicle',
         'dates_label' => 'Dates',
+        'reason_label' => 'Reason',
         'outro' => 'If you did not request this cancellation, please contact :operator.',
     ],
 

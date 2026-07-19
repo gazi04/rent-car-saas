@@ -51,6 +51,7 @@ return [
         'reference_label' => 'Referenca',
         'vehicle_label' => 'Automjeti',
         'dates_label' => 'Datat',
+        'reason_label' => 'Arsyeja',
         'outro' => 'Ju lutemi provoni data të tjera ose kontaktoni drejtpërdrejt :operator.',
     ],
 
@@ -63,6 +64,7 @@ return [
         'reference_label' => 'Referenca',
         'vehicle_label' => 'Automjeti',
         'dates_label' => 'Datat',
+        'reason_label' => 'Arsyeja',
         'outro' => 'Nëse nuk e keni kërkuar këtë anulim, ju lutemi kontaktoni :operator.',
     ],
 

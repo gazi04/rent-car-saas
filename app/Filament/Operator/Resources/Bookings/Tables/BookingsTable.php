@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
@@ -124,8 +125,15 @@ class BookingsTable
             ->color('danger')
             ->requiresConfirmation()
             ->visible(fn (Booking $record): bool => $record->status === BookingStatus::Pending)
-            ->action(function (Booking $record): void {
-                app(BookingService::class)->reject($record);
+            ->schema([
+                Textarea::make('reason')
+                    ->label(__('panel.cancellation_reason')),
+            ])
+            ->action(function (Booking $record, array $data): void {
+                app(BookingService::class)->reject(
+                    $record,
+                    reason: filled($data['reason'] ?? null) ? $data['reason'] : null,
+                );
             });
     }
 
@@ -220,9 +228,16 @@ class BookingsTable
                 BookingStatus::Completed,
                 BookingStatus::Cancelled,
             ], true))
-            ->action(function (Booking $record): void {
+            ->schema([
+                Textarea::make('reason')
+                    ->label(__('panel.cancellation_reason')),
+            ])
+            ->action(function (Booking $record, array $data): void {
                 try {
-                    app(BookingService::class)->cancel($record);
+                    app(BookingService::class)->cancel(
+                        $record,
+                        reason: filled($data['reason'] ?? null) ? $data['reason'] : null,
+                    );
                 } catch (\InvalidArgumentException $e) {
                     Notification::make()->title($e->getMessage())->danger()->send();
                 }

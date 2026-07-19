@@ -2,7 +2,9 @@
 
 namespace App\Filament\Operator\Resources\Bookings\Schemas;
 
+use App\Enums\BookingStatus;
 use App\Enums\PlanFeature;
+use App\Models\Booking;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -65,6 +67,11 @@ class BookingForm
                             ->maxLength(255),
                         Textarea::make('notes')
                             ->label(__('panel.notes'))
+                            ->columnSpanFull(),
+                        Textarea::make('cancellation_reason')
+                            ->label(__('panel.cancellation_reason'))
+                            ->visible(fn (?Booking $record): bool => $record?->status === BookingStatus::Cancelled)
+                            ->disabled()
                             ->columnSpanFull(),
                     ]),
             ]);

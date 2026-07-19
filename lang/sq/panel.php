@@ -17,6 +17,7 @@ return [
     'customer_phone' => 'Telefoni i klientit',
     'customer_email' => 'Email-i i klientit',
     'notes' => 'Shënime',
+    'cancellation_reason' => 'Arsyeja (opsionale)',
 
     // Tabela e rezervimeve
     'reference' => 'Referenca',

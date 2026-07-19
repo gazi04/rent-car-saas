@@ -106,9 +106,11 @@ class BookingService
         BookingConfirmed::dispatch($booking);
     }
 
-    public function reject(Booking $booking): void
+    public function reject(Booking $booking, ?string $reason = null): void
     {
-        $this->transition($booking, BookingStatus::Pending, BookingStatus::Cancelled);
+        $this->transition($booking, BookingStatus::Pending, BookingStatus::Cancelled, [
+            ...($reason !== null ? ['cancellation_reason' => $reason] : []),
+        ]);
         BookingRejected::dispatch($booking);
     }
 
@@ -128,7 +130,7 @@ class BookingService
         ]);
     }
 
-    public function cancel(Booking $booking, string $cancelledBy = 'operator'): void
+    public function cancel(Booking $booking, string $cancelledBy = 'operator', ?string $reason = null): void
     {
         if ($booking->status === BookingStatus::Completed) {
             throw new \InvalidArgumentException('Completed bookings cannot be cancelled.');
@@ -136,7 +138,10 @@ class BookingService
 
         $updated = Booking::whereKey($booking->getKey())
             ->where('status', '!=', BookingStatus::Cancelled->value)
-            ->update(['status' => BookingStatus::Cancelled->value]);
+            ->update([
+                'status' => BookingStatus::Cancelled->value,
+                ...($reason !== null ? ['cancellation_reason' => $reason] : []),
+            ]);
 
         if ($updated === 0) {
             return;

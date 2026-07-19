@@ -17,6 +17,7 @@ return [
     'customer_phone' => 'Customer phone',
     'customer_email' => 'Customer email',
     'notes' => 'Notes',
+    'cancellation_reason' => 'Reason (optional)',
 
     // Booking table
     'reference' => 'Reference',
