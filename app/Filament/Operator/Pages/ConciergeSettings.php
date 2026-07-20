@@ -47,6 +47,11 @@ class ConciergeSettings extends Page
         return __('panel.nav_concierge');
     }
 
+    public function getTitle(): string
+    {
+        return __('panel.nav_concierge');
+    }
+
     /** @var array<string, mixed>|null */
     public ?array $data = [];
 

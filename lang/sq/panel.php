@@ -5,6 +5,8 @@
 return [
     'nav_bookings' => 'Rezervimet',
     'nav_vehicles' => 'Automjetet',
+    'model_label_vehicle' => 'Automjeti',
+    'model_label_booking' => 'Rezervimi',
 
     // Forma e rezervimit
     'section_vehicle_dates' => 'Automjeti & Datat',
@@ -129,6 +131,7 @@ return [
 
     // Regjistri i klientëve
     'nav_customers' => 'Klientët',
+    'model_label_customer' => 'Klienti',
     'customer_notes' => 'Shënime',
     'is_blacklisted' => 'Në listën e zezë',
     'blacklisted' => 'Në listën e zezë',
@@ -138,6 +141,7 @@ return [
 
     // Nën-llogaritë e stafit
     'nav_staff' => 'Stafi',
+    'model_label_staff' => 'Anëtar i stafit',
     'section_staff' => 'Anëtar i stafit',
     'staff_name' => 'Emri',
     'staff_email' => 'Email',
@@ -174,6 +178,7 @@ return [
 
     // Kodet promocionale
     'nav_promo_codes' => 'Kodet promocionale',
+    'model_label_promo_code' => 'Kodi promocional',
     'promo_section' => 'Kodi promocional',
     'promo_code' => 'Kodi',
     'promo_type' => 'Lloji',
@@ -192,6 +197,7 @@ return [
 
     // Gjurmimi i mirëmbajtjes së automjeteve
     'nav_service_records' => 'Të dhënat e servisit',
+    'model_label_service_record' => 'Të dhëna servisi',
     'service_section' => 'Të dhëna servisi',
     'service_type' => 'Lloji i servisit',
     'service_type_oil_change' => 'Ndërrim vaji',
@@ -212,6 +218,7 @@ return [
 
     // Vlerësimet
     'nav_reviews' => 'Vlerësimet',
+    'model_label_review' => 'Vlerësimi',
     'review_reviewer' => 'Vlerësuesi',
     'review_rating' => 'Vlerësimi',
     'review_comment' => 'Komenti',
@@ -222,6 +229,7 @@ return [
 
     // Lista e pritjes
     'nav_waitlist' => 'Lista e pritjes',
+    'model_label_waitlist_entry' => 'Hyrje në listën e pritjes',
     'waitlist_vehicle' => 'Automjeti',
     'waitlist_name' => 'Emri',
     'waitlist_email' => 'Email',

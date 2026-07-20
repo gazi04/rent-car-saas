@@ -43,6 +43,11 @@ class TemplateSettings extends Page
         return __('panel.nav_templates');
     }
 
+    public function getTitle(): string
+    {
+        return __('panel.nav_templates');
+    }
+
     /** @var array<string, mixed>|null */
     public ?array $data = [];
 

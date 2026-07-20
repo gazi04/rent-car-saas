@@ -5,6 +5,8 @@
 return [
     'nav_bookings' => 'Bookings',
     'nav_vehicles' => 'Vehicles',
+    'model_label_vehicle' => 'Vehicle',
+    'model_label_booking' => 'Booking',
 
     // Booking form
     'section_vehicle_dates' => 'Vehicle & Dates',
@@ -129,6 +131,7 @@ return [
 
     // Customer directory
     'nav_customers' => 'Customers',
+    'model_label_customer' => 'Customer',
     'customer_notes' => 'Notes',
     'is_blacklisted' => 'Blacklisted',
     'blacklisted' => 'Blacklisted',
@@ -138,6 +141,7 @@ return [
 
     // Staff sub-accounts
     'nav_staff' => 'Staff',
+    'model_label_staff' => 'Staff member',
     'section_staff' => 'Staff member',
     'staff_name' => 'Name',
     'staff_email' => 'Email',
@@ -174,6 +178,7 @@ return [
 
     // Promo codes
     'nav_promo_codes' => 'Promo codes',
+    'model_label_promo_code' => 'Promo code',
     'promo_section' => 'Promo code',
     'promo_code' => 'Code',
     'promo_type' => 'Type',
@@ -192,6 +197,7 @@ return [
 
     // Vehicle maintenance tracking
     'nav_service_records' => 'Service records',
+    'model_label_service_record' => 'Service record',
     'service_section' => 'Service record',
     'service_type' => 'Service type',
     'service_type_oil_change' => 'Oil change',
@@ -212,6 +218,7 @@ return [
 
     // Reviews
     'nav_reviews' => 'Reviews',
+    'model_label_review' => 'Review',
     'review_reviewer' => 'Reviewer',
     'review_rating' => 'Rating',
     'review_comment' => 'Comment',
@@ -222,6 +229,7 @@ return [
 
     // Waitlist
     'nav_waitlist' => 'Waitlist',
+    'model_label_waitlist_entry' => 'Waitlist entry',
     'waitlist_vehicle' => 'Vehicle',
     'waitlist_name' => 'Name',
     'waitlist_email' => 'Email',

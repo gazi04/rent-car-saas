@@ -7,6 +7,7 @@ use App\Models\Booking;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Read-only booking history on the customer view page. Bookings are created
@@ -16,6 +17,11 @@ use Filament\Tables\Table;
 class BookingsRelationManager extends RelationManager
 {
     protected static string $relationship = 'bookings';
+
+    public static function getTitle(Model $ownerRecord, string $pageClass): string
+    {
+        return __('panel.nav_bookings');
+    }
 
     public function table(Table $table): Table
     {

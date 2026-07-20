@@ -27,6 +27,16 @@ class BookingResource extends Resource
         return __('panel.nav_bookings');
     }
 
+    public static function getModelLabel(): string
+    {
+        return __('panel.model_label_booking');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('panel.nav_bookings');
+    }
+
     public static function form(Schema $schema): Schema
     {
         return BookingForm::configure($schema);

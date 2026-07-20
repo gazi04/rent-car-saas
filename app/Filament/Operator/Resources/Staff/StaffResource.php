@@ -36,6 +36,16 @@ class StaffResource extends Resource
         return __('panel.nav_staff');
     }
 
+    public static function getModelLabel(): string
+    {
+        return __('panel.model_label_staff');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('panel.nav_staff');
+    }
+
     /** Owner-only: hidden and 404 for staff accounts themselves. */
     public static function canAccess(): bool
     {

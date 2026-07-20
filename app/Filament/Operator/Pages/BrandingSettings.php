@@ -326,4 +326,9 @@ class BrandingSettings extends Page
     {
         return __('branding.navigation_label');
     }
+
+    public function getTitle(): string
+    {
+        return __('branding.navigation_label');
+    }
 }

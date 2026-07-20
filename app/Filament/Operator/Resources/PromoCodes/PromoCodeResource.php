@@ -34,6 +34,16 @@ class PromoCodeResource extends Resource
         return __('panel.nav_promo_codes');
     }
 
+    public static function getModelLabel(): string
+    {
+        return __('panel.model_label_promo_code');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('panel.nav_promo_codes');
+    }
+
     /** Owner-only + plan-gated: hidden and 404 for staff and when the plan disables promo codes. */
     public static function canAccess(): bool
     {

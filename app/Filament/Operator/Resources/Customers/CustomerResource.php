@@ -32,6 +32,16 @@ class CustomerResource extends Resource
         return __('panel.nav_customers');
     }
 
+    public static function getModelLabel(): string
+    {
+        return __('panel.model_label_customer');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('panel.nav_customers');
+    }
+
     public static function form(Schema $schema): Schema
     {
         return CustomerForm::configure($schema);

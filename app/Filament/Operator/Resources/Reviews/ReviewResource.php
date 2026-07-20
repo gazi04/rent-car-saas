@@ -34,6 +34,16 @@ class ReviewResource extends Resource
         return __('panel.nav_reviews');
     }
 
+    public static function getModelLabel(): string
+    {
+        return __('panel.model_label_review');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('panel.nav_reviews');
+    }
+
     /** Owner-only (fleet/marketing data); free on every plan (not feature-gated). */
     public static function canAccess(): bool
     {

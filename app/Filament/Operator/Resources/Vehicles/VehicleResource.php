@@ -29,6 +29,16 @@ class VehicleResource extends Resource
         return __('panel.nav_vehicles');
     }
 
+    public static function getModelLabel(): string
+    {
+        return __('panel.model_label_vehicle');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('panel.nav_vehicles');
+    }
+
     /** Fleet management is owner-only — hidden and 404 for staff accounts. */
     public static function canAccess(): bool
     {

@@ -35,6 +35,16 @@ class ServiceRecordResource extends Resource
         return __('panel.nav_service_records');
     }
 
+    public static function getModelLabel(): string
+    {
+        return __('panel.model_label_service_record');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('panel.nav_service_records');
+    }
+
     /** Owner-only, free on every plan — logging must stay available even on Basic. */
     public static function canAccess(): bool
     {

@@ -33,6 +33,16 @@ class WaitlistEntryResource extends Resource
         return __('panel.nav_waitlist');
     }
 
+    public static function getModelLabel(): string
+    {
+        return __('panel.model_label_waitlist_entry');
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return __('panel.nav_waitlist');
+    }
+
     /**
      * Owner-only + plan-gated: hidden and 404 for staff, and when the plan enables
      * neither feature.
