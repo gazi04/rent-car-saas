@@ -188,6 +188,7 @@ return [
     'promo_uses' => 'Uses',
     'promo_unlimited_hint' => 'Leave empty for unlimited.',
     'promo_invalid_title' => 'Invalid promo code',
+    'vehicle_not_available_title' => 'Vehicle not available',
 
     // Vehicle maintenance tracking
     'nav_service_records' => 'Service records',

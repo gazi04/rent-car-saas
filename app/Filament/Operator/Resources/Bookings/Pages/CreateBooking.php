@@ -25,7 +25,7 @@ class CreateBooking extends CreateRecord
             return app(BookingService::class)->createManual($data);
         } catch (VehicleNotAvailableException|PromoCodeInvalidException $e) {
             Notification::make()
-                ->title($e instanceof PromoCodeInvalidException ? __('panel.promo_invalid_title') : 'Vehicle not available')
+                ->title($e instanceof PromoCodeInvalidException ? __('panel.promo_invalid_title') : __('panel.vehicle_not_available_title'))
                 ->body($e->getMessage())
                 ->danger()
                 ->send();
