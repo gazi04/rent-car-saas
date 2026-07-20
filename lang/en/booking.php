@@ -153,6 +153,7 @@ return [
     // AI storefront FAQ concierge (#4)
     'concierge_launcher' => 'Ask a question',
     'concierge_title' => 'Questions?',
+    'concierge_subtitle' => 'We usually reply in seconds',
     'concierge_close' => 'Close',
     'concierge_greeting' => 'Hi! Ask me about deposits, cancellation, required documents or opening hours.',
     'concierge_placeholder' => 'Type your question…',

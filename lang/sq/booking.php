@@ -153,6 +153,7 @@ return [
     // AI storefront FAQ concierge (#4)
     'concierge_launcher' => 'Bëni një pyetje',
     'concierge_title' => 'Pyetje?',
+    'concierge_subtitle' => 'Zakonisht përgjigjemi brenda sekondash',
     'concierge_close' => 'Mbyll',
     'concierge_greeting' => 'Përshëndetje! Më pyesni për depozitën, anulimin, dokumentet e nevojshme ose orarin.',
     'concierge_placeholder' => 'Shkruani pyetjen tuaj…',
