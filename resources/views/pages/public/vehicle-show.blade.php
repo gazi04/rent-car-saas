@@ -10,6 +10,7 @@ use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
@@ -113,6 +114,24 @@ new #[Layout('layouts.public')] #[Title('Vehicle Details')] class extends Compon
         return $this->isBookable
             && (tenant()?->allowsFeature(PlanFeature::Waitlist)
                 ?? (bool) PlanFeature::Waitlist->default());
+    }
+
+    /**
+     * The date pickers are plain flatpickr instances (dd/mm/yyyy display,
+     * matching the main booking calendar's picker) with no wire:model — they
+     * report back via dispatched events instead, same pattern as
+     * resources/js/booking-form.js's 'dates-selected'.
+     */
+    #[On('waitlist-start-selected')]
+    public function onWaitlistStartSelected(string $date): void
+    {
+        $this->waitlistStart = $date;
+    }
+
+    #[On('waitlist-end-selected')]
+    public function onWaitlistEndSelected(string $date): void
+    {
+        $this->waitlistEnd = $date;
     }
 
     /**
