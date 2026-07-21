@@ -63,6 +63,31 @@ class Tenant extends BaseTenant implements HasMedia
         ];
     }
 
+    /**
+     * Guarantee the billing invariant: an Active tenant always has a paid_until,
+     * so it is always visible to the daily subscription sweep.
+     *
+     * `status` is written from many places — the admin create/edit form (which
+     * lets an admin pick Active directly), approveAction(), reactivateAction(),
+     * the seeder, the factory — and only approveAction() also sets paid_until. A
+     * tenant reaching Active by any other route is skipped by
+     * ProcessTenantSubscriptions forever (its query is whereNotNull('paid_until'))
+     * and keeps storefront and panel access with nothing left to lapse. Guarding
+     * at each call site would be a rule half-applied that the next write path
+     * silently opts out of; a model hook is the only total one. Same reasoning as
+     * Vehicle::booted().
+     *
+     * An existing paid_until is never overwritten — only the null case enrolls.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (Tenant $tenant): void {
+            if ($tenant->status === TenantStatus::Active && $tenant->paid_until === null) {
+                $tenant->paid_until = now()->addDays((int) config('billing.trial_days'))->endOfDay();
+            }
+        });
+    }
+
     public function isActive(): bool
     {
         return $this->status === TenantStatus::Active;
