@@ -3,7 +3,7 @@
 
 {{ __("emails.{$langKey}.greeting", ['name' => $tenant->name]) }}
 
-{{ __("emails.{$langKey}.intro", ['days' => $daysLeft, 'date' => $tenant->paid_until->format('d M Y')]) }}
+{{ __("emails.{$langKey}.intro", ['days' => $displayDays, 'date' => $tenant->paid_until->format('d M Y'), 'suspends_on' => $suspendsOn]) }}
 
 | | |
 |---|---|

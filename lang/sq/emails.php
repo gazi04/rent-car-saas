@@ -90,6 +90,27 @@ return [
         'outro' => 'Nëse tashmë keni paguar, mund ta injoroni këtë mesazh — pagesa juaj do të regjistrohet së shpejti.',
     ],
 
+    // Dërgohet një ditë pas përfundimit të periudhës — paralajmërimi i fundit para pezullimit.
+    'trial_grace_reminder' => [
+        'subject' => 'Prova juaj falas ka përfunduar — edhe :days ditë',
+        'greeting' => 'Përshëndetje :name,',
+        'intro' => 'Prova juaj falas përfundoi më :date. Ju kanë mbetur edhe :days ditë për të zgjedhur një plan dhe për të kryer pagesën — pas :suspends_on faqja juaj e rezervimeve dhe paneli do të pezullohen.',
+        'plan_label' => 'Plani',
+        'paid_until_label' => 'Prova përfundoi',
+        'payment_note' => 'Për ta mbajtur aktive faqen tuaj të rezervimeve dhe panelin, ju lutemi zgjidhni një plan dhe kryeni pagesën me transfertë bankare ose personalisht.',
+        'outro' => 'Nëse tashmë keni paguar, mund ta injoroni këtë mesazh — pagesa juaj do të regjistrohet së shpejti.',
+    ],
+
+    'subscription_grace_reminder' => [
+        'subject' => 'Abonimi juaj ka skaduar — edhe :days ditë',
+        'greeting' => 'Përshëndetje :name,',
+        'intro' => 'Periudha e abonimit tuaj përfundoi më :date. Ju kanë mbetur edhe :days ditë për ta rinovuar — pas :suspends_on faqja juaj e rezervimeve dhe paneli do të pezullohen.',
+        'plan_label' => 'Plani',
+        'paid_until_label' => 'Paguar deri më',
+        'payment_note' => 'Për ta mbajtur aktive faqen tuaj të rezervimeve dhe panelin, ju lutemi kryeni pagesën me transfertë bankare ose personalisht.',
+        'outro' => 'Nëse tashmë keni paguar, mund ta injoroni këtë mesazh — pagesa juaj do të regjistrohet së shpejti.',
+    ],
+
     // Kujtesa e servisit (operatori, gjurmimi i mirëmbajtjes së automjeteve)
     'service_due' => [
         'subject' => 'Servisi afër afatit — :vehicle',

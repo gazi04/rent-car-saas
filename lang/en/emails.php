@@ -90,6 +90,27 @@ return [
         'outro' => 'If you have already paid, you can ignore this message — your payment will be recorded shortly.',
     ],
 
+    // Sent the day after the period lapsed — the last warning before suspension.
+    'trial_grace_reminder' => [
+        'subject' => 'Your free trial has ended — :days day(s) left',
+        'greeting' => 'Hello :name,',
+        'intro' => 'Your free trial ended on :date. You have :days day(s) left to choose a plan and arrange payment — after :suspends_on your booking site and dashboard will be suspended.',
+        'plan_label' => 'Plan',
+        'paid_until_label' => 'Trial ended',
+        'payment_note' => 'To keep your booking site and dashboard active, please choose a plan and arrange the payment by bank transfer or in person.',
+        'outro' => 'If you have already paid, you can ignore this message — your payment will be recorded shortly.',
+    ],
+
+    'subscription_grace_reminder' => [
+        'subject' => 'Your subscription has expired — :days day(s) left',
+        'greeting' => 'Hello :name,',
+        'intro' => 'Your subscription period ended on :date. You have :days day(s) left to renew — after :suspends_on your booking site and dashboard will be suspended.',
+        'plan_label' => 'Plan',
+        'paid_until_label' => 'Paid until',
+        'payment_note' => 'To keep your booking site and dashboard active, please arrange the payment by bank transfer or in person.',
+        'outro' => 'If you have already paid, you can ignore this message — your payment will be recorded shortly.',
+    ],
+
     // Service due reminder (operator, vehicle maintenance tracking)
     'service_due' => [
         'subject' => 'Service due soon — :vehicle',

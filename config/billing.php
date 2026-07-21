@@ -18,6 +18,11 @@ return [
 
     'grace_days' => 7,
 
-    /** Days before paid_until on which a renewal reminder is emailed. */
-    'reminder_days' => [7, 1],
+    /**
+     * Days relative to paid_until on which a reminder is emailed.
+     * Positive = that many days before the period ends.
+     * Negative = that many days after it lapsed, i.e. inside the grace window —
+     * the operator's last warning before automatic suspension.
+     */
+    'reminder_days' => [7, 1, -1],
 ];
