@@ -12,6 +12,7 @@ use Carbon\Carbon;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Component {
@@ -23,6 +24,18 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
     public string $endDate = '';
     /** @var array<string, mixed>|null */
     public ?array $priceBreakdown = null;
+
+    /**
+     * Dates forwarded from the listing page's date-range filter (via the
+     * vehicle-show page's CTA link) — read-only inputs, never written back to
+     * the query string. mount() copies a valid pair into startDate/endDate so
+     * the customer doesn't have to re-pick what they already chose upstream.
+     */
+    #[Url(as: 'start_date')]
+    public string $prefillStartDate = '';
+
+    #[Url(as: 'end_date')]
+    public string $prefillEndDate = '';
 
     // Promo code (gated feature)
     public string $promoCode = '';
@@ -42,6 +55,21 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
     {
         abort_unless($vehicle->is_public && $vehicle->status === VehicleStatus::Available, 404);
         $this->vehicle = $vehicle;
+
+        if ($this->prefillStartDate !== '' && $this->prefillEndDate !== '') {
+            try {
+                $start = Carbon::parse($this->prefillStartDate);
+                $end = Carbon::parse($this->prefillEndDate);
+            } catch (\Exception) {
+                return;
+            }
+
+            if ($start->lt($end)) {
+                $this->startDate = $this->prefillStartDate;
+                $this->endDate = $this->prefillEndDate;
+                $this->refreshPrice();
+            }
+        }
     }
 
     #[On('dates-selected')]
@@ -240,6 +268,8 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
                        type="text"
                        placeholder="{{ __('booking.date_placeholder') }}"
                        data-availability-url="{{ route('vehicle.availability', $vehicle) }}"
+                       data-default-start="{{ $startDate }}"
+                       data-default-end="{{ $endDate }}"
                        class="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
                 @error('startDate') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 @error('endDate') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror

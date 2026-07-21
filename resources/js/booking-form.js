@@ -15,6 +15,7 @@ function initBookingPicker() {
     if (!el || el._flatpickr) return;
 
     const availabilityUrl = el.dataset.availabilityUrl;
+    const { defaultStart, defaultEnd } = el.dataset;
 
     fetch(availabilityUrl)
         .then((res) => res.json())
@@ -29,6 +30,7 @@ function initBookingPicker() {
                 minDate: 'today',
                 dateFormat: 'Y-m-d',
                 disable: disableRanges,
+                defaultDate: defaultStart && defaultEnd ? [defaultStart, defaultEnd] : undefined,
                 onChange(selectedDates) {
                     if (selectedDates.length === 2) {
                         const fmt = (d) => {

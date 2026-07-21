@@ -14,6 +14,7 @@ export default defineConfig({
                 'resources/js/passkeys.js',
                 'resources/js/booking-form.js',
                 'resources/js/waitlist-form.js',
+                'resources/js/vehicle-filters.js',
                 'resources/css/filament/operator/theme.css',
                 'resources/css/filament/admin/theme.css',
             ],

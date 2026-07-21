@@ -12,10 +12,22 @@ use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 new #[Layout('layouts.public')] #[Title('Vehicle Details')] class extends Component {
     public Vehicle $vehicle;
+
+    /**
+     * Carried forward from the listing page's date-range filter (never read for
+     * anything but forwarding) so the booking wizard's CTA can pass them along
+     * in turn — see _rates.blade.php and vehicle-booking.blade.php's mount().
+     */
+    #[Url(as: 'start_date')]
+    public string $startDate = '';
+
+    #[Url(as: 'end_date')]
+    public string $endDate = '';
 
     /**
      * Only is_public gates the page — status does not (backlog #3).

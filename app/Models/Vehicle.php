@@ -2,13 +2,16 @@
 
 namespace App\Models;
 
+use App\Enums\BookingStatus;
 use App\Enums\FuelType;
 use App\Enums\Transmission;
 use App\Enums\VehicleCategory;
 use App\Enums\VehicleStatus;
 use App\Events\VehicleBecameAvailable;
+use Carbon\CarbonImmutable;
 use Database\Factories\VehicleFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -117,6 +120,29 @@ class Vehicle extends Model implements HasMedia
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
+    }
+
+    /**
+     * Fleet-wide counterpart to AvailabilityService::isAvailable() — that service
+     * checks one vehicle at a time for the booking wizard; this scope excludes
+     * whole rows from a listing query so the storefront's date filter can hide
+     * unavailable vehicles without an isAvailable() call per row. Mirrors the
+     * same overlap predicate (bookings in a blocking status, or a blocked_dates
+     * row, spanning the requested range).
+     *
+     * @param  Builder<Vehicle>  $query
+     * @return Builder<Vehicle>
+     */
+    public function scopeAvailableBetween(Builder $query, CarbonImmutable $start, CarbonImmutable $end): Builder
+    {
+        return $query
+            ->whereDoesntHave('bookings', fn ($q) => $q
+                ->whereIn('status', BookingStatus::blocking())
+                ->where('start_date', '<', $end)
+                ->where('end_date', '>', $start))
+            ->whereDoesntHave('blockedDates', fn ($q) => $q
+                ->where('start_date', '<', $end)
+                ->where('end_date', '>', $start));
     }
 
     /** @return HasMany<BlockedDate, $this> */

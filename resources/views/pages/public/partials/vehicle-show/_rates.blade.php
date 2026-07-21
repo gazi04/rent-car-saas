@@ -35,8 +35,14 @@
         @endif
     </dl>
 
+    @php
+        $rateDateParams = ($startDate ?? '') !== '' && ($endDate ?? '') !== ''
+            ? ['start_date' => $startDate, 'end_date' => $endDate]
+            : [];
+    @endphp
+
     @if ($isBookable ?? true)
-        <a href="{{ route('public.vehicle.book', $vehicle) }}"
+        <a href="{{ route('public.vehicle.book', $vehicle) }}{{ $rateDateParams ? '?' . http_build_query($rateDateParams) : '' }}"
            class="mt-6 block text-center rounded-md bg-primary px-4 py-3 text-base font-semibold text-white hover:bg-secondary transition-colors">
             {{ __('booking.book_now') }}
         </a>

@@ -4,6 +4,11 @@
     /** Off-the-road vehicles are listed too (backlog #3) — dimmed, and the CTA
         goes to the page to join the stock alert rather than promising a booking. */
     $isBookable = $vehicle->status === \App\Enums\VehicleStatus::Available;
+    /** Carry the listing's date-range filter forward so the visitor doesn't
+        re-pick dates on the vehicle-show page and booking wizard. */
+    $cardDateParams = ($startDate ?? '') !== '' && ($endDate ?? '') !== ''
+        ? ['start_date' => $startDate, 'end_date' => $endDate]
+        : [];
 @endphp
 
 <div class="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow {{ $horizontal ? 'sm:flex' : '' }} {{ $isBookable ? '' : 'opacity-75' }}">
@@ -50,7 +55,7 @@
                 <span class="text-lg font-bold text-gray-900">€{{ number_format((float) $vehicle->daily_rate, 2) }}</span>
                 <span class="text-xs text-gray-500 ml-1">{{ __('booking.per_day') }}</span>
             </div>
-            <a href="{{ route('public.vehicle', $vehicle) }}"
+            <a href="{{ route('public.vehicle', $vehicle) }}{{ $cardDateParams ? '?' . http_build_query($cardDateParams) : '' }}"
                class="inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium transition-colors {{ $isBookable ? 'bg-primary text-white hover:bg-secondary' : 'border border-gray-300 text-gray-700 hover:bg-gray-50' }}">
                 {{ $isBookable ? __('booking.book_now') : __('booking.stock_alert_submit') }}
             </a>
