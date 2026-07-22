@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Enums\VehicleStatus;
@@ -11,7 +13,9 @@ use App\Models\WaitlistEntry;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Mail;
+use InvalidArgumentException;
 
 /**
  * Waitlist joins and the "a slot opened" notification sweep (backlog #2), plus
@@ -31,7 +35,7 @@ use Illuminate\Support\Facades\Mail;
 class WaitlistService
 {
     /** Dateless entries never expire on their own; the sweep retires them here. */
-    private const STOCK_ALERT_TTL_DAYS = 90;
+    private const int STOCK_ALERT_TTL_DAYS = 90;
 
     public function __construct(private readonly AvailabilityService $availability) {}
 
@@ -42,18 +46,14 @@ class WaitlistService
      */
     public function join(Vehicle $vehicle, array $data): WaitlistEntry
     {
-        $start = Carbon::parse($data['start_date'])->startOfDay();
-        $end = Carbon::parse($data['end_date'])->startOfDay();
+        $start = Date::parse($data['start_date'])->startOfDay();
+        $end = Date::parse($data['end_date'])->startOfDay();
 
-        if (! $start->lt($end)) {
-            throw new \InvalidArgumentException('start_date must be before end_date.');
-        }
+        throw_unless($start->lt($end), InvalidArgumentException::class, 'start_date must be before end_date.');
 
-        if ($start->lt(now()->startOfDay())) {
-            throw new \InvalidArgumentException('Cannot join a waitlist for dates in the past.');
-        }
+        throw_if($start->lt(today()), InvalidArgumentException::class, 'Cannot join a waitlist for dates in the past.');
 
-        return WaitlistEntry::create([
+        return WaitlistEntry::query()->create([
             'vehicle_id' => $vehicle->id,
             'name' => $data['name'],
             'email' => $data['email'],
@@ -75,7 +75,7 @@ class WaitlistService
      */
     public function joinStockAlert(Vehicle $vehicle, array $data): WaitlistEntry
     {
-        return WaitlistEntry::create([
+        return WaitlistEntry::query()->create([
             'vehicle_id' => $vehicle->id,
             'name' => $data['name'],
             'email' => $data['email'],
@@ -101,7 +101,7 @@ class WaitlistService
             return 0;
         }
 
-        $tenant = Tenant::find($vehicle->tenant_id);
+        $tenant = Tenant::query()->find($vehicle->tenant_id);
 
         if ($tenant === null) {
             return 0;
@@ -110,8 +110,7 @@ class WaitlistService
         $entries = WaitlistEntry::query()
             ->where('vehicle_id', $vehicle->id)
             ->whereNull('notified_at')
-            ->whereNull('start_date')
-            ->orderBy('created_at')
+            ->whereNull('start_date')->oldest()
             ->get();
 
         foreach ($entries as $entry) {
@@ -144,7 +143,7 @@ class WaitlistService
      */
     public function notifyMatching(Vehicle $vehicle, ?CarbonInterface $freedStart = null, ?CarbonInterface $freedEnd = null): int
     {
-        $tenant = Tenant::find($vehicle->tenant_id);
+        $tenant = Tenant::query()->find($vehicle->tenant_id);
 
         if ($tenant === null) {
             return 0;
@@ -155,8 +154,7 @@ class WaitlistService
             ->whereNull('notified_at')
             ->whereNotNull('start_date')
             ->whereNotNull('end_date')
-            ->whereDate('start_date', '>=', now()->startOfDay())
-            ->orderBy('created_at') // FIFO
+            ->whereDate('start_date', '>=', today())->oldest() // FIFO
             ->get()
             ->filter(fn (WaitlistEntry $entry): bool => $entry->overlaps($freedStart, $freedEnd));
 
@@ -169,13 +167,10 @@ class WaitlistService
                 continue;
             }
 
-            // AvailabilityService takes a mutable Carbon, but AppServiceProvider
-            // sets Date::use(CarbonImmutable), so every model date cast is
-            // immutable. Convert, the way BookingService does by parsing strings.
             $available = $this->availability->isAvailable(
                 $vehicle,
-                Carbon::instance($entry->start_date),
-                Carbon::instance($entry->end_date),
+                $entry->start_date,
+                $entry->end_date,
             );
 
             if (! $available) {
@@ -211,7 +206,7 @@ class WaitlistService
                     ->where(function (Builder $dated): void {
                         $dated
                             ->whereNotNull('start_date')
-                            ->whereDate('start_date', '<', now()->startOfDay());
+                            ->whereDate('start_date', '<', today());
                     })
                     ->orWhere(function (Builder $dateless): void {
                         $dateless

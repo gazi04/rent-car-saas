@@ -1,18 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Enums\BookingStatus;
 use App\Models\Vehicle;
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
+use InvalidArgumentException;
 
 class AvailabilityService
 {
-    public function isAvailable(Vehicle $vehicle, Carbon $start, Carbon $end): bool
+    public function isAvailable(Vehicle $vehicle, CarbonInterface $start, CarbonInterface $end): bool
     {
-        if (! $start->lt($end)) {
-            throw new \InvalidArgumentException('start_date must be before end_date.');
-        }
+        throw_unless($start->lt($end), InvalidArgumentException::class, 'start_date must be before end_date.');
 
         if ($this->hasBookingConflict($vehicle, $start, $end)) {
             return false;
@@ -28,7 +29,7 @@ class AvailabilityService
      * half-open range on this vehicle. Shared by isAvailable() and the operator
      * block-dates guard so the interval predicate lives in exactly one place.
      */
-    public function hasBookingConflict(Vehicle $vehicle, Carbon $start, Carbon $end): bool
+    public function hasBookingConflict(Vehicle $vehicle, CarbonInterface $start, CarbonInterface $end): bool
     {
         return $vehicle->bookings()
             ->whereIn('status', BookingStatus::blocking())
