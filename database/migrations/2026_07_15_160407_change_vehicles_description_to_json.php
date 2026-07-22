@@ -24,7 +24,7 @@ return new class extends Migration
         if (DB::getDriverName() === 'pgsql') {
             DB::statement('ALTER TABLE vehicles ALTER COLUMN description TYPE json USING description::json');
         } else {
-            Schema::table('vehicles', function (Blueprint $table) {
+            Schema::table('vehicles', function (Blueprint $table): void {
                 $table->json('description')->nullable()->change();
             });
         }
@@ -38,7 +38,7 @@ return new class extends Migration
         if (DB::getDriverName() === 'pgsql') {
             DB::statement("ALTER TABLE vehicles ALTER COLUMN description TYPE text USING description->>'en'");
         } else {
-            Schema::table('vehicles', function (Blueprint $table) {
+            Schema::table('vehicles', function (Blueprint $table): void {
                 $table->text('description')->nullable()->change();
             });
 

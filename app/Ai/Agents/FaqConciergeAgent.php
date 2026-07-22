@@ -51,8 +51,8 @@ class FaqConciergeAgent implements Agent, Conversational, HasStructuredOutput, R
 
     public function instructions(): string
     {
-        return 'You are a helpful assistant on a car-rental company\'s public booking website. '
-            .'Answer the visitor\'s question using ONLY the facts in the FAQ text below. '
+        return "You are a helpful assistant on a car-rental company's public booking website. "
+            ."Answer the visitor's question using ONLY the facts in the FAQ text below. "
             .'If the answer is not in that text, do not guess or use outside knowledge — instead set '
             .'"confident" to false and leave a short apology in "answer". '
             ."Reply in {$this->language}, in 1-3 plain sentences, no headings or lists.\n\n"

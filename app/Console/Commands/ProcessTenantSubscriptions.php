@@ -52,7 +52,7 @@ class ProcessTenantSubscriptions extends Command
             $processed++;
         }
 
-        $this->info("Processed {$processed} enrolled tenants.");
+        $this->info(sprintf('Processed %d enrolled tenants.', $processed));
 
         return self::SUCCESS;
     }
@@ -96,6 +96,6 @@ class ProcessTenantSubscriptions extends Command
                 ->sendToDatabase($admin);
         }
 
-        $this->warn("Suspended {$tenant->name} (paid until {$tenant->paid_until?->toDateString()}).");
+        $this->warn(sprintf('Suspended %s (paid until %s).', $tenant->name, $tenant->paid_until?->toDateString()));
     }
 }

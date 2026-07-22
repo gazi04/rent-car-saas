@@ -7,6 +7,7 @@ use App\Enums\PlanFeature;
 use App\Filament\Support\HelpAction;
 use App\Models\Booking;
 use App\Models\Vehicle;
+use BackedEnum;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Filament\Actions\Action;
@@ -15,14 +16,26 @@ use Filament\Pages\Page;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Date;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Read-only aggregation over the tenant's existing bookings — counts, revenue,
  * and per-vehicle utilisation for a chosen date range, with CSV export. All
  * queries are auto tenant-scoped via BelongsToTenant.
+ *
+ * @phpstan-type HeatmapPayload array{
+ *     truncated: bool,
+ *     fleet_size: int<0, max>,
+ *     days: list<array{date: string, day: string, dow: string, is_weekend: bool}>,
+ *     rows: list<array{
+ *         vehicle: string,
+ *         occupied_days: int<0, max>,
+ *         cells: list<array{kind: 'free'|'booking'|'block', color: string|null, label: string|null}>,
+ *     }>,
+ *     demand: list<array{date: string, occupied: int<0, max>, percent: int<0, 100>}>,
+ * }
  *
  * @property-read Schema $form
  */
@@ -36,7 +49,7 @@ class Reports extends Page
      */
     public const MAX_HEATMAP_DAYS = 31;
 
-    protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedChartBar;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChartBar;
 
     protected static ?int $navigationSort = 9;
 
@@ -47,7 +60,7 @@ class Reports extends Page
      * serialized into every Livewire request payload, and this is a days x fleet
      * matrix.
      *
-     * @var array<string, mixed>|null
+     * @var HeatmapPayload|null
      */
     private ?array $heatmapCache = null;
 
@@ -197,22 +210,11 @@ class Reports extends Page
      * to the viewer's local day and shift the whole grid a column west of UTC. Same
      * rule as the public availability endpoint (routes/tenant.php).
      *
-     * @return array{
-     *     truncated: bool,
-     *     fleet_size: int<0, max>,
-     *     days: list<array{date: string, day: string, dow: string, is_weekend: bool}>,
-     *     rows: list<array{
-     *         vehicle: string,
-     *         occupied_days: int<0, max>,
-     *         cells: list<array{kind: 'free'|'booking'|'block', color: string|null, label: string|null}>,
-     *     }>,
-     *     demand: list<array{date: string, occupied: int<0, max>, percent: int<0, 100>}>,
-     * }
+     * @return HeatmapPayload
      */
     public function heatmap(): array
     {
         if ($this->heatmapCache !== null) {
-            /** @var array{truncated: bool, fleet_size: int<0, max>, days: list<array{date: string, day: string, dow: string, is_weekend: bool}>, rows: list<array{vehicle: string, occupied_days: int<0, max>, cells: list<array{kind: 'free'|'booking'|'block', color: string|null, label: string|null}>}>, demand: list<array{date: string, occupied: int<0, max>, percent: int<0, 100>}>} */
             return $this->heatmapCache;
         }
 
@@ -262,7 +264,7 @@ class Reports extends Page
                     $cells[$i] = [
                         'kind' => 'block',
                         'color' => '#9ca3af',
-                        'label' => __('panel.legend_blocked').($block->reason !== null ? " — {$block->reason}" : ''),
+                        'label' => __('panel.legend_blocked').($block->reason !== null ? ' — '.$block->reason : ''),
                     ];
                     $rank[$i] = 0;
                 }
@@ -280,7 +282,7 @@ class Reports extends Page
                     $cells[$i] = [
                         'kind' => 'booking',
                         'color' => $booking->status->calendarColor(),
-                        'label' => "{$booking->reference} — {$booking->status->getLabel()}",
+                        'label' => sprintf('%s — %s', $booking->reference, $booking->status->getLabel()),
                     ];
                     $rank[$i] = $bookingRank;
                 }
@@ -423,7 +425,7 @@ class Reports extends Page
         [$rangeStart, $rangeEnd] = $this->range();
         $filename = sprintf('bookings-%s-%s.csv', $rangeStart->toDateString(), $rangeEnd->toDateString());
 
-        $bookings = $this->bookingsInRange()->with('vehicle')->orderBy('start_date')->get();
+        $bookings = $this->bookingsInRange()->with('vehicle')->oldest('start_date')->get();
 
         return response()->streamDownload(function () use ($bookings): void {
             $out = fopen('php://output', 'w');
@@ -467,8 +469,8 @@ class Reports extends Page
         $end = $this->data['end_date'] ?? null;
 
         return [
-            ($start ? Carbon::parse($start) : now()->startOfMonth())->startOfDay(),
-            ($end ? Carbon::parse($end) : now()->endOfMonth())->endOfDay(),
+            ($start ? Date::parse($start) : now()->startOfMonth())->startOfDay(),
+            ($end ? Date::parse($end) : now()->endOfMonth())->endOfDay(),
         ];
     }
 

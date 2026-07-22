@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\PlanFeature;
@@ -92,7 +94,7 @@ class Plan extends Model
 
         if ($ensureSlug !== null && ! isset($options[$ensureSlug])) {
             $archived = self::query()->where('slug', $ensureSlug)->value('name');
-            $options[$ensureSlug] = $archived ? "{$archived} (archived)" : $ensureSlug;
+            $options[$ensureSlug] = $archived ? $archived.' (archived)' : $ensureSlug;
         }
 
         return $options;

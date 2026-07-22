@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('ai_usage_logs', function (Blueprint $table) {
+        Schema::create('ai_usage_logs', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('tenant_id')->nullable()->constrained()->nullOnDelete();
             $table->string('feature');

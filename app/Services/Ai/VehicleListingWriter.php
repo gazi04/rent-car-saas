@@ -1,11 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Ai;
 
 use App\Ai\Agents\VehicleListingAgent;
 use App\Exceptions\AiRequestFailedException;
 use App\Models\Vehicle;
-use Laravel\Ai\Files;
+use BackedEnum;
+use Laravel\Ai\Files\Image;
 use Laravel\Ai\Responses\StructuredAgentResponse;
 use Throwable;
 
@@ -47,17 +50,19 @@ class VehicleListingWriter
         foreach ($rawFacts as $key => $value) {
             // Form state may hand us backed enums (category, fuel type, …) —
             // take their scalar value so the prompt is plain text.
-            $scalar = $value instanceof \BackedEnum ? $value->value : $value;
+            $scalar = $value instanceof BackedEnum ? $value->value : $value;
 
             if (filled($scalar) && is_scalar($scalar)) {
-                $lines[] = "{$key}: {$scalar}";
+                $lines[] = sprintf('%s: %s', $key, $scalar);
             }
         }
 
         $facts = implode("\n", $lines);
 
         $prompt = 'Write a listing description for this rental vehicle using only these facts'
-            .($vehicle ? ' and the attached photos' : '').":\n{$facts}";
+            .($vehicle instanceof Vehicle ? ' and the attached photos' : '')
+            .":\n"
+            .$facts;
 
         try {
             /** @var StructuredAgentResponse $response */
@@ -65,8 +70,8 @@ class VehicleListingWriter
                 $prompt,
                 attachments: $this->photoAttachments($vehicle),
             );
-        } catch (Throwable $e) {
-            throw AiRequestFailedException::wrap($e);
+        } catch (Throwable $throwable) {
+            throw AiRequestFailedException::wrap($throwable);
         }
 
         /** @var array{en?: string, sq?: string} $result */
@@ -87,24 +92,24 @@ class VehicleListingWriter
      * smaller than the originals, plenty for describing the car). The SDK
      * handles reading + encoding each local file.
      *
-     * @return list<Files\Image>
+     * @return list<Image>
      */
     private function photoAttachments(?Vehicle $vehicle): array
     {
-        if ($vehicle === null) {
+        if (! $vehicle instanceof Vehicle) {
             return [];
         }
 
         $attachments = $vehicle->getMedia('vehicle_photos')
             ->take((int) config('ai.max_photos'))
-            ->map(function ($media): ?Files\Image {
+            ->map(function ($media): ?Image {
                 $path = $media->hasGeneratedConversion('web') ? $media->getPath('web') : $media->getPath();
 
                 if (! is_file($path)) {
                     return null;
                 }
 
-                return Files\Image::fromPath($path);
+                return Image::fromPath($path);
             })
             ->filter()
             ->all();

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\Booking;
@@ -18,7 +20,7 @@ class RentalAgreementService
             return $contract;
         }
 
-        $path = "tenants/{$booking->tenant_id}/contracts/{$booking->reference}.pdf";
+        $path = sprintf('tenants/%s/contracts/%s.pdf', $booking->tenant_id, $booking->reference);
 
         $previousLocale = App::getLocale();
         App::setLocale($booking->locale ?? 'sq');
@@ -27,7 +29,7 @@ class RentalAgreementService
             $pdf = Pdf::loadView('pdf.rental-agreement', [
                 'booking' => $booking->load('vehicle'),
                 // Operator's custom terms wording (feature #7), or the built-in default.
-                'terms' => app(TemplateRenderer::class)->resolve($booking, 'tmpl_agreement_terms', 'contract.terms_body'),
+                'terms' => resolve(TemplateRenderer::class)->resolve($booking, 'tmpl_agreement_terms', 'contract.terms_body'),
             ])->setPaper('a4');
 
             Storage::put($path, $pdf->output());

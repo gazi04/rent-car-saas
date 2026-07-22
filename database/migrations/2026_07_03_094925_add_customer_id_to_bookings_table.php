@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('bookings', function (Blueprint $table) {
+        Schema::table('bookings', function (Blueprint $table): void {
             // Nullable: existing rows aren't backfilled, and a customer delete
             // nulls the link rather than removing booking history.
             $table->foreignId('customer_id')->nullable()->after('vehicle_id')->constrained()->nullOnDelete();
@@ -23,7 +23,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('bookings', function (Blueprint $table) {
+        Schema::table('bookings', function (Blueprint $table): void {
             $table->dropConstrainedForeignId('customer_id');
         });
     }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Ai;
 
 use App\Ai\Agents\PricingSuggestionAgent;
@@ -18,7 +20,7 @@ use Throwable;
  */
 class PricingSuggestionService
 {
-    private const HISTORY_DAYS = 90;
+    private const int HISTORY_DAYS = 90;
 
     /**
      * @return array{suggested_daily_rate: float, reasoning: string}
@@ -34,8 +36,8 @@ class PricingSuggestionService
             $response = (new PricingSuggestionAgent($language))->prompt(
                 (string) json_encode($this->pricingData($vehicle), JSON_PRETTY_PRINT),
             );
-        } catch (Throwable $e) {
-            throw AiRequestFailedException::wrap($e);
+        } catch (Throwable $throwable) {
+            throw AiRequestFailedException::wrap($throwable);
         }
 
         /** @var array{suggested_daily_rate: float|int, reasoning: string} $result */

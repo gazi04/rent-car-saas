@@ -23,7 +23,7 @@ class PromoCodesTable
                 TextColumn::make('type')
                     ->label(__('panel.promo_type'))
                     ->badge()
-                    ->formatStateUsing(fn (string $state): string => __("panel.promo_{$state}")),
+                    ->formatStateUsing(fn (string $state): string => __('panel.promo_'.$state)),
                 TextColumn::make('value')
                     ->label(__('panel.promo_value')),
                 TextColumn::make('uses')

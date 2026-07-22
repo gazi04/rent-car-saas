@@ -57,8 +57,11 @@ class WaitlistEntryResource extends Resource
             return false;
         }
 
-        return self::allowsFeature(PlanFeature::Waitlist)
-            || self::allowsFeature(PlanFeature::StockAlert);
+        if (self::allowsFeature(PlanFeature::Waitlist)) {
+            return true;
+        }
+
+        return self::allowsFeature(PlanFeature::StockAlert);
     }
 
     private static function allowsFeature(PlanFeature $feature): bool

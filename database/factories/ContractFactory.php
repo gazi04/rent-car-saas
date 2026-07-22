@@ -29,7 +29,7 @@ class ContractFactory extends Factory
     {
         return $this->state(fn (array $attributes): array => [
             'booking_id' => $booking->id,
-            'path' => "tenants/{$booking->tenant_id}/contracts/{$booking->reference}.pdf",
+            'path' => sprintf('tenants/%s/contracts/%s.pdf', $booking->tenant_id, $booking->reference),
         ]);
     }
 }

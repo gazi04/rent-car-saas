@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use App\Enums\PaymentMethod;
@@ -18,8 +20,8 @@ class TenantPaymentSeeder extends Seeder
      */
     public function run(): void
     {
-        $tenant = Tenant::where('email', 'ardi@example.com')->first();
-        $admin = User::where('email', 'admin@yourdomain.com')->first();
+        $tenant = Tenant::query()->where('email', 'ardi@example.com')->first();
+        $admin = User::query()->where('email', 'admin@yourdomain.com')->first();
 
         if ($tenant === null || $admin === null) {
             return;

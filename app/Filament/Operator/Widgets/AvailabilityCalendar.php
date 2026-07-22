@@ -9,7 +9,6 @@ use App\Models\BlockedDate;
 use App\Models\Booking;
 use App\Models\Vehicle;
 use App\Services\AvailabilityService;
-use Carbon\Carbon;
 use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
@@ -20,7 +19,8 @@ use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Model;
-use Saade\FilamentFullCalendar\Actions;
+use Illuminate\Support\Facades\Date;
+use Saade\FilamentFullCalendar\Actions\CreateAction;
 use Saade\FilamentFullCalendar\Data\EventData;
 use Saade\FilamentFullCalendar\Widgets\FullCalendarWidget;
 
@@ -239,12 +239,10 @@ class AvailabilityCalendar extends FullCalendarWidget
                 ->label(__('panel.vehicle'))
                 ->options(Vehicle::query()->pluck('name', 'id'))
                 ->required()
-                ->rule(static function (): Closure {
-                    return static function (string $attribute, mixed $value, Closure $fail): void {
-                        if (! Vehicle::query()->whereKey($value)->exists()) {
-                            $fail(__('panel.invalid_vehicle'));
-                        }
-                    };
+                ->rule(static fn (): Closure => static function (string $attribute, mixed $value, Closure $fail): void {
+                    if (! Vehicle::query()->whereKey($value)->exists()) {
+                        $fail(__('panel.invalid_vehicle'));
+                    }
                 }),
             DatePicker::make('start_date')
                 ->label(__('panel.from'))
@@ -256,32 +254,30 @@ class AvailabilityCalendar extends FullCalendarWidget
                 // Reject a block that overlaps an existing occupying booking
                 // (Pending/Confirmed/Active) — the operator would otherwise
                 // block a car that's already rented in that range.
-                ->rule(static function (Get $get): Closure {
-                    return static function (string $attribute, mixed $value, Closure $fail) use ($get): void {
-                        $vehicleId = $get('vehicle_id');
-                        $start = $get('start_date');
+                ->rule(static fn (Get $get): Closure => static function (string $attribute, mixed $value, Closure $fail) use ($get): void {
+                    $vehicleId = $get('vehicle_id');
+                    $start = $get('start_date');
 
-                        if (! $vehicleId || ! $start || ! $value) {
-                            return;
-                        }
+                    if (! $vehicleId || ! $start || ! $value) {
+                        return;
+                    }
 
-                        $startDate = Carbon::parse($start);
-                        $endDate = Carbon::parse($value);
+                    $startDate = Date::parse($start);
+                    $endDate = Date::parse($value);
 
-                        if (! $startDate->lt($endDate)) {
-                            return; // inverted/equal handled by ->after('start_date')
-                        }
+                    if (! $startDate->lt($endDate)) {
+                        return; // inverted/equal handled by ->after('start_date')
+                    }
 
-                        $vehicle = Vehicle::query()->whereKey($vehicleId)->first();
+                    $vehicle = Vehicle::query()->whereKey($vehicleId)->first();
 
-                        if ($vehicle === null) {
-                            return; // missing/cross-tenant handled by the vehicle_id rule
-                        }
+                    if ($vehicle === null) {
+                        return; // missing/cross-tenant handled by the vehicle_id rule
+                    }
 
-                        if (app(AvailabilityService::class)->hasBookingConflict($vehicle, $startDate, $endDate)) {
-                            $fail(__('panel.block_overlaps_booking'));
-                        }
-                    };
+                    if (resolve(AvailabilityService::class)->hasBookingConflict($vehicle, $startDate, $endDate)) {
+                        $fail(__('panel.block_overlaps_booking'));
+                    }
                 }),
             TextInput::make('reason')
                 ->label(__('panel.reason'))
@@ -295,7 +291,7 @@ class AvailabilityCalendar extends FullCalendarWidget
     {
         return [
             HelpAction::make('availability_calendar'),
-            Actions\CreateAction::make()
+            CreateAction::make()
                 ->visible(fn (): bool => $this->isOwner())
                 ->label(__('panel.block_dates'))
                 // Pre-fill the pickers from a calendar drag-select; the header
@@ -307,14 +303,12 @@ class AvailabilityCalendar extends FullCalendarWidget
                         'vehicle_id' => $this->vehicleFilter ?: null,
                     ]);
                 })
-                ->using(function (array $data, string $model): BlockedDate {
-                    return $model::create([
-                        'vehicle_id' => $data['vehicle_id'],
-                        'start_date' => $data['start_date'],
-                        'end_date' => $data['end_date'],
-                        'reason' => $data['reason'] ?? null,
-                    ]);
-                })
+                ->using(fn (array $data, string $model): BlockedDate => $model::create([
+                    'vehicle_id' => $data['vehicle_id'],
+                    'start_date' => $data['start_date'],
+                    'end_date' => $data['end_date'],
+                    'reason' => $data['reason'] ?? null,
+                ]))
                 ->after(fn () => $this->refreshRecords()),
         ];
     }

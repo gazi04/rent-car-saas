@@ -25,7 +25,9 @@ use Illuminate\Queue\SerializesModels;
  */
 class SubscriptionRenewalReminderMail extends Mailable implements ShouldQueue
 {
-    use Queueable, SerializesModels, ThrottlesMailQueue;
+    use Queueable;
+    use SerializesModels;
+    use ThrottlesMailQueue;
 
     /**
      * @param  int  $daysLeft  The reminder threshold from config('billing.reminder_days'):
@@ -39,7 +41,7 @@ class SubscriptionRenewalReminderMail extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: __("emails.{$this->langKey()}.subject", ['days' => $this->displayDays()]),
+            subject: __(sprintf('emails.%s.subject', $this->langKey()), ['days' => $this->displayDays()]),
         );
     }
 

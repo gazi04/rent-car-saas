@@ -21,23 +21,20 @@ class TenantSeeder extends Seeder
      */
     public function run(): void
     {
-        $tenant = Tenant::firstOrCreate(
-            ['email' => 'ardi@example.com'],
-            [
-                'name' => 'Ardi Rent A Car',
-                'phone' => '+38344123456',
-                'status' => TenantStatus::Active,
-                'plan' => Plan::TRIAL_SLUG,
-                'trial_ends_at' => now()->addDays(30),
-            ],
-        );
+        $tenant = Tenant::query()->firstOrCreate(['email' => 'ardi@example.com'], [
+            'name' => 'Ardi Rent A Car',
+            'phone' => '+38344123456',
+            'status' => TenantStatus::Active,
+            'plan' => Plan::TRIAL_SLUG,
+            'trial_ends_at' => now()->addDays(30),
+        ]);
 
         $base = config('tenancy.tenant_base_domain', 'localhost');
         $tenant->domains()->firstOrCreate(['domain' => 'ardi.'.$base]);
 
         // `role` and `tenant_id` are not mass-assignable, so set them via forceFill —
         // same pattern as AdminUserSeeder and the operator self-registration flow.
-        $operator = User::firstOrNew(['email' => 'ardi@example.com']);
+        $operator = User::query()->firstOrNew(['email' => 'ardi@example.com']);
 
         $operator->forceFill([
             'name' => 'Ardi Operator',

@@ -11,9 +11,46 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 use Stancl\JobPipeline\JobPipeline;
-use Stancl\Tenancy\Events;
-use Stancl\Tenancy\Listeners;
-use Stancl\Tenancy\Middleware;
+use Stancl\Tenancy\Events\BootstrappingTenancy;
+use Stancl\Tenancy\Events\CreatingDomain;
+use Stancl\Tenancy\Events\CreatingTenant;
+use Stancl\Tenancy\Events\DatabaseCreated;
+use Stancl\Tenancy\Events\DatabaseDeleted;
+use Stancl\Tenancy\Events\DatabaseMigrated;
+use Stancl\Tenancy\Events\DatabaseRolledBack;
+use Stancl\Tenancy\Events\DatabaseSeeded;
+use Stancl\Tenancy\Events\DeletingDomain;
+use Stancl\Tenancy\Events\DeletingTenant;
+use Stancl\Tenancy\Events\DomainCreated;
+use Stancl\Tenancy\Events\DomainDeleted;
+use Stancl\Tenancy\Events\DomainSaved;
+use Stancl\Tenancy\Events\DomainUpdated;
+use Stancl\Tenancy\Events\EndingTenancy;
+use Stancl\Tenancy\Events\InitializingTenancy;
+use Stancl\Tenancy\Events\RevertedToCentralContext;
+use Stancl\Tenancy\Events\RevertingToCentralContext;
+use Stancl\Tenancy\Events\SavingDomain;
+use Stancl\Tenancy\Events\SavingTenant;
+use Stancl\Tenancy\Events\SyncedResourceChangedInForeignDatabase;
+use Stancl\Tenancy\Events\SyncedResourceSaved;
+use Stancl\Tenancy\Events\TenancyBootstrapped;
+use Stancl\Tenancy\Events\TenancyEnded;
+use Stancl\Tenancy\Events\TenancyInitialized;
+use Stancl\Tenancy\Events\TenantCreated;
+use Stancl\Tenancy\Events\TenantDeleted;
+use Stancl\Tenancy\Events\TenantSaved;
+use Stancl\Tenancy\Events\TenantUpdated;
+use Stancl\Tenancy\Events\UpdatingDomain;
+use Stancl\Tenancy\Events\UpdatingTenant;
+use Stancl\Tenancy\Listeners\BootstrapTenancy;
+use Stancl\Tenancy\Listeners\RevertToCentralContext;
+use Stancl\Tenancy\Listeners\UpdateSyncedResource;
+use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
+use Stancl\Tenancy\Middleware\InitializeTenancyByDomainOrSubdomain;
+use Stancl\Tenancy\Middleware\InitializeTenancyByPath;
+use Stancl\Tenancy\Middleware\InitializeTenancyByRequestData;
+use Stancl\Tenancy\Middleware\InitializeTenancyBySubdomain;
+use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
 class TenancyServiceProvider extends ServiceProvider
 {
@@ -29,59 +66,59 @@ class TenancyServiceProvider extends ServiceProvider
             // Tenant events
             // Single-database tenancy: no per-tenant database is created, migrated, or
             // deleted, so the database-provisioning job pipelines are intentionally omitted.
-            Events\CreatingTenant::class => [],
-            Events\TenantCreated::class => [],
-            Events\SavingTenant::class => [],
-            Events\TenantSaved::class => [],
-            Events\UpdatingTenant::class => [],
-            Events\TenantUpdated::class => [],
-            Events\DeletingTenant::class => [],
-            Events\TenantDeleted::class => [],
+            CreatingTenant::class => [],
+            TenantCreated::class => [],
+            SavingTenant::class => [],
+            TenantSaved::class => [],
+            UpdatingTenant::class => [],
+            TenantUpdated::class => [],
+            DeletingTenant::class => [],
+            TenantDeleted::class => [],
 
             // Domain events
-            Events\CreatingDomain::class => [],
-            Events\DomainCreated::class => [],
-            Events\SavingDomain::class => [],
-            Events\DomainSaved::class => [],
-            Events\UpdatingDomain::class => [],
-            Events\DomainUpdated::class => [],
-            Events\DeletingDomain::class => [],
-            Events\DomainDeleted::class => [],
+            CreatingDomain::class => [],
+            DomainCreated::class => [],
+            SavingDomain::class => [],
+            DomainSaved::class => [],
+            UpdatingDomain::class => [],
+            DomainUpdated::class => [],
+            DeletingDomain::class => [],
+            DomainDeleted::class => [],
 
             // Database events
-            Events\DatabaseCreated::class => [],
-            Events\DatabaseMigrated::class => [],
-            Events\DatabaseSeeded::class => [],
-            Events\DatabaseRolledBack::class => [],
-            Events\DatabaseDeleted::class => [],
+            DatabaseCreated::class => [],
+            DatabaseMigrated::class => [],
+            DatabaseSeeded::class => [],
+            DatabaseRolledBack::class => [],
+            DatabaseDeleted::class => [],
 
             // Tenancy events
-            Events\InitializingTenancy::class => [],
-            Events\TenancyInitialized::class => [
-                Listeners\BootstrapTenancy::class,
+            InitializingTenancy::class => [],
+            TenancyInitialized::class => [
+                BootstrapTenancy::class,
             ],
 
-            Events\EndingTenancy::class => [],
-            Events\TenancyEnded::class => [
-                Listeners\RevertToCentralContext::class,
+            EndingTenancy::class => [],
+            TenancyEnded::class => [
+                RevertToCentralContext::class,
             ],
 
-            Events\BootstrappingTenancy::class => [],
-            Events\TenancyBootstrapped::class => [],
-            Events\RevertingToCentralContext::class => [],
-            Events\RevertedToCentralContext::class => [],
+            BootstrappingTenancy::class => [],
+            TenancyBootstrapped::class => [],
+            RevertingToCentralContext::class => [],
+            RevertedToCentralContext::class => [],
 
             // Resource syncing
-            Events\SyncedResourceSaved::class => [
-                Listeners\UpdateSyncedResource::class,
+            SyncedResourceSaved::class => [
+                UpdateSyncedResource::class,
             ],
 
             // Fired only when a synced resource is changed in a different DB than the origin DB (to avoid infinite loops)
-            Events\SyncedResourceChangedInForeignDatabase::class => [],
+            SyncedResourceChangedInForeignDatabase::class => [],
         ];
     }
 
-    public function register()
+    public function register(): void
     {
         //
     }
@@ -111,15 +148,13 @@ class TenancyServiceProvider extends ServiceProvider
      */
     protected function makeLivewireUpdateRouteTenancyAware(): void
     {
-        Livewire::setUpdateRoute(function ($handle, string $path) {
-            return Route::post($path, $handle)
-                ->middleware([
-                    'web',
-                    'universal',
-                    Middleware\InitializeTenancyByDomain::class,
-                    ResolveFilamentPanelForSharedRoutes::class,
-                ]);
-        });
+        Livewire::setUpdateRoute(fn ($handle, string $path) => Route::post($path, $handle)
+            ->middleware([
+                'web',
+                'universal',
+                InitializeTenancyByDomain::class,
+                ResolveFilamentPanelForSharedRoutes::class,
+            ]));
     }
 
     protected function bootEvents(): void
@@ -137,7 +172,7 @@ class TenancyServiceProvider extends ServiceProvider
 
     protected function mapRoutes(): void
     {
-        $this->app->booted(function () {
+        $this->app->booted(function (): void {
             if (file_exists(base_path('routes/tenant.php'))) {
                 Route::namespace(static::$controllerNamespace)
                     ->group(base_path('routes/tenant.php'));
@@ -149,13 +184,13 @@ class TenancyServiceProvider extends ServiceProvider
     {
         $tenancyMiddleware = [
             // Even higher priority than the initialization middleware
-            Middleware\PreventAccessFromCentralDomains::class,
+            PreventAccessFromCentralDomains::class,
 
-            Middleware\InitializeTenancyByDomain::class,
-            Middleware\InitializeTenancyBySubdomain::class,
-            Middleware\InitializeTenancyByDomainOrSubdomain::class,
-            Middleware\InitializeTenancyByPath::class,
-            Middleware\InitializeTenancyByRequestData::class,
+            InitializeTenancyByDomain::class,
+            InitializeTenancyBySubdomain::class,
+            InitializeTenancyByDomainOrSubdomain::class,
+            InitializeTenancyByPath::class,
+            InitializeTenancyByRequestData::class,
         ];
 
         $kernel = $this->app->make(Kernel::class);

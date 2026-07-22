@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Carbon\CarbonImmutable;
@@ -17,8 +19,10 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 #[Fillable(['vehicle_id', 'start_date', 'end_date', 'reason'])]
 class BlockedDate extends Model
 {
+    use BelongsToTenant;
+
     /** @use HasFactory<BlockedDateFactory> */
-    use BelongsToTenant, HasFactory;
+    use HasFactory;
 
     /**
      * @return array<string, string>

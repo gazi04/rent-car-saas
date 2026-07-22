@@ -12,14 +12,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('tenants', function (Blueprint $table) {
+        Schema::table('tenants', function (Blueprint $table): void {
             $table->timestamp('paid_until')->nullable()->after('trial_ends_at');
         });
     }
 
     public function down(): void
     {
-        Schema::table('tenants', function (Blueprint $table) {
+        Schema::table('tenants', function (Blueprint $table): void {
             $table->dropColumn('paid_until');
         });
     }

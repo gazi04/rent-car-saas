@@ -18,7 +18,7 @@ class VehicleSeeder extends Seeder
     public function run(): void
     {
         // Matches the demo tenant created in TenantSeeder.
-        $tenant = Tenant::where('email', 'ardi@example.com')->first();
+        $tenant = Tenant::query()->where('email', 'ardi@example.com')->first();
 
         if ($tenant === null) {
             return;

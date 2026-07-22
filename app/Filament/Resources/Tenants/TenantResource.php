@@ -91,7 +91,7 @@ class TenantResource extends Resource
                                 ->where('tenant_id', $record->id)
                                 ->whereIn('role', ['operator', 'staff'])
                                 ->get()
-                                ->map(fn (User $user): string => "{$user->name} ({$user->email})")
+                                ->map(fn (User $user): string => sprintf('%s (%s)', $user->name, $user->email))
                                 ->implode(', ') ?: '—'),
                     ]),
                 Section::make('Usage')
@@ -99,10 +99,10 @@ class TenantResource extends Resource
                     ->components([
                         TextEntry::make('fleet_size')
                             ->label('Fleet size')
-                            ->state(fn (Tenant $record): int => Vehicle::where('tenant_id', $record->id)->count()),
+                            ->state(fn (Tenant $record): int => Vehicle::query()->where('tenant_id', $record->id)->count()),
                         TextEntry::make('bookings_count')
                             ->label('Bookings')
-                            ->state(fn (Tenant $record): int => Booking::where('tenant_id', $record->id)->count()),
+                            ->state(fn (Tenant $record): int => Booking::query()->where('tenant_id', $record->id)->count()),
                     ]),
                 Section::make('Last activity')
                     ->components([
@@ -119,7 +119,7 @@ class TenantResource extends Resource
                                     return 'No activity';
                                 }
 
-                                return "{$activity->description} — {$activity->created_at?->diffForHumans()}";
+                                return sprintf('%s — %s', $activity->description, $activity->created_at?->diffForHumans());
                             }),
                     ]),
             ]);

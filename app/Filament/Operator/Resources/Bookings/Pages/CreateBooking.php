@@ -22,7 +22,7 @@ class CreateBooking extends CreateRecord
     protected function handleRecordCreation(array $data): Model
     {
         try {
-            return app(BookingService::class)->createManual($data);
+            return resolve(BookingService::class)->createManual($data);
         } catch (VehicleNotAvailableException|PromoCodeInvalidException $e) {
             Notification::make()
                 ->title($e instanceof PromoCodeInvalidException ? __('panel.promo_invalid_title') : __('panel.vehicle_not_available_title'))

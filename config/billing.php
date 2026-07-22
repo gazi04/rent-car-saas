@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
 |--------------------------------------------------------------------------
 | Manual B2B billing
@@ -12,7 +14,6 @@
 | grace_days window after it lapses, then automatic suspension.
 |
 */
-
 return [
     'trial_days' => 30,
 

@@ -23,7 +23,7 @@ class CreateTenant extends CreateRecord
         unset($data['subdomain']);
 
         /** @var Tenant $tenant */
-        $tenant = static::getModel()::create($data);
+        $tenant = static::getModel()::query()->create($data);
 
         $tenant->domains()->create([
             'domain' => $subdomain.'.'.config('tenancy.tenant_base_domain', 'localhost'),

@@ -10,6 +10,7 @@ use App\Http\Middleware\EnsureTenantIsActive;
 use App\Models\BlockedDate;
 use App\Models\Booking;
 use App\Models\Vehicle;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
@@ -31,7 +32,7 @@ Route::middleware([
     PreventAccessFromCentralDomains::class,
     EnsureTenantIsActive::class,
     'set-locale',
-])->group(function () {
+])->group(function (): void {
     // ── Public booking site ──────────────────────────────────────────────
     Route::livewire('/', 'pages::public.home')->name('public.home');
 
@@ -65,7 +66,7 @@ Route::middleware([
         ->middleware('signed');
 
     // Session locale toggle — POST, redirect back.
-    Route::post('/language', function (Request $request) {
+    Route::post('/language', function (Request $request): RedirectResponse {
         $locale = $request->input('locale');
         if (in_array($locale, ['sq', 'en'], strict: true)) {
             session(['locale' => $locale]);
@@ -76,7 +77,7 @@ Route::middleware([
 
     // Operator panel language toggle — persists to users.locale so the choice
     // survives sessions/devices and drives the reminder-email locale.
-    Route::get('/panel-language/{locale}', function (string $locale) {
+    Route::get('/panel-language/{locale}', function (string $locale): RedirectResponse {
         if (in_array($locale, ['sq', 'en'], strict: true)) {
             auth()->user()->forceFill(['locale' => $locale])->save();
         }

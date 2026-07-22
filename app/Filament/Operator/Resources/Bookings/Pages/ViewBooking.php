@@ -31,9 +31,9 @@ class ViewBooking extends ViewRecord
                 ->action(function (): mixed {
                     /** @var Booking $booking */
                     $booking = $this->record;
-                    $contract = app(RentalAgreementService::class)->generate($booking);
+                    $contract = resolve(RentalAgreementService::class)->generate($booking);
 
-                    return Storage::download($contract->path, "agreement-{$booking->reference}.pdf");
+                    return Storage::download($contract->path, sprintf('agreement-%s.pdf', $booking->reference));
                 }),
         ];
     }

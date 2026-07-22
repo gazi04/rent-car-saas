@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Database\Factories\AiBusinessSummaryFactory;
@@ -17,8 +19,10 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 #[Fillable(['tenant_id', 'content', 'period_start', 'period_end'])]
 class AiBusinessSummary extends Model
 {
+    use BelongsToTenant;
+
     /** @use HasFactory<AiBusinessSummaryFactory> */
-    use BelongsToTenant, HasFactory;
+    use HasFactory;
 
     /**
      * @return array<string, string>

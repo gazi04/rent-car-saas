@@ -37,8 +37,8 @@ new #[Layout('layouts.public')] #[Title('Home')] class extends Component {
             'about_title' => $tenant?->localizedSetting('home_about_title') ?: __('booking.home_about_title'),
             'about_text' => $tenant?->localizedSetting('home_about_text') ?: __('booking.home_about_text'),
             'services' => collect([1, 2, 3])->map(fn (int $i): array => [
-                'title' => $tenant?->localizedSetting("home_service_{$i}_title") ?: __("booking.home_service_{$i}_title"),
-                'text' => $tenant?->localizedSetting("home_service_{$i}_text") ?: __("booking.home_service_{$i}_text"),
+                'title' => $tenant?->localizedSetting(sprintf('home_service_%d_title', $i)) ?: __(sprintf('booking.home_service_%d_title', $i)),
+                'text' => $tenant?->localizedSetting(sprintf('home_service_%d_text', $i)) ?: __(sprintf('booking.home_service_%d_text', $i)),
             ])->all(),
         ];
     }

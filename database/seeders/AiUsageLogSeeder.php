@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use App\Models\AiUsageLog;
@@ -17,7 +19,7 @@ class AiUsageLogSeeder extends Seeder
      */
     public function run(): void
     {
-        $tenant = Tenant::where('email', 'ardi@example.com')->first();
+        $tenant = Tenant::query()->where('email', 'ardi@example.com')->first();
 
         if ($tenant === null) {
             return;

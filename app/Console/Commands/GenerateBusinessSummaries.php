@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands;
 
 use App\Enums\PlanFeature;
@@ -36,11 +38,11 @@ class GenerateBusinessSummaries extends Command
                 continue;
             }
 
-            GenerateBusinessSummaryJob::dispatch($tenant);
+            dispatch(new GenerateBusinessSummaryJob($tenant));
             $dispatched++;
         }
 
-        $this->info("Queued {$dispatched} business summaries.");
+        $this->info(sprintf('Queued %d business summaries.', $dispatched));
 
         return self::SUCCESS;
     }

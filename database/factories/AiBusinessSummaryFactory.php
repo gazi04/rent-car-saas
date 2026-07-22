@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
 use App\Models\AiBusinessSummary;
@@ -22,7 +24,7 @@ class AiBusinessSummaryFactory extends Factory
         return [
             'content' => ['en' => $this->faker->paragraph(), 'sq' => $this->faker->paragraph()],
             'period_start' => $periodStart,
-            'period_end' => now()->startOfDay(),
+            'period_end' => today(),
         ];
     }
 }

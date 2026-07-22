@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands;
 
 use App\Enums\PlanFeature;
@@ -36,11 +38,11 @@ class ProcessVehicleMaintenance extends Command
                 continue;
             }
 
-            ProcessVehicleMaintenanceJob::dispatch($tenant);
+            dispatch(new ProcessVehicleMaintenanceJob($tenant));
             $dispatched++;
         }
 
-        $this->info("Queued maintenance processing for {$dispatched} tenants.");
+        $this->info(sprintf('Queued maintenance processing for %d tenants.', $dispatched));
 
         return self::SUCCESS;
     }

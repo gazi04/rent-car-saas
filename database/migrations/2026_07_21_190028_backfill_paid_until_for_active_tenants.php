@@ -1,8 +1,8 @@
 <?php
 
 use App\Enums\TenantStatus;
-use Carbon\Carbon;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -40,7 +40,7 @@ return new class extends Migration
         foreach ($unenrolled as $tenant) {
             DB::table('tenants')->where('id', $tenant->id)->update([
                 'paid_until' => $tenant->trial_ends_at !== null
-                    ? Carbon::parse($tenant->trial_ends_at)
+                    ? Date::parse($tenant->trial_ends_at)
                     : now()->addDays($trialDays)->endOfDay(),
             ]);
         }

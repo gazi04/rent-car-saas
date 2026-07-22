@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Ai;
 
 use App\Ai\Agents\BusinessSummaryAgent;
@@ -28,15 +30,15 @@ class BusinessSummaryGenerator
     {
         $days = (int) config('ai.summary_period_days');
         $periodStart = now()->subDays($days)->startOfDay();
-        $periodEnd = now()->startOfDay();
+        $periodEnd = today();
 
         try {
             /** @var StructuredAgentResponse $response */
             $response = (new BusinessSummaryAgent)->prompt(
                 (string) json_encode($this->metrics($days, $periodStart), JSON_PRETTY_PRINT),
             );
-        } catch (Throwable $e) {
-            throw AiRequestFailedException::wrap($e);
+        } catch (Throwable $throwable) {
+            throw AiRequestFailedException::wrap($throwable);
         }
 
         /** @var array{en?: string, sq?: string} $result */
@@ -67,7 +69,7 @@ class BusinessSummaryGenerator
             ->where('start_date', '<=', $end)
             ->where('end_date', '>=', $start);
 
-        $revenue = fn ($start, $end) => (float) $inPeriod($start, $end)
+        $revenue = fn ($start, $end): float => (float) $inPeriod($start, $end)
             ->whereIn('status', [BookingStatus::Active, BookingStatus::Completed])
             ->sum('total');
 

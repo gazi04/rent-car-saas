@@ -22,7 +22,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
-use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use STS\FilamentImpersonate\Actions\Impersonate;
 
@@ -111,7 +111,7 @@ class TenantsTable
             // reappears in production where SESSION_DOMAIN=.yourdomain.com. The
             // second clause overrides the package's default target-present check.
             ->visible(fn (Tenant $record): bool => filled(config('session.domain'))
-                && self::operatorFor($record) !== null);
+                && self::operatorFor($record) instanceof User);
     }
 
     /** The tenant's owner (operator) account — the impersonation target. */
@@ -221,7 +221,7 @@ class TenantsTable
 
                     $record->update([
                         'plan' => $data['plan'],
-                        'paid_until' => Carbon::parse($data['period_end'])->endOfDay(),
+                        'paid_until' => Date::parse($data['period_end'])->endOfDay(),
                         'status' => $record->status === TenantStatus::Suspended ? TenantStatus::Active : $record->status,
                     ]);
 
@@ -287,7 +287,7 @@ class TenantsTable
             ])
             ->action(function (Tenant $record, array $data): void {
                 $newPaidUntil = $data['mode'] === 'set_date'
-                    ? Carbon::parse($data['paid_until'])->endOfDay()
+                    ? Date::parse($data['paid_until'])->endOfDay()
                     : self::nextPeriodStart($record)->addDays((int) $data['days'])->endOfDay();
 
                 $record->update([
@@ -317,7 +317,7 @@ class TenantsTable
             ->color('info')
             ->visible(fn (Tenant $record): bool => in_array($record->status, [TenantStatus::Active, TenantStatus::Suspended], true))
             ->requiresConfirmation()
-            ->modalDescription('This changes the tenant\'s enabled features immediately, with no payment recorded.')
+            ->modalDescription("This changes the tenant's enabled features immediately, with no payment recorded.")
             ->schema([
                 Select::make('plan')
                     ->options(fn (Tenant $record): array => Plan::options($record->plan))

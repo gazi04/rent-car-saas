@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('bookings', function (Blueprint $table) {
+        Schema::table('bookings', function (Blueprint $table): void {
             // Optional operator-entered explanation shown to the customer on both
             // cancel and reject emails (e.g. vehicle broke down / had an accident).
             $table->string('cancellation_reason')->nullable()->after('status');
@@ -23,7 +23,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('bookings', function (Blueprint $table) {
+        Schema::table('bookings', function (Blueprint $table): void {
             $table->dropColumn('cancellation_reason');
         });
     }

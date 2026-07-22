@@ -4,6 +4,7 @@ namespace App\Filament\Operator\Pages;
 
 use App\Enums\PlanFeature;
 use App\Filament\Support\HelpAction;
+use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -25,7 +26,7 @@ use Filament\Support\Icons\Heroicon;
  */
 class TemplateSettings extends Page
 {
-    protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
 
     protected static ?int $navigationSort = 12;
 
@@ -101,7 +102,7 @@ class TemplateSettings extends Page
             Section::make(__('panel.tmpl_terms'))
                 ->description($this->variablesHint())
                 ->components([
-                    Textarea::make("tmpl_agreement_terms_{$locale}")
+                    Textarea::make('tmpl_agreement_terms_'.$locale)
                         ->label(__('panel.tmpl_terms'))
                         ->rows(10)
                         ->maxLength(5000),
@@ -120,17 +121,17 @@ class TemplateSettings extends Page
         $events = config('templates.emails', []);
 
         return collect($events)->map(
-            fn (string $event): Section => Section::make(__("panel.tmpl_email_{$event}"))
+            fn (string $event): Section => Section::make(__('panel.tmpl_email_'.$event))
                 ->description($this->variablesHint())
                 ->components([
-                    TextInput::make("tmpl_email_{$event}_subject_{$locale}")
+                    TextInput::make(sprintf('tmpl_email_%s_subject_%s', $event, $locale))
                         ->label(__('panel.tmpl_subject'))
                         ->maxLength(255),
-                    Textarea::make("tmpl_email_{$event}_intro_{$locale}")
+                    Textarea::make(sprintf('tmpl_email_%s_intro_%s', $event, $locale))
                         ->label(__('panel.tmpl_intro'))
                         ->rows(3)
                         ->maxLength(2000),
-                    Textarea::make("tmpl_email_{$event}_outro_{$locale}")
+                    Textarea::make(sprintf('tmpl_email_%s_outro_%s', $event, $locale))
                         ->label(__('panel.tmpl_outro'))
                         ->rows(2)
                         ->maxLength(1000),

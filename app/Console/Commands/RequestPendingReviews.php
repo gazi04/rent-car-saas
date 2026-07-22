@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands;
 
 use App\Enums\PlanFeature;
@@ -35,11 +37,11 @@ class RequestPendingReviews extends Command
                 continue;
             }
 
-            RequestReviewsJob::dispatch($tenant);
+            dispatch(new RequestReviewsJob($tenant));
             $dispatched++;
         }
 
-        $this->info("Queued review requests for {$dispatched} tenants.");
+        $this->info(sprintf('Queued review requests for %d tenants.', $dispatched));
 
         return self::SUCCESS;
     }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Enums\BookingStatus;
@@ -20,6 +22,6 @@ class DownloadAgreementController extends Controller
 
         $contract = $service->generate($booking);
 
-        return Storage::download($contract->path, "agreement-{$booking->reference}.pdf");
+        return Storage::download($contract->path, sprintf('agreement-%s.pdf', $booking->reference));
     }
 }

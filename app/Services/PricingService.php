@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Enums\RateType;
 use App\Models\PromoCode;
 use App\Models\Vehicle;
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 
 class PricingService
 {
@@ -17,7 +19,7 @@ class PricingService
      *
      * @return array{rate_type: RateType, subtotal: float, discount: float, total: float, deposit: float}
      */
-    public function calculate(Vehicle $vehicle, Carbon $start, Carbon $end, ?PromoCode $promo = null): array
+    public function calculate(Vehicle $vehicle, CarbonInterface $start, CarbonInterface $end, ?PromoCode $promo = null): array
     {
         $hours = (int) ceil($start->diffInMinutes($end) / 60);
         $days = max(1, (int) ceil($hours / 24));

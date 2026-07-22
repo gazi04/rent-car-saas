@@ -13,7 +13,9 @@ use Illuminate\Queue\SerializesModels;
 
 class NewBookingAlertMail extends Mailable implements ShouldQueue
 {
-    use Queueable, SerializesModels, ThrottlesMailQueue;
+    use Queueable;
+    use SerializesModels;
+    use ThrottlesMailQueue;
 
     public function __construct(public readonly Booking $booking) {}
 

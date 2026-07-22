@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Ai\Agents;
 
 use App\Ai\Contracts\ReportsAiUsage;
@@ -35,7 +37,7 @@ class PricingSuggestionAgent implements Agent, HasStructuredOutput, ReportsAiUsa
     {
         return 'You advise a small car-rental company on pricing. Suggest a realistic daily rate in EUR '
             .'based strictly on the data provided (recent demand, current rates, category benchmarks). '
-            ."Keep the reasoning to 2-3 sentences a non-analyst can follow, written in {$this->language}.";
+            .sprintf('Keep the reasoning to 2-3 sentences a non-analyst can follow, written in %s.', $this->language);
     }
 
     /**

@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('ai_business_summaries', function (Blueprint $table) {
+        Schema::table('ai_business_summaries', function (Blueprint $table): void {
             $table->unique(['tenant_id', 'period_start', 'period_end']);
         });
     }
@@ -21,7 +21,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('ai_business_summaries', function (Blueprint $table) {
+        Schema::table('ai_business_summaries', function (Blueprint $table): void {
             $table->dropUnique(['tenant_id', 'period_start', 'period_end']);
         });
     }

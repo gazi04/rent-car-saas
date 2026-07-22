@@ -19,7 +19,7 @@ class ReviewSeeder extends Seeder
      */
     public function run(): void
     {
-        $tenant = Tenant::where('email', 'ardi@example.com')->first();
+        $tenant = Tenant::query()->where('email', 'ardi@example.com')->first();
 
         if ($tenant === null) {
             return;
@@ -27,8 +27,8 @@ class ReviewSeeder extends Seeder
 
         tenancy()->initialize($tenant);
 
-        $completed = Booking::where('status', BookingStatus::Completed)->first();
-        $confirmed = Booking::where('status', BookingStatus::Confirmed)->first();
+        $completed = Booking::query()->where('status', BookingStatus::Completed)->first();
+        $confirmed = Booking::query()->where('status', BookingStatus::Confirmed)->first();
 
         if ($completed !== null) {
             Review::factory()->approved()->create([

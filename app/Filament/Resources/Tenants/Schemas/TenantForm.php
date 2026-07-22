@@ -33,15 +33,13 @@ class TenantForm
                 TextInput::make('subdomain')
                     ->required()
                     ->rule('regex:/^[a-z0-9]+(-[a-z0-9]+)*$/')
-                    ->rule(static function (): Closure {
-                        return static function (string $attribute, mixed $value, Closure $fail): void {
-                            $domain = $value.'.'.config('tenancy.tenant_base_domain', 'localhost');
-                            if (Domain::where('domain', $domain)->exists()) {
-                                $fail('This subdomain is already taken.');
-                            }
-                        };
+                    ->rule(static fn (): Closure => static function (string $attribute, mixed $value, Closure $fail): void {
+                        $domain = $value.'.'.config('tenancy.tenant_base_domain', 'localhost');
+                        if (Domain::query()->where('domain', $domain)->exists()) {
+                            $fail('This subdomain is already taken.');
+                        }
                     })
-                    ->helperText('Lowercase letters, numbers and hyphens. Becomes the operator\'s booking site.')
+                    ->helperText("Lowercase letters, numbers and hyphens. Becomes the operator's booking site.")
                     ->suffix('.'.config('tenancy.tenant_base_domain', 'localhost'))
                     ->visibleOn('create')
                     ->dehydrated(),

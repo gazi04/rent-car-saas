@@ -21,7 +21,9 @@ new #[Title('Security settings')] class extends Component {
     use PasswordValidationRules;
 
     public string $current_password = '';
+
     public string $password = '';
+
     public string $password_confirmation = '';
 
     /* @chisel-2fa */
@@ -30,6 +32,7 @@ new #[Title('Security settings')] class extends Component {
     public bool $twoFactorEnabled;
 
     public bool $requiresConfirmation;
+
     /* @end-chisel-2fa */
 
     /* @chisel-passkeys */
@@ -46,6 +49,7 @@ new #[Title('Security settings')] class extends Component {
 
     #[Locked]
     public string $deletingPasskeyName = '';
+
     /* @end-chisel-passkeys */
 
     /**
@@ -85,10 +89,10 @@ new #[Title('Security settings')] class extends Component {
                 'current_password' => $this->currentPasswordRules(),
                 'password' => $this->passwordRules(),
             ]);
-        } catch (ValidationException $e) {
+        } catch (ValidationException $validationException) {
             $this->reset('current_password', 'password', 'password_confirmation');
 
-            throw $e;
+            throw $validationException;
         }
 
         Auth::user()->update([
@@ -110,7 +114,7 @@ new #[Title('Security settings')] class extends Component {
             ->select(['id', 'name', 'credential', 'created_at', 'last_used_at'])
             ->latest()
             ->get()
-            ->map(fn ($passkey) => [
+            ->map(fn ($passkey): array => [
                 'id' => $passkey->id,
                 'name' => $passkey->name,
                 'authenticator' => $passkey->authenticator,
@@ -158,6 +162,7 @@ new #[Title('Security settings')] class extends Component {
         $this->deletingPasskeyId = null;
         $this->deletingPasskeyName = '';
     }
+
     /* @end-chisel-passkeys */
 
     /* @chisel-2fa */
@@ -179,6 +184,7 @@ new #[Title('Security settings')] class extends Component {
 
         $this->twoFactorEnabled = false;
     }
+
     /* @end-chisel-2fa */
 }; ?>
 

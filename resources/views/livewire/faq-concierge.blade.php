@@ -67,7 +67,7 @@ new class extends Component
         RateLimiter::hit($tenantKey, decaySeconds: 86400);
 
         try {
-            $answer = app(FaqConciergeService::class)->answer(
+            $answer = resolve(FaqConciergeService::class)->answer(
                 tenant(),
                 $question,
                 app()->getLocale(),

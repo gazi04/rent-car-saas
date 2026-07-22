@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Events;
 
 use App\Models\Vehicle;
@@ -14,7 +16,8 @@ use Illuminate\Queue\SerializesModels;
  */
 class VehicleBecameAvailable
 {
-    use Dispatchable, SerializesModels;
+    use Dispatchable;
+    use SerializesModels;
 
     public function __construct(
         public readonly Vehicle $vehicle,

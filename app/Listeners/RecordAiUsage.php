@@ -41,7 +41,7 @@ class RecordAiUsage
             $usage = $response->usage;
             $model = $response->meta->model ?? $event->prompt->model;
 
-            AiUsageLog::create([
+            AiUsageLog::query()->create([
                 'tenant_id' => tenant()?->id,
                 'feature' => $agent->aiFeature(),
                 'provider' => $response->meta->provider ?? '',
@@ -55,8 +55,8 @@ class RecordAiUsage
                 'estimated_cost' => $this->estimator->estimate($model, $usage),
                 'created_at' => now(),
             ]);
-        } catch (Throwable $e) {
-            report($e);
+        } catch (Throwable $throwable) {
+            report($throwable);
         }
     }
 }

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Database\Factories\ServiceRecordFactory;
@@ -27,8 +29,10 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 #[Fillable(['tenant_id', 'vehicle_id', 'service_type', 'performed_on', 'odometer', 'cost', 'notes', 'next_due_on', 'next_due_odometer', 'reminder_sent_at', 'blocked_date_id'])]
 class ServiceRecord extends Model
 {
+    use BelongsToTenant;
+
     /** @use HasFactory<ServiceRecordFactory> */
-    use BelongsToTenant, HasFactory;
+    use HasFactory;
 
     /**
      * @return array<string, string>

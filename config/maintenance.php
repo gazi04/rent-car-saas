@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
 |--------------------------------------------------------------------------
 | Vehicle maintenance tracking
@@ -10,7 +12,6 @@
 | PlanFeature::MaintenanceReminders.
 |
 */
-
 return [
     /** Curated service types offered in the ServiceRecord form/table. */
     'service_types' => ['oil_change', 'tyres', 'inspection', 'brakes', 'other'],

@@ -39,7 +39,7 @@ class NotifyWaitlistOnBookingFreed implements ShouldQueue
 
     private function notify(Booking $booking): void
     {
-        $tenant = Tenant::find($booking->tenant_id);
+        $tenant = Tenant::query()->find($booking->tenant_id);
 
         if ($tenant === null || ! $tenant->allowsFeature(PlanFeature::Waitlist)) {
             return;

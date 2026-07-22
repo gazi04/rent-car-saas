@@ -15,7 +15,7 @@ class CustomerSeeder extends Seeder
      */
     public function run(): void
     {
-        $tenant = Tenant::where('email', 'ardi@example.com')->first();
+        $tenant = Tenant::query()->where('email', 'ardi@example.com')->first();
 
         if ($tenant === null) {
             return;

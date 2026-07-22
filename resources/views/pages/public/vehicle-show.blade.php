@@ -181,7 +181,7 @@ new #[Layout('layouts.public')] #[Title('Vehicle Details')] class extends Compon
         RateLimiter::hit($key, decaySeconds: 3600);
 
         try {
-            app(WaitlistService::class)->join($this->vehicle, [
+            resolve(WaitlistService::class)->join($this->vehicle, [
                 'name' => $this->waitlistName,
                 'email' => $this->waitlistEmail,
                 'phone' => $this->waitlistPhone ?: null,
@@ -253,7 +253,7 @@ new #[Layout('layouts.public')] #[Title('Vehicle Details')] class extends Compon
         RateLimiter::hit($key, decaySeconds: 3600);
 
         try {
-            app(WaitlistService::class)->joinStockAlert($this->vehicle, [
+            resolve(WaitlistService::class)->joinStockAlert($this->vehicle, [
                 'name' => $this->stockAlertName,
                 'email' => $this->stockAlertEmail,
                 'phone' => $this->stockAlertPhone ?: null,

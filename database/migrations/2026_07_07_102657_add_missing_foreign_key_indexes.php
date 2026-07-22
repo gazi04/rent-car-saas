@@ -11,20 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('bookings', function (Blueprint $table) {
+        Schema::table('bookings', function (Blueprint $table): void {
             $table->index('customer_id');
             $table->index('promo_code_id');
         });
 
-        Schema::table('reviews', function (Blueprint $table) {
+        Schema::table('reviews', function (Blueprint $table): void {
             $table->index('customer_id');
         });
 
-        Schema::table('service_records', function (Blueprint $table) {
+        Schema::table('service_records', function (Blueprint $table): void {
             $table->index('blocked_date_id');
         });
 
-        Schema::table('tenant_payments', function (Blueprint $table) {
+        Schema::table('tenant_payments', function (Blueprint $table): void {
             $table->index('recorded_by');
         });
     }
@@ -34,20 +34,20 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('bookings', function (Blueprint $table) {
+        Schema::table('bookings', function (Blueprint $table): void {
             $table->dropIndex(['customer_id']);
             $table->dropIndex(['promo_code_id']);
         });
 
-        Schema::table('reviews', function (Blueprint $table) {
+        Schema::table('reviews', function (Blueprint $table): void {
             $table->dropIndex(['customer_id']);
         });
 
-        Schema::table('service_records', function (Blueprint $table) {
+        Schema::table('service_records', function (Blueprint $table): void {
             $table->dropIndex(['blocked_date_id']);
         });
 
-        Schema::table('tenant_payments', function (Blueprint $table) {
+        Schema::table('tenant_payments', function (Blueprint $table): void {
             $table->dropIndex(['recorded_by']);
         });
     }

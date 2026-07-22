@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
 use App\Models\User;
@@ -16,7 +18,7 @@ class AdminUserSeeder extends Seeder
      */
     public function run(): void
     {
-        $user = User::firstOrNew(['email' => 'admin@yourdomain.com']);
+        $user = User::query()->firstOrNew(['email' => 'admin@yourdomain.com']);
 
         $user->forceFill([
             'name' => 'Super Admin',

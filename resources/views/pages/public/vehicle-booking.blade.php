@@ -8,7 +8,7 @@ use App\Models\PromoCode;
 use App\Models\Vehicle;
 use App\Services\BookingService;
 use App\Services\PricingService;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\Date;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
@@ -17,11 +17,14 @@ use Livewire\Component;
 
 new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Component {
     public Vehicle $vehicle;
+
     public int $step = 1;
 
     // Step 1 — dates
     public string $startDate = '';
+
     public string $endDate = '';
+
     /** @var array<string, mixed>|null */
     public ?array $priceBreakdown = null;
 
@@ -39,14 +42,20 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
 
     // Promo code (gated feature)
     public string $promoCode = '';
+
     public ?string $promoNotice = null;
+
     public ?string $promoError = null;
 
     // Step 2 — customer details
     public string $customerName = '';
+
     public string $customerPhone = '';
+
     public string $customerEmail = '';
+
     public string $pickupLocation = '';
+
     public string $notes = '';
 
     public bool $slotTaken = false;
@@ -58,8 +67,8 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
 
         if ($this->prefillStartDate !== '' && $this->prefillEndDate !== '') {
             try {
-                $start = Carbon::parse($this->prefillStartDate);
-                $end = Carbon::parse($this->prefillEndDate);
+                $start = Date::parse($this->prefillStartDate);
+                $end = Date::parse($this->prefillEndDate);
             } catch (\Exception) {
                 return;
             }
@@ -128,7 +137,7 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
         $this->slotTaken = false;
 
         try {
-            $booking = app(BookingService::class)->create([
+            $booking = resolve(BookingService::class)->create([
                 'vehicle_id' => $this->vehicle->id,
                 'start_date' => $this->startDate,
                 'end_date' => $this->endDate,
@@ -189,8 +198,8 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
             return;
         }
 
-        $start = Carbon::parse($this->startDate);
-        $end = Carbon::parse($this->endDate);
+        $start = Date::parse($this->startDate);
+        $end = Date::parse($this->endDate);
 
         if (! $start->lt($end)) {
             $this->priceBreakdown = null;
@@ -198,7 +207,7 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
             return;
         }
 
-        $pricing = app(PricingService::class)->calculate($this->vehicle, $start, $end, $this->previewPromo());
+        $pricing = resolve(PricingService::class)->calculate($this->vehicle, $start, $end, $this->previewPromo());
 
         $this->priceBreakdown = [
             'rate_type' => $pricing['rate_type']->getLabel(),

@@ -17,7 +17,9 @@ use Illuminate\Support\Facades\URL;
 
 class BookingReceivedMail extends Mailable implements ShouldQueue
 {
-    use Queueable, SerializesModels, ThrottlesMailQueue;
+    use Queueable;
+    use SerializesModels;
+    use ThrottlesMailQueue;
 
     public function __construct(
         public readonly Booking $booking,
@@ -27,13 +29,13 @@ class BookingReceivedMail extends Mailable implements ShouldQueue
     public static function forTenantDomain(Booking $booking): self
     {
         $cancelUrl = null;
-        $tenant = Tenant::find($booking->tenant_id);
+        $tenant = Tenant::query()->find($booking->tenant_id);
         $rootUrl = $tenant?->publicRootUrl();
 
         if ($rootUrl && $booking->customer_email) {
             // forceRootUrl alone is not enough: the generator swaps in the current
             // request's scheme, so an https root would still emit http links.
-            URL::forceScheme(parse_url($rootUrl, PHP_URL_SCHEME) ?: 'http');
+            URL::forceScheme(parse_url((string) $rootUrl, PHP_URL_SCHEME) ?: 'http');
             URL::forceRootUrl($rootUrl);
 
             $cancelUrl = URL::temporarySignedRoute(
@@ -51,11 +53,11 @@ class BookingReceivedMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
-        $tenant = Tenant::find($this->booking->tenant_id);
+        $tenant = Tenant::query()->find($this->booking->tenant_id);
 
         return new Envelope(
             from: new Address($tenant->email, $tenant->name),
-            subject: app(TemplateRenderer::class)->resolve(
+            subject: resolve(TemplateRenderer::class)->resolve(
                 $this->booking,
                 'tmpl_email_received_subject',
                 'emails.booking_received.subject',
@@ -66,8 +68,8 @@ class BookingReceivedMail extends Mailable implements ShouldQueue
 
     public function content(): Content
     {
-        $renderer = app(TemplateRenderer::class);
-        $operator = Tenant::find($this->booking->tenant_id)->name;
+        $renderer = resolve(TemplateRenderer::class);
+        $operator = Tenant::query()->find($this->booking->tenant_id)->name;
 
         return new Content(
             markdown: 'emails.booking-received',

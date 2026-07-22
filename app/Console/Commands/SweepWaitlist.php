@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Console\Commands;
 
 use App\Enums\PlanFeature;
@@ -41,11 +43,11 @@ class SweepWaitlist extends Command
                 continue;
             }
 
-            SweepWaitlistJob::dispatch($tenant);
+            dispatch(new SweepWaitlistJob($tenant));
             $dispatched++;
         }
 
-        $this->info("Queued waitlist sweeps for {$dispatched} tenants.");
+        $this->info(sprintf('Queued waitlist sweeps for %d tenants.', $dispatched));
 
         return self::SUCCESS;
     }

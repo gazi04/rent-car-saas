@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\BookingStatus;
@@ -11,6 +13,7 @@ use App\Events\VehicleBecameAvailable;
 use Carbon\CarbonImmutable;
 use Database\Factories\VehicleFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -34,8 +37,13 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 #[Fillable(['tenant_id', 'name', 'plate', 'category', 'year', 'fuel_type', 'transmission', 'seats', 'daily_rate', 'hourly_rate', 'weekly_rate', 'monthly_rate', 'discount_type', 'discount_value', 'mileage_limit', 'deposit', 'description', 'custom_fields', 'status', 'is_public'])]
 class Vehicle extends Model implements HasMedia
 {
+    use BelongsToTenant;
+
     /** @use HasFactory<VehicleFactory> */
-    use BelongsToTenant, HasFactory, InteractsWithMedia, SoftDeletes;
+    use HasFactory;
+
+    use InteractsWithMedia;
+    use SoftDeletes;
 
     /**
      * @var array<string, mixed>
@@ -86,7 +94,7 @@ class Vehicle extends Model implements HasMedia
             $becamePublic = $vehicle->wasChanged('status') || $vehicle->wasChanged('is_public');
 
             if ($becamePublic && $vehicle->is_public && $vehicle->status === VehicleStatus::Available) {
-                VehicleBecameAvailable::dispatch($vehicle);
+                event(new VehicleBecameAvailable($vehicle));
             }
         });
     }
@@ -133,7 +141,8 @@ class Vehicle extends Model implements HasMedia
      * @param  Builder<Vehicle>  $query
      * @return Builder<Vehicle>
      */
-    public function scopeAvailableBetween(Builder $query, CarbonImmutable $start, CarbonImmutable $end): Builder
+    #[Scope]
+    protected function availableBetween(Builder $query, CarbonImmutable $start, CarbonImmutable $end): Builder
     {
         return $query
             ->whereDoesntHave('bookings', fn ($q) => $q

@@ -101,9 +101,9 @@ class ProcessVehicleMaintenanceJob implements ShouldQueue
 
         $blockDays = (int) config('maintenance.block_days');
 
-        $blockedDate = BlockedDate::create([
+        $blockedDate = BlockedDate::query()->create([
             'vehicle_id' => $record->vehicle_id,
-            'start_date' => now()->startOfDay(),
+            'start_date' => today(),
             'end_date' => now()->addDays($blockDays)->startOfDay(),
             'reason' => 'maintenance',
         ]);

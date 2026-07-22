@@ -30,8 +30,8 @@ class TenantSubscriptionSuspended extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject("Tenant suspended — {$this->tenant->name}")
-            ->line("The subscription of {$this->tenant->name} lapsed more than 7 days ago and the tenant has been suspended automatically.")
+            ->subject('Tenant suspended — '.$this->tenant->name)
+            ->line(sprintf('The subscription of %s lapsed more than 7 days ago and the tenant has been suspended automatically.', $this->tenant->name))
             ->line('Paid until: '.$this->tenant->paid_until?->toFormattedDateString())
             ->line('Record a payment in the admin panel to reactivate them.');
     }

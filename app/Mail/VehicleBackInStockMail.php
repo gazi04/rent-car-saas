@@ -28,7 +28,9 @@ use Illuminate\Support\Facades\URL;
  */
 class VehicleBackInStockMail extends Mailable implements ShouldQueue
 {
-    use Queueable, SerializesModels, ThrottlesMailQueue;
+    use Queueable;
+    use SerializesModels;
+    use ThrottlesMailQueue;
 
     public function __construct(
         public readonly WaitlistEntry $entry,
@@ -38,13 +40,13 @@ class VehicleBackInStockMail extends Mailable implements ShouldQueue
     public static function forTenantDomain(WaitlistEntry $entry): self
     {
         $vehicleUrl = null;
-        $tenant = Tenant::find($entry->tenant_id);
+        $tenant = Tenant::query()->find($entry->tenant_id);
         $rootUrl = $tenant?->publicRootUrl();
 
         if ($rootUrl) {
             // forceRootUrl alone is not enough: the generator swaps in the current
             // request's scheme, so an https root would still emit http links.
-            URL::forceScheme(parse_url($rootUrl, PHP_URL_SCHEME) ?: 'http');
+            URL::forceScheme(parse_url((string) $rootUrl, PHP_URL_SCHEME) ?: 'http');
             URL::forceRootUrl($rootUrl);
 
             $vehicleUrl = URL::route('public.vehicle', ['vehicle' => $entry->vehicle_id]);
@@ -58,7 +60,7 @@ class VehicleBackInStockMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
-        $tenant = Tenant::find($this->entry->tenant_id);
+        $tenant = Tenant::query()->find($this->entry->tenant_id);
 
         return new Envelope(
             from: new Address($tenant->email, $tenant->name),
@@ -71,7 +73,7 @@ class VehicleBackInStockMail extends Mailable implements ShouldQueue
 
     public function content(): Content
     {
-        $tenant = Tenant::find($this->entry->tenant_id);
+        $tenant = Tenant::query()->find($this->entry->tenant_id);
 
         return new Content(
             markdown: 'emails.vehicle-back-in-stock',

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Database\Factories\ReviewFactory;
@@ -22,8 +24,10 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 #[Fillable(['tenant_id', 'booking_id', 'vehicle_id', 'customer_id', 'reviewer_name', 'rating', 'comment', 'is_approved', 'submitted_at'])]
 class Review extends Model
 {
+    use BelongsToTenant;
+
     /** @use HasFactory<ReviewFactory> */
-    use BelongsToTenant, HasFactory;
+    use HasFactory;
 
     /**
      * @return array<string, string>

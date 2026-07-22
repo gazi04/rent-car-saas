@@ -6,7 +6,6 @@ use App\Enums\BookingStatus;
 use App\Models\Booking;
 use App\Services\BookingService;
 use App\Services\RentalAgreementService;
-use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DateTimePicker;
@@ -19,7 +18,9 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Storage;
+use InvalidArgumentException;
 
 class BookingsTable
 {
@@ -79,11 +80,9 @@ class BookingsTable
                             ->label(__('panel.until'))
                             ->seconds(false),
                     ])
-                    ->query(function (Builder $query, array $data): Builder {
-                        return $query
-                            ->when($data['from'], fn ($q, $v) => $q->where('start_date', '>=', $v))
-                            ->when($data['until'], fn ($q, $v) => $q->where('start_date', '<=', $v));
-                    }),
+                    ->query(fn (Builder $query, array $data): Builder => $query
+                        ->when($data['from'], fn ($q, $v) => $q->where('start_date', '>=', $v))
+                        ->when($data['until'], fn ($q, $v) => $q->where('start_date', '<=', $v))),
             ])
             ->recordActions([
                 self::confirmAction(),
@@ -109,7 +108,7 @@ class BookingsTable
             ->requiresConfirmation()
             ->visible(fn (Booking $record): bool => $record->status === BookingStatus::Pending)
             ->action(function (Booking $record): void {
-                app(BookingService::class)->confirm($record);
+                resolve(BookingService::class)->confirm($record);
             });
     }
 
@@ -130,7 +129,7 @@ class BookingsTable
                     ->label(__('panel.cancellation_reason')),
             ])
             ->action(function (Booking $record, array $data): void {
-                app(BookingService::class)->reject(
+                resolve(BookingService::class)->reject(
                     $record,
                     reason: filled($data['reason'] ?? null) ? $data['reason'] : null,
                 );
@@ -158,9 +157,9 @@ class BookingsTable
                     ->minValue(0),
             ])
             ->action(function (Booking $record, array $data): void {
-                app(BookingService::class)->markActive(
+                resolve(BookingService::class)->markActive(
                     $record,
-                    filled($data['started_at']) ? Carbon::parse($data['started_at']) : null,
+                    filled($data['started_at']) ? Date::parse($data['started_at']) : null,
                     filled($data['start_odometer']) ? (int) $data['start_odometer'] : null,
                 );
             });
@@ -187,9 +186,9 @@ class BookingsTable
                     ->minValue(0),
             ])
             ->action(function (Booking $record, array $data): void {
-                app(BookingService::class)->complete(
+                resolve(BookingService::class)->complete(
                     $record,
-                    filled($data['completed_at']) ? Carbon::parse($data['completed_at']) : null,
+                    filled($data['completed_at']) ? Date::parse($data['completed_at']) : null,
                     filled($data['end_odometer']) ? (int) $data['end_odometer'] : null,
                 );
             });
@@ -207,9 +206,9 @@ class BookingsTable
                 BookingStatus::Completed,
             ], true))
             ->action(function (Booking $record): mixed {
-                $contract = app(RentalAgreementService::class)->generate($record);
+                $contract = resolve(RentalAgreementService::class)->generate($record);
 
-                return Storage::download($contract->path, "agreement-{$record->reference}.pdf");
+                return Storage::download($contract->path, sprintf('agreement-%s.pdf', $record->reference));
             });
     }
 
@@ -234,12 +233,12 @@ class BookingsTable
             ])
             ->action(function (Booking $record, array $data): void {
                 try {
-                    app(BookingService::class)->cancel(
+                    resolve(BookingService::class)->cancel(
                         $record,
                         reason: filled($data['reason'] ?? null) ? $data['reason'] : null,
                     );
-                } catch (\InvalidArgumentException $e) {
-                    Notification::make()->title($e->getMessage())->danger()->send();
+                } catch (InvalidArgumentException $invalidArgumentException) {
+                    Notification::make()->title($invalidArgumentException->getMessage())->danger()->send();
                 }
             });
     }

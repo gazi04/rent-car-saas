@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table): void {
             // NULL for Super Admin (central user); set for operator users.
             $table->foreignId('tenant_id')->nullable()->after('id')->constrained()->nullOnDelete();
             $table->string('role')->default('operator')->after('password');
@@ -23,7 +23,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table): void {
             $table->dropForeign(['tenant_id']);
             $table->dropIndex(['tenant_id']);
             $table->dropColumn(['tenant_id', 'role']);

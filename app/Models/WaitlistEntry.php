@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Carbon\CarbonInterface;
@@ -35,8 +37,10 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 #[Fillable(['tenant_id', 'vehicle_id', 'name', 'email', 'phone', 'start_date', 'end_date', 'locale', 'notified_at'])]
 class WaitlistEntry extends Model
 {
+    use BelongsToTenant;
+
     /** @use HasFactory<WaitlistEntryFactory> */
-    use BelongsToTenant, HasFactory;
+    use HasFactory;
 
     /**
      * @return array<string, string>
@@ -70,7 +74,7 @@ class WaitlistEntry extends Model
      */
     public function hasExpired(): bool
     {
-        return $this->start_date !== null && $this->start_date->lt(now()->startOfDay());
+        return $this->start_date !== null && $this->start_date->lt(today());
     }
 
     /**
@@ -83,7 +87,7 @@ class WaitlistEntry extends Model
      */
     public function overlaps(?CarbonInterface $start, ?CarbonInterface $end): bool
     {
-        if ($this->start_date === null || $this->end_date === null || $start === null || $end === null) {
+        if ($this->start_date === null || $this->end_date === null || ! $start instanceof CarbonInterface || ! $end instanceof CarbonInterface) {
             return true;
         }
 

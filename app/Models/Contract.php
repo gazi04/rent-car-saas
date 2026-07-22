@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Database\Factories\ContractFactory;
@@ -12,8 +14,10 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 #[Fillable(['tenant_id', 'booking_id', 'path', 'generated_at'])]
 class Contract extends Model
 {
+    use BelongsToTenant;
+
     /** @use HasFactory<ContractFactory> */
-    use BelongsToTenant, HasFactory;
+    use HasFactory;
 
     /**
      * @return array<string, string>

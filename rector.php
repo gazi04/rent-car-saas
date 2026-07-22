@@ -6,6 +6,7 @@ use Rector\Caching\ValueObject\Storage\FileCacheStorage;
 use Rector\CodingStyle\Rector\ClassMethod\MakeInheritedMethodVisibilitySameAsParentRector;
 use Rector\Config\RectorConfig;
 use Rector\Php83\Rector\ClassMethod\AddOverrideAttributeToOverriddenMethodsRector;
+use RectorLaravel\Rector\If_\ThrowIfRector;
 use RectorLaravel\Set\LaravelSetList;
 use RectorLaravel\Set\LaravelSetProvider;
 
@@ -31,6 +32,11 @@ return RectorConfig::configure()
         cacheDirectory: '/tmp/rector',
         cacheClass: FileCacheStorage::class,
     )
+    // `tests/` is deliberately absent: Pest's closure DSL reads worse under the
+    // coding-style/early-return rules (they split `||` guards into two `if`s and
+    // sprintf-ify readable interpolation). `resources/` is absent too — Rector's
+    // import handling does not reach the <?php block of a Livewire SFC, so it
+    // rewrites imported classes as inline FQNs there.
     ->withPaths([
         __DIR__.'/app',
         __DIR__.'/bootstrap/app.php',
@@ -38,11 +44,16 @@ return RectorConfig::configure()
         __DIR__.'/database',
         __DIR__.'/public',
         __DIR__.'/routes',
-        __DIR__.'/tests',
     ])
     ->withSkip([
         AddOverrideAttributeToOverriddenMethodsRector::class,
         MakeInheritedMethodVisibilitySameAsParentRector::class,
+        // resolvePromo()'s guards are compound conditions; as throw_if() arguments
+        // they spill across three lines and read worse than an explicit if. The
+        // single-line guards elsewhere in the file keep the helper.
+        ThrowIfRector::class => [
+            __DIR__.'/app/Services/BookingService.php',
+        ],
     ])
     ->withPreparedSets(
         deadCode: true,

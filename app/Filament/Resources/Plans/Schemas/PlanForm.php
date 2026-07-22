@@ -72,11 +72,11 @@ class PlanForm
     {
         return collect(PlanFeature::cases())
             ->map(fn (PlanFeature $feature): Component => match ($feature->type()) {
-                PlanFeatureType::Toggle => Toggle::make("features.{$feature->value}")
+                PlanFeatureType::Toggle => Toggle::make('features.'.$feature->value)
                     ->label($feature->getLabel())
                     ->default((bool) $feature->default())
                     ->inline(false),
-                PlanFeatureType::Limit => TextInput::make("features.{$feature->value}")
+                PlanFeatureType::Limit => TextInput::make('features.'.$feature->value)
                     ->label($feature->getLabel())
                     ->integer()
                     ->minValue(0)

@@ -4,6 +4,7 @@ namespace App\Filament\Operator\Pages;
 
 use App\Enums\PlanFeature;
 use App\Filament\Support\HelpAction;
+use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
@@ -29,7 +30,7 @@ use Filament\Support\Icons\Heroicon;
  */
 class ConciergeSettings extends Page
 {
-    protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedChatBubbleLeftRight;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChatBubbleLeftRight;
 
     protected static ?int $navigationSort = 13;
 
@@ -92,7 +93,7 @@ class ConciergeSettings extends Page
     protected function faqFields(string $locale): array
     {
         return [
-            Textarea::make("faq_content_{$locale}")
+            Textarea::make('faq_content_'.$locale)
                 ->label(__('panel.concierge_faq'))
                 ->placeholder(__('panel.concierge_faq_placeholder'))
                 ->rows(14)

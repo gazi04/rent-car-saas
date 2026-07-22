@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Ai;
 
 use Laravel\Ai\Responses\Data\Usage;
@@ -15,7 +17,7 @@ class AiCostEstimator
     public function estimate(string $model, Usage $usage): float
     {
         /** @var array{input?: float|int, cached_input?: float|int|null, output?: float|int}|null $prices */
-        $prices = config("ai.pricing.{$model}");
+        $prices = config('ai.pricing.'.$model);
 
         if ($prices === null) {
             return 0.0;

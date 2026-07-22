@@ -23,7 +23,7 @@ return new class extends Migration
         if (DB::getDriverName() === 'pgsql') {
             DB::statement('ALTER TABLE ai_business_summaries ALTER COLUMN content TYPE json USING content::json');
         } else {
-            Schema::table('ai_business_summaries', function (Blueprint $table) {
+            Schema::table('ai_business_summaries', function (Blueprint $table): void {
                 $table->json('content')->change();
             });
         }
@@ -37,7 +37,7 @@ return new class extends Migration
         if (DB::getDriverName() === 'pgsql') {
             DB::statement("ALTER TABLE ai_business_summaries ALTER COLUMN content TYPE text USING content->>'en'");
         } else {
-            Schema::table('ai_business_summaries', function (Blueprint $table) {
+            Schema::table('ai_business_summaries', function (Blueprint $table): void {
                 $table->text('content')->change();
             });
 

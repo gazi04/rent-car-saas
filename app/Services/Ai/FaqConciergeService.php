@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Ai;
 
 use App\Ai\Agents\FaqConciergeAgent;
@@ -30,8 +32,8 @@ class FaqConciergeService
         try {
             /** @var StructuredAgentResponse $response */
             $response = (new FaqConciergeAgent($knowledge, $language, $history))->prompt($question);
-        } catch (Throwable $e) {
-            throw AiRequestFailedException::wrap($e);
+        } catch (Throwable $throwable) {
+            throw AiRequestFailedException::wrap($throwable);
         }
 
         /** @var array{answer?: string, confident?: bool} $result */

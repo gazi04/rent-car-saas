@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\BookingStatus;
@@ -21,8 +23,10 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 #[Fillable(['tenant_id', 'name', 'phone', 'email', 'notes', 'is_blacklisted'])]
 class Customer extends Model
 {
+    use BelongsToTenant;
+
     /** @use HasFactory<CustomerFactory> */
-    use BelongsToTenant, HasFactory;
+    use HasFactory;
 
     /**
      * @return array<string, string>

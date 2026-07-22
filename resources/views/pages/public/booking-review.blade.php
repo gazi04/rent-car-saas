@@ -53,7 +53,7 @@ new #[Layout('layouts.public')] #[Title('Leave a Review')] class extends Compone
 
         $this->validate();
 
-        Review::create([
+        Review::query()->create([
             'booking_id' => $this->booking->id,
             'vehicle_id' => $this->booking->vehicle_id,
             'customer_id' => $this->booking->customer_id,

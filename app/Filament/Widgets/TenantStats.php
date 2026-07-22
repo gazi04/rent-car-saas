@@ -20,13 +20,13 @@ class TenantStats extends StatsOverviewWidget
             ->sum('amount');
 
         return [
-            Stat::make('Total operators', Tenant::count())
+            Stat::make('Total operators', Tenant::query()->count())
                 ->color('primary'),
-            Stat::make('Active', Tenant::where('status', TenantStatus::Active->value)->count())
+            Stat::make('Active', Tenant::query()->where('status', TenantStatus::Active->value)->count())
                 ->color('success'),
-            Stat::make('Pending approval', Tenant::where('status', TenantStatus::Pending->value)->count())
+            Stat::make('Pending approval', Tenant::query()->where('status', TenantStatus::Pending->value)->count())
                 ->color('warning'),
-            Stat::make('On trial', Tenant::where('plan', Plan::TRIAL_SLUG)->count())
+            Stat::make('On trial', Tenant::query()->where('plan', Plan::TRIAL_SLUG)->count())
                 ->color('gray'),
             Stat::make('Revenue this month', '€'.number_format((float) $revenueThisMonth, 2))
                 ->description('Payments recorded this month')

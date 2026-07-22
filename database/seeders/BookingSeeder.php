@@ -19,7 +19,7 @@ class BookingSeeder extends Seeder
      */
     public function run(): void
     {
-        $tenant = Tenant::where('email', 'ardi@example.com')->first();
+        $tenant = Tenant::query()->where('email', 'ardi@example.com')->first();
 
         if ($tenant === null) {
             return;
@@ -35,8 +35,8 @@ class BookingSeeder extends Seeder
             return;
         }
 
-        $customer = Customer::first();
-        $promoCode = PromoCode::where('is_active', true)->first();
+        $customer = Customer::query()->first();
+        $promoCode = PromoCode::query()->where('is_active', true)->first();
 
         // A mix of statuses across vehicles.
         Booking::factory()->forVehicle($vehicles->first())->confirmed()->create([

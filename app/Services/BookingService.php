@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Enums\BookingStatus;
@@ -14,9 +16,11 @@ use App\Models\Booking;
 use App\Models\Customer;
 use App\Models\PromoCode;
 use App\Models\Vehicle;
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
 
 class BookingService
 {
@@ -34,7 +38,7 @@ class BookingService
             $promo = $this->resolvePromo($data, $customer);
             $price = $this->pricing->calculate($vehicle, $start, $end, $promo);
 
-            $booking = Booking::create([
+            $booking = Booking::query()->create([
                 'reference' => $this->generateReference(),
                 'vehicle_id' => $vehicle->id,
                 'customer_id' => $customer->id,
@@ -55,7 +59,7 @@ class BookingService
                 'locale' => app()->getLocale(),
             ]);
 
-            BookingCreated::dispatch($booking);
+            event(new BookingCreated($booking));
 
             return $booking;
         });
@@ -75,7 +79,7 @@ class BookingService
             $promo = $this->resolvePromo($data, $customer);
             $price = $this->pricing->calculate($vehicle, $start, $end, $promo);
 
-            $booking = Booking::create([
+            return Booking::query()->create([
                 'reference' => $this->generateReference(),
                 'vehicle_id' => $vehicle->id,
                 'customer_id' => $customer->id,
@@ -95,15 +99,13 @@ class BookingService
                 'status' => BookingStatus::Confirmed,
                 'locale' => app()->getLocale(),
             ]);
-
-            return $booking;
         });
     }
 
     public function confirm(Booking $booking): void
     {
         $this->transition($booking, BookingStatus::Pending, BookingStatus::Confirmed);
-        BookingConfirmed::dispatch($booking);
+        event(new BookingConfirmed($booking));
     }
 
     public function reject(Booking $booking, ?string $reason = null): void
@@ -111,10 +113,10 @@ class BookingService
         $this->transition($booking, BookingStatus::Pending, BookingStatus::Cancelled, [
             ...($reason !== null ? ['cancellation_reason' => $reason] : []),
         ]);
-        BookingRejected::dispatch($booking);
+        event(new BookingRejected($booking));
     }
 
-    public function markActive(Booking $booking, ?Carbon $startedAt = null, ?int $startOdometer = null): void
+    public function markActive(Booking $booking, ?CarbonInterface $startedAt = null, ?int $startOdometer = null): void
     {
         $this->transition($booking, BookingStatus::Confirmed, BookingStatus::Active, [
             'started_at' => $startedAt ?? now(),
@@ -122,7 +124,7 @@ class BookingService
         ]);
     }
 
-    public function complete(Booking $booking, ?Carbon $completedAt = null, ?int $endOdometer = null): void
+    public function complete(Booking $booking, ?CarbonInterface $completedAt = null, ?int $endOdometer = null): void
     {
         $this->transition($booking, BookingStatus::Active, BookingStatus::Completed, [
             'completed_at' => $completedAt ?? now(),
@@ -132,11 +134,9 @@ class BookingService
 
     public function cancel(Booking $booking, string $cancelledBy = 'operator', ?string $reason = null): void
     {
-        if ($booking->status === BookingStatus::Completed) {
-            throw new \InvalidArgumentException('Completed bookings cannot be cancelled.');
-        }
+        throw_if($booking->status === BookingStatus::Completed, InvalidArgumentException::class, 'Completed bookings cannot be cancelled.');
 
-        $updated = Booking::whereKey($booking->getKey())
+        $updated = Booking::query()->whereKey($booking->getKey())
             ->where('status', '!=', BookingStatus::Cancelled->value)
             ->update([
                 'status' => BookingStatus::Cancelled->value,
@@ -148,7 +148,7 @@ class BookingService
         }
 
         $booking->refresh();
-        BookingCancelled::dispatch($booking, $cancelledBy);
+        event(new BookingCancelled($booking, $cancelledBy));
     }
 
     /**
@@ -157,26 +157,24 @@ class BookingService
      * resolving any promo code).
      *
      * @param  array<string, mixed>  $data
-     * @return array{0: Vehicle, 1: Carbon, 2: Carbon}
+     * @return array{0: Vehicle, 1: CarbonInterface, 2: CarbonInterface}
      */
     private function lockAndValidate(array $data): array
     {
         // Lock the vehicle row — concurrent transactions queue behind this.
-        $vehicle = Vehicle::whereKey($data['vehicle_id'])->lockForUpdate()->firstOrFail();
+        $vehicle = Vehicle::query()->whereKey($data['vehicle_id'])->lockForUpdate()->firstOrFail();
 
-        $start = Carbon::parse($data['start_date']);
-        $end = Carbon::parse($data['end_date']);
+        $start = Date::parse($data['start_date']);
+        $end = Date::parse($data['end_date']);
 
         try {
             $available = $this->availability->isAvailable($vehicle, $start, $end);
-        } catch (\InvalidArgumentException) {
+        } catch (InvalidArgumentException) {
             throw new VehicleNotAvailableException('The selected dates are invalid.');
         }
 
         // Re-check under the lock — the answer can't change until we commit.
-        if (! $available) {
-            throw new VehicleNotAvailableException('Sorry, this vehicle was just booked by someone else.');
-        }
+        throw_unless($available, VehicleNotAvailableException::class, 'Sorry, this vehicle was just booked by someone else.');
 
         return [$vehicle, $start, $end];
     }
@@ -225,7 +223,7 @@ class BookingService
      */
     private function transition(Booking $booking, BookingStatus $from, BookingStatus $to, array $extra = []): void
     {
-        $updated = Booking::whereKey($booking->getKey())
+        $updated = Booking::query()->whereKey($booking->getKey())
             ->where('status', $from->value)
             ->update([
                 'status' => $to->value,
@@ -236,8 +234,8 @@ class BookingService
         if ($updated === 0) {
             $booking->refresh();
 
-            throw new \InvalidArgumentException(
-                "Booking must be {$from->value} to transition to {$to->value}, got {$booking->status->value}."
+            throw new InvalidArgumentException(
+                sprintf('Booking must be %s to transition to %s, got %s.', $from->value, $to->value, $booking->status->value)
             );
         }
 
@@ -255,10 +253,7 @@ class BookingService
      */
     private function resolveCustomer(array $data): Customer
     {
-        $customer = Customer::firstOrCreate(
-            ['phone' => $data['customer_phone']],
-            ['name' => $data['customer_name'], 'email' => $data['customer_email'] ?? null],
-        );
+        $customer = Customer::query()->firstOrCreate(['phone' => $data['customer_phone']], ['name' => $data['customer_name'], 'email' => $data['customer_email'] ?? null]);
 
         if (! $customer->wasRecentlyCreated) {
             $customer->fill([

@@ -4,6 +4,7 @@ namespace App\Filament\Operator\Pages;
 
 use App\Enums\PlanFeature;
 use App\Filament\Support\HelpAction;
+use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Select;
@@ -23,7 +24,7 @@ use Filament\Support\Icons\Heroicon;
  */
 class BrandingSettings extends Page
 {
-    protected static string|\BackedEnum|null $navigationIcon = Heroicon::OutlinedPaintBrush;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPaintBrush;
 
     protected static ?int $navigationSort = 10;
 
@@ -54,8 +55,8 @@ class BrandingSettings extends Page
         $localizedKeys = config('branding.localized_keys', []);
 
         foreach ($localizedKeys as $key) {
-            if (! isset($settings["{$key}_sq"]) && isset($settings[$key])) {
-                $settings["{$key}_sq"] = $settings[$key];
+            if (! isset($settings[$key.'_sq']) && isset($settings[$key])) {
+                $settings[$key.'_sq'] = $settings[$key];
             }
         }
 
@@ -223,37 +224,37 @@ class BrandingSettings extends Page
             Section::make(__('branding.section_hero'))
                 ->description(__('branding.content_hint'))
                 ->components([
-                    TextInput::make("home_hero_heading_{$locale}")
+                    TextInput::make('home_hero_heading_'.$locale)
                         ->label(__('branding.home_hero_heading'))
                         ->maxLength(120),
-                    Textarea::make("home_hero_subheading_{$locale}")
+                    Textarea::make('home_hero_subheading_'.$locale)
                         ->label(__('branding.home_hero_subheading'))
                         ->rows(2)
                         ->maxLength(300),
-                    TextInput::make("home_hero_cta_label_{$locale}")
+                    TextInput::make('home_hero_cta_label_'.$locale)
                         ->label(__('branding.home_hero_cta_label'))
                         ->maxLength(40),
                 ]),
 
             Section::make(__('branding.section_about'))
                 ->components([
-                    TextInput::make("home_about_title_{$locale}")
+                    TextInput::make('home_about_title_'.$locale)
                         ->label(__('branding.home_about_title'))
                         ->maxLength(120),
-                    Textarea::make("home_about_text_{$locale}")
+                    Textarea::make('home_about_text_'.$locale)
                         ->label(__('branding.home_about_text'))
                         ->rows(4)
                         ->maxLength(2000),
                 ]),
 
             ...collect([1, 2, 3])->map(
-                fn (int $i): Section => Section::make(__("branding.section_service_{$i}"))
+                fn (int $i): Section => Section::make(__('branding.section_service_'.$i))
                     ->columns(2)
                     ->components([
-                        TextInput::make("home_service_{$i}_title_{$locale}")
+                        TextInput::make(sprintf('home_service_%d_title_%s', $i, $locale))
                             ->label(__('branding.service_title'))
                             ->maxLength(80),
-                        Textarea::make("home_service_{$i}_text_{$locale}")
+                        Textarea::make(sprintf('home_service_%d_text_%s', $i, $locale))
                             ->label(__('branding.service_text'))
                             ->rows(2)
                             ->maxLength(300),
@@ -270,7 +271,7 @@ class BrandingSettings extends Page
     protected function layoutOptions(string $page): array
     {
         /** @var array<int, string> $slugs */
-        $slugs = config("branding.layouts.{$page}", []);
+        $slugs = config('branding.layouts.'.$page, []);
 
         return collect($slugs)
             ->mapWithKeys(fn (string $slug): array => [

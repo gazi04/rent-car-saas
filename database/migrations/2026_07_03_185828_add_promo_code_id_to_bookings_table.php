@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('bookings', function (Blueprint $table) {
+        Schema::table('bookings', function (Blueprint $table): void {
             // Nullable: most bookings have no promo; a promo delete nulls the link
             // rather than removing booking history.
             $table->foreignId('promo_code_id')->nullable()->after('customer_id')->constrained()->nullOnDelete();
@@ -23,7 +23,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('bookings', function (Blueprint $table) {
+        Schema::table('bookings', function (Blueprint $table): void {
             $table->dropConstrainedForeignId('promo_code_id');
         });
     }

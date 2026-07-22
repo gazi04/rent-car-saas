@@ -2,6 +2,7 @@
 
 namespace App\Concerns;
 
+use DateTimeInterface;
 use Illuminate\Queue\Middleware\RateLimited;
 
 trait ThrottlesMailQueue
@@ -26,7 +27,7 @@ trait ThrottlesMailQueue
      * worker's stale-attempt check, so throttled mail gets a real time budget
      * to drain through the 1/sec limiter instead of being killed by attempt count.
      */
-    public function retryUntil(): \DateTimeInterface
+    public function retryUntil(): DateTimeInterface
     {
         return now()->addMinutes(10);
     }

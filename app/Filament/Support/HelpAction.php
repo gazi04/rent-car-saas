@@ -14,7 +14,7 @@ final class HelpAction
             ->label('')
             ->tooltip(__('help.tooltip'))
             ->icon(Heroicon::OutlinedQuestionMarkCircle)
-            ->modalHeading(Lang::has("help.{$key}.title") ? __("help.{$key}.title") : __('help.fallback_title'))
+            ->modalHeading(Lang::has(sprintf('help.%s.title', $key)) ? __(sprintf('help.%s.title', $key)) : __('help.fallback_title'))
             ->modalContent(view('filament.help-modal-content', ['key' => $key]))
             ->modalSubmitAction(false)
             ->modalCancelAction(false)

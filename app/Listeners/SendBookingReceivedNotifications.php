@@ -15,7 +15,7 @@ class SendBookingReceivedNotifications implements ShouldQueue
     public function handle(BookingCreated $event): void
     {
         $booking = $event->booking;
-        $operators = User::where('tenant_id', $booking->tenant_id)->get();
+        $operators = User::query()->where('tenant_id', $booking->tenant_id)->get();
 
         if ($booking->customer_email) {
             Mail::to($booking->customer_email)

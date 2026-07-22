@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\BookingStatus;
@@ -28,8 +30,10 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 #[Fillable(['tenant_id', 'code', 'type', 'value', 'starts_at', 'expires_at', 'max_uses', 'uses_count', 'per_customer_limit', 'is_active'])]
 class PromoCode extends Model
 {
+    use BelongsToTenant;
+
     /** @use HasFactory<PromoCodeFactory> */
-    use BelongsToTenant, HasFactory;
+    use HasFactory;
 
     /**
      * @return array<string, string>
@@ -71,7 +75,7 @@ class PromoCode extends Model
 
     public function withinWindow(): bool
     {
-        $today = now()->startOfDay();
+        $today = today();
 
         return ($this->starts_at === null || $this->starts_at->lte($today))
             && ($this->expires_at === null || $this->expires_at->gte($today));

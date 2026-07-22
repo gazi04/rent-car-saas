@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * Free-text content the operator writes, stored per language as
  * {key}_sq / {key}_en (the base un-suffixed key is kept on the allow-list
@@ -22,8 +24,8 @@ $localizedContentKeys = [
 
 $localizedVariants = [];
 foreach ($localizedContentKeys as $key) {
-    $localizedVariants[] = "{$key}_sq";
-    $localizedVariants[] = "{$key}_en";
+    $localizedVariants[] = $key.'_sq';
+    $localizedVariants[] = $key.'_en';
 }
 
 return [

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\PlanFeature;
@@ -26,8 +28,12 @@ use Stancl\Tenancy\Database\Models\Tenant as BaseTenant;
 #[Hidden(['stripe_id', 'stripe_subscription_id'])]
 class Tenant extends BaseTenant implements HasMedia
 {
+    use HasDomains;
+
     /** @use HasFactory<TenantFactory> */
-    use HasDomains, HasFactory, InteractsWithMedia;
+    use HasFactory;
+
+    use InteractsWithMedia;
 
     /** @var array<string, mixed>|null */
     private ?array $settingsCache = null;
@@ -169,7 +175,7 @@ class Tenant extends BaseTenant implements HasMedia
     {
         $value = $this->settings()[$key] ?? null;
 
-        return $value !== null ? $value : $default;
+        return $value ?? $default;
     }
 
     /**
@@ -182,9 +188,9 @@ class Tenant extends BaseTenant implements HasMedia
         $locale = app()->getLocale();
         $other = $locale === 'sq' ? 'en' : 'sq';
 
-        return $this->setting("{$key}_{$locale}")
+        return $this->setting(sprintf('%s_%s', $key, $locale))
             ?? $this->setting($key)
-            ?? $this->setting("{$key}_{$other}")
+            ?? $this->setting(sprintf('%s_%s', $key, $other))
             ?? $default;
     }
 
@@ -279,7 +285,7 @@ class Tenant extends BaseTenant implements HasMedia
     {
         $url = $this->logoUrl();
 
-        return $url !== null ? rtrim(config('app.url'), '/').$url : null;
+        return $url !== null ? rtrim((string) config('app.url'), '/').$url : null;
     }
 
     public function colorPrimary(): string

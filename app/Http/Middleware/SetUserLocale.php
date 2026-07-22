@@ -14,7 +14,7 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class SetUserLocale
 {
-    private const SUPPORTED = ['sq', 'en'];
+    private const array SUPPORTED = ['sq', 'en'];
 
     public function handle(Request $request, Closure $next): Response
     {

@@ -16,17 +16,19 @@ use Illuminate\Queue\SerializesModels;
 
 class BookingCancelledMail extends Mailable implements ShouldQueue
 {
-    use Queueable, SerializesModels, ThrottlesMailQueue;
+    use Queueable;
+    use SerializesModels;
+    use ThrottlesMailQueue;
 
     public function __construct(public readonly Booking $booking) {}
 
     public function envelope(): Envelope
     {
-        $tenant = Tenant::find($this->booking->tenant_id);
+        $tenant = Tenant::query()->find($this->booking->tenant_id);
 
         return new Envelope(
             from: new Address($tenant->email, $tenant->name),
-            subject: app(TemplateRenderer::class)->resolve(
+            subject: resolve(TemplateRenderer::class)->resolve(
                 $this->booking,
                 'tmpl_email_cancelled_subject',
                 'emails.booking_cancelled.subject',
@@ -37,8 +39,8 @@ class BookingCancelledMail extends Mailable implements ShouldQueue
 
     public function content(): Content
     {
-        $renderer = app(TemplateRenderer::class);
-        $operator = Tenant::find($this->booking->tenant_id)->name;
+        $renderer = resolve(TemplateRenderer::class);
+        $operator = Tenant::query()->find($this->booking->tenant_id)->name;
 
         return new Content(
             markdown: 'emails.booking-cancelled',

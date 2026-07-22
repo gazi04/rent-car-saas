@@ -23,7 +23,7 @@ class SendBookingCancelledNotifications implements ShouldQueue
         }
 
         if ($cancelledBy === 'customer') {
-            $operators = User::where('tenant_id', $booking->tenant_id)->get();
+            $operators = User::query()->where('tenant_id', $booking->tenant_id)->get();
             $vehicleDisplay = $booking->vehicle->name;
 
             foreach ($operators as $operator) {

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\Booking;
@@ -22,7 +24,7 @@ class TemplateRenderer
      */
     public function resolve(Booking $booking, string $overrideKey, string $defaultLangKey, array $defaultReplace = []): string
     {
-        $override = Tenant::find($booking->tenant_id)?->localizedSetting($overrideKey);
+        $override = Tenant::query()->find($booking->tenant_id)?->localizedSetting($overrideKey);
 
         if (filled($override)) {
             return $this->render((string) $override, $this->bookingVariables($booking));
@@ -61,7 +63,7 @@ class TemplateRenderer
             'end_date' => $booking->end_date->format('d M Y'),
             'total' => '€'.number_format((float) $booking->total, 2),
             'deposit' => '€'.number_format((float) $booking->deposit, 2),
-            'operator' => (string) Tenant::find($booking->tenant_id)->name,
+            'operator' => (string) Tenant::query()->find($booking->tenant_id)->name,
             'pickup_location' => (string) ($booking->pickup_location ?? ''),
         ];
     }

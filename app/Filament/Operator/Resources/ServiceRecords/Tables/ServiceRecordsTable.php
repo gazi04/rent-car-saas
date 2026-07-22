@@ -33,7 +33,7 @@ class ServiceRecordsTable
                 TextColumn::make('service_type')
                     ->label(__('panel.service_type'))
                     ->badge()
-                    ->formatStateUsing(fn (string $state): string => __("panel.service_type_{$state}")),
+                    ->formatStateUsing(fn (string $state): string => __('panel.service_type_'.$state)),
                 TextColumn::make('performed_on')
                     ->label(__('panel.service_performed_on'))
                     ->date()

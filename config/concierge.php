@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * AI storefront FAQ concierge (future-feature-ideas.md #4).
  *
@@ -25,7 +27,7 @@ $locales = ['sq', 'en'];
 $keys = [];
 
 foreach ($locales as $locale) {
-    $keys[] = "faq_content_{$locale}";
+    $keys[] = 'faq_content_'.$locale;
 }
 
 return [

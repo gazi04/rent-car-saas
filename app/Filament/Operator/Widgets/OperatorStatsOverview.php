@@ -19,7 +19,7 @@ class OperatorStatsOverview extends StatsOverviewWidget
 
     protected function getStats(): array
     {
-        $startOfToday = now()->startOfDay();
+        $startOfToday = today();
         $endOfToday = now()->endOfDay();
 
         $todaysPickups = Booking::query()

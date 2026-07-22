@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * Custom contract / email templates (operator-feature-report.md #7).
  *
@@ -24,14 +26,14 @@ $keys = [];
 
 foreach ($agreementFields as $field) {
     foreach ($locales as $locale) {
-        $keys[] = "tmpl_agreement_{$field}_{$locale}";
+        $keys[] = sprintf('tmpl_agreement_%s_%s', $field, $locale);
     }
 }
 
 foreach ($emails as $event) {
     foreach ($emailFields as $field) {
         foreach ($locales as $locale) {
-            $keys[] = "tmpl_email_{$event}_{$field}_{$locale}";
+            $keys[] = sprintf('tmpl_email_%s_%s_%s', $event, $field, $locale);
         }
     }
 }

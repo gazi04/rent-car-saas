@@ -53,7 +53,7 @@ new #[Layout('layouts.auth')] #[Title('Start your rental business')] class exten
                 'regex:/^[a-z0-9]+(-[a-z0-9]+)*$/',
                 Rule::notIn($this->reservedSubdomains),
                 function (string $attribute, mixed $value, Closure $fail) use ($base): void {
-                    if (Domain::where('domain', $value.'.'.$base)->exists()) {
+                    if (Domain::query()->where('domain', $value.'.'.$base)->exists()) {
                         $fail(__('This subdomain is already taken.'));
                     }
                 },
@@ -61,7 +61,7 @@ new #[Layout('layouts.auth')] #[Title('Start your rental business')] class exten
             'password' => $this->passwordRules(),
         ]);
 
-        $tenant = Tenant::create([
+        $tenant = Tenant::query()->create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'phone' => $validated['phone'] ?: null,

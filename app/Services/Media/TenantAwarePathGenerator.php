@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\Media;
 
 use App\Models\Tenant;
 use App\Models\Vehicle;
+use RuntimeException;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\MediaLibrary\Support\PathGenerator\PathGenerator;
 
@@ -48,7 +51,7 @@ class TenantAwarePathGenerator implements PathGenerator
         return match (true) {
             $model instanceof Tenant => (string) $model->id,
             $model instanceof Vehicle => (string) $model->tenant_id,
-            default => throw new \RuntimeException(
+            default => throw new RuntimeException(
                 'No tenant-id resolution rule for media model type ['.$media->model_type.'].'
             ),
         };

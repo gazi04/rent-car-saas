@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('bookings', function (Blueprint $table) {
+        Schema::table('bookings', function (Blueprint $table): void {
             // Idempotency marker for the daily review-request sweep: set once the
             // next-day review invitation email has been queued for this booking.
             $table->timestamp('review_requested_at')->nullable()->after('completed_at');
@@ -23,7 +23,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('bookings', function (Blueprint $table) {
+        Schema::table('bookings', function (Blueprint $table): void {
             $table->dropColumn('review_requested_at');
         });
     }

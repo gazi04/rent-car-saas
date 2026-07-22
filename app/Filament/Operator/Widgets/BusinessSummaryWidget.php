@@ -58,7 +58,7 @@ class BusinessSummaryWidget extends Widget implements HasActions, HasSchemas
         }
 
         try {
-            $summary = app(BusinessSummaryGenerator::class)->generate();
+            $summary = resolve(BusinessSummaryGenerator::class)->generate();
         } catch (AiRequestFailedException) {
             Notification::make()->title(__('panel.ai_error'))->danger()->send();
 

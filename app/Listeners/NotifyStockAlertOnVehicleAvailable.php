@@ -25,7 +25,7 @@ class NotifyStockAlertOnVehicleAvailable implements ShouldQueue
 
     public function handleVehicleBecameAvailable(VehicleBecameAvailable $event): void
     {
-        $tenant = Tenant::find($event->vehicle->tenant_id);
+        $tenant = Tenant::query()->find($event->vehicle->tenant_id);
 
         if ($tenant === null || ! $tenant->allowsFeature(PlanFeature::StockAlert)) {
             return;

@@ -1,9 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Database\Factories\AiUsageLogFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\WithoutTimestamps;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,12 +24,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'cache_read_input_tokens', 'cache_write_input_tokens', 'total_tokens',
     'estimated_cost', 'created_at',
 ])]
+#[WithoutTimestamps]
 class AiUsageLog extends Model
 {
     /** @use HasFactory<AiUsageLogFactory> */
     use HasFactory;
-
-    public $timestamps = false;
 
     /**
      * @return array<string, string>

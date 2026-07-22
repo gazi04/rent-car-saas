@@ -31,7 +31,7 @@ class ServiceRecordForm
                                 $types = config('maintenance.service_types');
 
                                 return collect($types)
-                                    ->mapWithKeys(fn (string $type): array => [$type => __("panel.service_type_{$type}")])
+                                    ->mapWithKeys(fn (string $type): array => [$type => __('panel.service_type_'.$type)])
                                     ->all();
                             })
                             ->native(false)

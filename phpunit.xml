@@ -14,6 +14,9 @@
         <testsuite name="Postgres">
             <directory>tests/Postgres</directory>
         </testsuite>
+        <testsuite name="Arch">
+            <directory>tests/Arch</directory>
+        </testsuite>
     </testsuites>
     <source>
         <include>

@@ -18,7 +18,7 @@ class ContractSeeder extends Seeder
      */
     public function run(): void
     {
-        $tenant = Tenant::where('email', 'ardi@example.com')->first();
+        $tenant = Tenant::query()->where('email', 'ardi@example.com')->first();
 
         if ($tenant === null) {
             return;
@@ -26,7 +26,7 @@ class ContractSeeder extends Seeder
 
         tenancy()->initialize($tenant);
 
-        Booking::whereIn('status', [BookingStatus::Confirmed, BookingStatus::Completed])
+        Booking::query()->whereIn('status', [BookingStatus::Confirmed, BookingStatus::Completed])
             ->get()
             ->each(fn (Booking $booking) => Contract::factory()->forBooking($booking)->create());
 

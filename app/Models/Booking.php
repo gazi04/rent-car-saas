@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\BookingStatus;
@@ -22,8 +24,10 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 #[Fillable(['vehicle_id', 'customer_id', 'promo_code_id', 'reference', 'customer_name', 'customer_phone', 'customer_email', 'pickup_location', 'notes', 'start_date', 'end_date', 'rate_type', 'subtotal', 'discount_amount', 'total', 'deposit', 'status', 'locale', 'started_at', 'completed_at', 'review_requested_at', 'start_odometer', 'end_odometer'])]
 class Booking extends Model
 {
+    use BelongsToTenant;
+
     /** @use HasFactory<BookingFactory> */
-    use BelongsToTenant, HasFactory;
+    use HasFactory;
 
     /**
      * @return array<string, mixed>

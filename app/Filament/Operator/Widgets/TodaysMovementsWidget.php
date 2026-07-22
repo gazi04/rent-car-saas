@@ -67,7 +67,7 @@ class TodaysMovementsWidget extends TableWidget
     /** @return Builder<Booking> */
     protected function movementsQuery(): Builder
     {
-        $startOfToday = now()->startOfDay();
+        $startOfToday = today();
         $endOfToday = now()->endOfDay();
 
         return Booking::query()

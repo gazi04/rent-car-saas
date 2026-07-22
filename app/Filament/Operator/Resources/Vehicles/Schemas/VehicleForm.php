@@ -87,7 +87,7 @@ class VehicleForm
                                 Action::make('suggestPrice')
                                     ->label(__('panel.ai_suggest_price'))
                                     ->icon('heroicon-m-sparkles')
-                                    ->visible(fn (?Vehicle $record): bool => $record !== null
+                                    ->visible(fn (?Vehicle $record): bool => $record instanceof Vehicle
                                         && (tenant()?->allowsFeature(PlanFeature::AiPricingSuggestions) ?? (bool) PlanFeature::AiPricingSuggestions->default()))
                                     ->requiresConfirmation()
                                     ->modalHeading(__('panel.ai_suggest_price'))
@@ -98,7 +98,7 @@ class VehicleForm
                                     // on the multi-second AI round-trip.
                                     ->action(function (Vehicle $record, Set $set): void {
                                         try {
-                                            $suggestion = app(PricingSuggestionService::class)->suggest($record, app()->getLocale());
+                                            $suggestion = resolve(PricingSuggestionService::class)->suggest($record, app()->getLocale());
                                         } catch (AiRequestFailedException) {
                                             Notification::make()->title(__('panel.ai_error'))->danger()->send();
 
@@ -203,7 +203,7 @@ class VehicleForm
                                     ->visible(fn (): bool => tenant()?->allowsFeature(PlanFeature::AiListingWriter) ?? (bool) PlanFeature::AiListingWriter->default())
                                     ->action(function (Get $get, Set $set, ?Vehicle $record): void {
                                         try {
-                                            $description = app(VehicleListingWriter::class)->write(
+                                            $description = resolve(VehicleListingWriter::class)->write(
                                                 specs: [
                                                     'name' => $get('name'),
                                                     'category' => $get('category'),
