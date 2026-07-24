@@ -32,6 +32,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'set-locale' => SetLocale::class,
         ]);
+
+        // The Resend delivery webhook is a signed server-to-server POST — it has
+        // no session/CSRF token; its Svix signature is verified in the controller.
+        $middleware->validateCsrfTokens(except: ['webhooks/resend']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

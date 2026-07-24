@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ResendWebhookController;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -27,4 +28,11 @@ Route::domain(config('tenancy.central_domain'))->middleware('set-locale')->group
     });
 });
 
-require __DIR__.'/settings.php';
+// Resend delivery webhook (email log status updates). Central host, no tenant
+// middleware; unauthenticated but Svix-signature-verified in the controller,
+// and CSRF-exempt (see bootstrap/app.php).
+Route::domain(config('tenancy.central_domain'))
+    ->post('webhooks/resend', ResendWebhookController::class)
+    ->name('webhooks.resend');
+
+require __DIR__ . '/settings.php';

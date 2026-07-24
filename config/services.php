@@ -22,6 +22,9 @@ return [
 
     'resend' => [
         'key' => env('RESEND_API_KEY'),
+        // Svix signing secret for inbound delivery webhooks (whsec_...);
+        // verified in ResendWebhookController.
+        'webhook_secret' => env('RESEND_WEBHOOK_SECRET'),
     ],
 
     'ses' => [
