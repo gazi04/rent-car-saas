@@ -6,7 +6,7 @@
     "keywords": ["laravel", "framework"],
     "license": "MIT",
     "require": {
-        "php": "^8.3",
+        "php": "^8.5",
         "barryvdh/laravel-dompdf": "^3.1",
         "filament/filament": "^5.0",
         "filament/spatie-laravel-media-library-plugin": "^5.0",
@@ -26,8 +26,12 @@
         "stechstudio/filament-impersonate": "^5.5"
     },
     "require-dev": {
+        "barryvdh/laravel-debugbar": "*",
+        "dompdf/dompdf": "^3.1.6",
         "driftingly/rector-laravel": "^2.5",
         "fakerphp/faker": "^1.24",
+        "friendsofphp/php-cs-fixer": "^3.95",
+        "icanhazstring/composer-unused": "*",
         "larastan/larastan": "^3.9",
         "laravel/boost": "^2.2",
         "laravel/pail": "^1.2.5",
@@ -38,7 +42,11 @@
         "nunomaduro/collision": "^8.9.3",
         "pestphp/pest": "^4.7",
         "pestphp/pest-plugin-laravel": "^4.1",
-        "rector/rector": "^2.5"
+        "pestphp/pest-plugin-mutate": "^4.0",
+        "pestphp/pest-plugin-type-coverage": "*",
+        "phpstan/phpstan-strict-rules": "*",
+        "rector/rector": "^2.5",
+        "roave/security-advisories": "dev-latest"
     },
     "autoload": {
         "psr-4": {
@@ -71,12 +79,30 @@
         "lint:check": [
             "pint --parallel --test"
         ],
+        "cs:fix": [
+            "php-cs-fixer fix"
+        ],
+        "cs:check": [
+            "php-cs-fixer fix --dry-run --diff"
+        ],
         "ci:check": [
             "Composer\\Config::disableProcessTimeout",
             "@test"
         ],
         "types:check": [
             "phpstan analyse"
+        ],
+        "types:baseline": [
+            "phpstan analyse --generate-baseline"
+        ],
+        "test:type-coverage": [
+            "pest --type-coverage --min=98"
+        ],
+        "test:mutation": [
+            "pest --mutate --testsuite=Unit,Feature --covered-only"
+        ],
+        "deps:unused": [
+            "composer-unused"
         ],
         "test": [
             "@php artisan config:clear --ansi",
