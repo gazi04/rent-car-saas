@@ -21,6 +21,8 @@ use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
 
+covers(WaitlistService::class);
+
 afterEach(fn () => tenancy()->end());
 
 /**
@@ -444,6 +446,27 @@ it('retires stock alerts nobody could still want, and keeps the recent ones', fu
 
     expect(WaitlistEntry::query()->find($stale->id))->toBeNull()
         ->and(WaitlistEntry::query()->find($recent->id))->not->toBeNull();
+});
+
+it('reports nobody notified when the vehicle is not bookable', function () {
+    Mail::fake();
+    stockAlertTenant('stocknone', [PlanFeature::StockAlert->value => true], 'stocknoneplan');
+    $vehicle = unavailableVehicle();
+
+    WaitlistEntry::factory()->stockAlert()->create(['vehicle_id' => $vehicle->id]);
+
+    expect(app(WaitlistService::class)->notifyStockAlerts($vehicle))->toBe(0);
+    Mail::assertNothingQueued();
+});
+
+it('reports exactly how many stock alerts it sent', function () {
+    Mail::fake();
+    stockAlertTenant('stockcount', [PlanFeature::StockAlert->value => true], 'stockcountplan');
+    $vehicle = Vehicle::factory()->create(['is_public' => true, 'status' => VehicleStatus::Available]);
+
+    WaitlistEntry::factory()->stockAlert()->count(3)->create(['vehicle_id' => $vehicle->id]);
+
+    expect(app(WaitlistService::class)->notifyStockAlerts($vehicle))->toBe(3);
 });
 
 it('keeps the English and Albanian email translations in sync', function () {

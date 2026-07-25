@@ -4,6 +4,7 @@ use App\Enums\PlanFeature;
 use App\Filament\Operator\Pages\BrandingSettings;
 use App\Models\Plan;
 use App\Models\Tenant;
+use App\Models\TenantSetting;
 use App\Models\User;
 use Filament\Facades\Filament;
 use Illuminate\Http\UploadedFile;
@@ -76,6 +77,20 @@ it('round-trips a setting via setSetting and setting', function () {
     $tenant->setSetting('color_primary', '#ff5500');
 
     expect($tenant->setting('color_primary'))->toBe('#ff5500');
+});
+
+it('reads a setting staged directly by the factory, bypassing setSetting', function () {
+    // The factory exists precisely to stage rows setSetting() would refuse — here
+    // a colour that fails the hex guard — so the read side can be tested on its own.
+    [$tenant] = brandingSetup('factory1');
+
+    TenantSetting::factory()->pair('color_primary', 'javascript:alert(1)')->create([
+        'tenant_id' => $tenant->id,
+    ]);
+
+    expect($tenant->setting('color_primary'))->toBe('javascript:alert(1)')
+        // ...and the read-time guard still refuses to hand it to the page.
+        ->and($tenant->colorPrimary())->toBe(config('branding.defaults.color_primary'));
 });
 
 it('setting returns the provided default when key is unset', function () {

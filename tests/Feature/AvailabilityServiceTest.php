@@ -8,6 +8,8 @@ use App\Models\Vehicle;
 use App\Services\AvailabilityService;
 use Carbon\Carbon;
 
+covers(AvailabilityService::class);
+
 beforeEach(function () {
     $this->tenant = Tenant::factory()->create();
     tenancy()->initialize($this->tenant);
@@ -99,4 +101,19 @@ it('returns false when a manual blocked date overlaps', function () {
     ]);
 
     expect($this->service->isAvailable($this->vehicle, $start, $end))->toBeFalse();
+});
+
+it('rejects a range that ends before it starts', function () {
+    [$start, $end] = window('2030-01-15', '2030-01-10');
+
+    expect(fn () => $this->service->isAvailable($this->vehicle, $start, $end))
+        ->toThrow(InvalidArgumentException::class);
+});
+
+it('rejects a zero-length range', function () {
+    // start must be strictly before end — an instant is not a rental.
+    [$start, $end] = window('2030-01-10 09:00', '2030-01-10 09:00');
+
+    expect(fn () => $this->service->isAvailable($this->vehicle, $start, $end))
+        ->toThrow(InvalidArgumentException::class);
 });

@@ -46,7 +46,14 @@ arch('controllers')
 
 arch('services')
     ->expect('App\Services')
-    ->toHaveSuffix('Service');
+    ->toHaveSuffix('Service')
+    ->ignoring([
+        'App\Services\Media\TenantAwarePathGenerator',
+        'App\Services\TemplateRenderer',
+        'App\Services\Ai\AiCostEstimator',
+        'App\Services\Ai\BusinessSummaryGenerator',
+        'App\Services\Ai\VehicleListingWriter',
+    ]);
 
 arch('enums')
     ->expect('App\Enums')

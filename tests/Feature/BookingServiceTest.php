@@ -2,6 +2,7 @@
 
 use App\Enums\BookingStatus;
 use App\Events\BookingCancelled;
+use App\Events\BookingConfirmed;
 use App\Events\BookingCreated;
 use App\Events\BookingRejected;
 use App\Exceptions\VehicleNotAvailableException;
@@ -10,8 +11,11 @@ use App\Models\Customer;
 use App\Models\Tenant;
 use App\Models\Vehicle;
 use App\Services\BookingService;
+use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Event;
+
+covers(BookingService::class);
 
 beforeEach(function () {
     $this->tenant = Tenant::factory()->create();
@@ -116,6 +120,72 @@ it('transitions active → completed and sets completed_at', function () {
 
     expect($booking->fresh()->status)->toBe(BookingStatus::Completed)
         ->and($booking->fresh()->completed_at)->not->toBeNull();
+});
+
+it('fires BookingConfirmed event on confirm', function () {
+    Event::fake([BookingConfirmed::class]);
+
+    $booking = $this->service->create(bookingData($this->vehicle));
+    $this->service->confirm($booking);
+
+    Event::assertDispatched(BookingConfirmed::class);
+});
+
+it('fires BookingRejected event on reject', function () {
+    Event::fake([BookingRejected::class]);
+
+    $booking = $this->service->create(bookingData($this->vehicle));
+    $this->service->reject($booking);
+
+    Event::assertDispatched(BookingRejected::class);
+});
+
+it('stores a rejection reason when given and leaves it null when not', function () {
+    $withReason = $this->service->create(bookingData($this->vehicle));
+    $this->service->reject($withReason, 'Vehicle needs urgent service');
+
+    $withoutReason = $this->service->create(bookingData($this->vehicle, [
+        'start_date' => '2030-03-01',
+        'end_date' => '2030-03-05',
+    ]));
+    $this->service->reject($withoutReason);
+
+    expect($withReason->fresh()->cancellation_reason)->toBe('Vehicle needs urgent service')
+        ->and($withoutReason->fresh()->cancellation_reason)->toBeNull();
+});
+
+it('stores a cancellation reason when given', function () {
+    $booking = $this->service->create(bookingData($this->vehicle));
+    $this->service->cancel($booking, 'customer', 'Changed my plans');
+
+    expect($booking->fresh()->cancellation_reason)->toBe('Changed my plans');
+});
+
+it('honours an explicit started_at and odometer on markActive', function () {
+    $booking = $this->service->create(bookingData($this->vehicle));
+    $this->service->confirm($booking);
+    $this->service->markActive($booking, Carbon::parse('2030-01-02 08:30'), 12_345);
+
+    expect($booking->fresh()->started_at->toDateTimeString())->toBe('2030-01-02 08:30:00')
+        ->and($booking->fresh()->start_odometer)->toBe(12_345);
+});
+
+it('honours an explicit completed_at and odometer on complete', function () {
+    $booking = $this->service->create(bookingData($this->vehicle));
+    $this->service->confirm($booking);
+    $this->service->markActive($booking);
+    $this->service->complete($booking, Carbon::parse('2030-01-09 17:45'), 12_900);
+
+    expect($booking->fresh()->completed_at->toDateTimeString())->toBe('2030-01-09 17:45:00')
+        ->and($booking->fresh()->end_odometer)->toBe(12_900);
+});
+
+it('leaves the odometer null when none is given', function () {
+    $booking = $this->service->create(bookingData($this->vehicle));
+    $this->service->confirm($booking);
+    $this->service->markActive($booking);
+
+    expect($booking->fresh()->start_odometer)->toBeNull();
 });
 
 it('throws on illegal transition complete from pending', function () {

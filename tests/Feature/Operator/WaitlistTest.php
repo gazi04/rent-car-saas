@@ -14,11 +14,14 @@ use App\Models\Vehicle;
 use App\Models\WaitlistEntry;
 use App\Services\BookingService;
 use App\Services\WaitlistService;
+use Carbon\Carbon;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Livewire;
+
+covers(WaitlistService::class, WaitlistEntry::class);
 
 use function Pest\Laravel\actingAs;
 
@@ -385,6 +388,109 @@ it('lists entries for the owner in join order', function () {
     Livewire::test(ListWaitlistEntries::class)
         ->assertOk()
         ->assertSee('first@example.com');
+});
+
+it('rejects an inverted range at the service, not just in the form', function () {
+    // The Livewire form validates first, so the service guard needs its own test.
+    waitlistTenant('wlsvcinv', [PlanFeature::Waitlist->value => true], 'wlsvcinvplan');
+    $vehicle = Vehicle::factory()->create();
+
+    expect(fn () => app(WaitlistService::class)->join($vehicle, [
+        'name' => 'Ana',
+        'email' => 'ana@example.com',
+        'start_date' => now()->addDays(8)->toDateString(),
+        'end_date' => now()->addDays(5)->toDateString(),
+    ]))->toThrow(InvalidArgumentException::class);
+
+    expect(WaitlistEntry::query()->count())->toBe(0);
+});
+
+it('rejects a start date in the past at the service', function () {
+    waitlistTenant('wlsvcpast', [PlanFeature::Waitlist->value => true], 'wlsvcpastplan');
+    $vehicle = Vehicle::factory()->create();
+
+    expect(fn () => app(WaitlistService::class)->join($vehicle, [
+        'name' => 'Ana',
+        'email' => 'ana@example.com',
+        'start_date' => now()->subDay()->toDateString(),
+        'end_date' => now()->addDays(5)->toDateString(),
+    ]))->toThrow(InvalidArgumentException::class);
+
+    expect(WaitlistEntry::query()->count())->toBe(0);
+});
+
+it('accepts a range starting today', function () {
+    // today() is the earliest joinable start — the boundary of the past-date guard.
+    waitlistTenant('wlsvctoday', [PlanFeature::Waitlist->value => true], 'wlsvctodayplan');
+    $vehicle = Vehicle::factory()->create();
+
+    $entry = app(WaitlistService::class)->join($vehicle, [
+        'name' => 'Ana',
+        'email' => 'ana@example.com',
+        'start_date' => today()->toDateString(),
+        'end_date' => today()->addDays(3)->toDateString(),
+    ]);
+
+    expect($entry->exists)->toBeTrue();
+});
+
+it('skips a blocked entry but still tells a later non-overlapping one', function () {
+    // A skipped entry must not abandon the rest of the queue.
+    Mail::fake();
+    [$tenant] = waitlistTenant('wlskip', [PlanFeature::Waitlist->value => true], 'wlskipplan');
+    $vehicle = Vehicle::factory()->create();
+
+    // June 2-5 stays unbookable: a confirmed booking still covers it.
+    Booking::factory()->forVehicle($vehicle)->confirmed()->create([
+        'start_date' => '2030-06-02',
+        'end_date' => '2030-06-05',
+    ]);
+
+    WaitlistEntry::factory()->forDates('2030-06-02', '2030-06-05')
+        ->create(['vehicle_id' => $vehicle->id, 'created_at' => now()->subDay()]);
+    WaitlistEntry::factory()->forDates('2030-07-10', '2030-07-14')
+        ->create(['vehicle_id' => $vehicle->id, 'created_at' => now()]);
+
+    $notified = app(WaitlistService::class)->notifyMatching($vehicle);
+
+    expect($notified)->toBe(1);
+    Mail::assertQueued(WaitlistSlotOpenMail::class, 1);
+});
+
+it('skips an entry whose dates a earlier entry already claimed but keeps going', function () {
+    // Losing the claim must not abandon entries further down the queue.
+    Mail::fake();
+    [$tenant] = waitlistTenant('wlclaim', [PlanFeature::Waitlist->value => true], 'wlclaimplan');
+    $vehicle = Vehicle::factory()->create();
+
+    WaitlistEntry::factory()->forDates('2030-06-02', '2030-06-05')
+        ->create(['vehicle_id' => $vehicle->id, 'created_at' => now()->subDays(2)]);
+    // Overlaps the first, so it loses the claim and is skipped.
+    WaitlistEntry::factory()->forDates('2030-06-03', '2030-06-06')
+        ->create(['vehicle_id' => $vehicle->id, 'created_at' => now()->subDay()]);
+    // Independent dates — must still be told.
+    WaitlistEntry::factory()->forDates('2030-07-10', '2030-07-14')
+        ->create(['vehicle_id' => $vehicle->id, 'created_at' => now()]);
+
+    $notified = app(WaitlistService::class)->notifyMatching($vehicle);
+
+    expect($notified)->toBe(2);
+    Mail::assertQueued(WaitlistSlotOpenMail::class, 2);
+});
+
+it('treats a dateless entry as overlapping any range', function () {
+    waitlistTenant('wloverlap', [PlanFeature::Waitlist->value => true], 'wloverlapplan');
+    $vehicle = Vehicle::factory()->create();
+
+    $dateless = WaitlistEntry::factory()->stockAlert()->create(['vehicle_id' => $vehicle->id]);
+    $dated = WaitlistEntry::factory()->forDates('2030-06-02', '2030-06-05')
+        ->create(['vehicle_id' => $vehicle->id]);
+
+    expect($dateless->overlaps(Carbon::parse('2030-01-01'), Carbon::parse('2030-01-05')))->toBeTrue()
+        // A missing comparison range means "no narrowing", so everything matches.
+        ->and($dated->overlaps(null, null))->toBeTrue()
+        ->and($dated->overlaps(Carbon::parse('2030-06-04'), Carbon::parse('2030-06-08')))->toBeTrue()
+        ->and($dated->overlaps(Carbon::parse('2030-08-01'), Carbon::parse('2030-08-05')))->toBeFalse();
 });
 
 it('keeps the English and Albanian booking translations in sync', function () {

@@ -20,6 +20,8 @@ use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
 
+covers(PromoCode::class, BookingService::class);
+
 afterEach(fn () => tenancy()->end());
 
 /**
@@ -298,4 +300,21 @@ it('hides the promo input on the public booking page when the plan disables it',
         // A real, valid code — silently ignored, because the component's own
         // gate bails before the code is ever looked up.
         ->assertSet('priceBreakdown.total', 150.0);
+});
+
+it('never returns a negative or oversized discount', function () {
+    promoTenant('promofloor', [PlanFeature::PromoCodes->value => true], 'promofloorplan');
+
+    $percentage = PromoCode::factory()->create(['type' => 'percentage', 'value' => 10]);
+    $fixed = PromoCode::factory()->fixed(500)->create();
+    $unknown = PromoCode::factory()->create(['type' => 'mystery', 'value' => 25]);
+
+    expect($percentage->discountFor(200.0))->toBe(20.0)
+        // A zero-value order can't yield a discount, whatever the code says.
+        ->and($percentage->discountFor(0.0))->toBe(0.0)
+        ->and($fixed->discountFor(0.0))->toBe(0.0)
+        // A fixed discount never exceeds what is being discounted.
+        ->and($fixed->discountFor(100.0))->toBe(100.0)
+        // An unrecognised type is worth nothing, not a negative.
+        ->and($unknown->discountFor(200.0))->toBe(0.0);
 });

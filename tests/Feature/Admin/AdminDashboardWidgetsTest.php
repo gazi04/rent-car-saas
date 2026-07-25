@@ -43,7 +43,9 @@ it('lists active tenants due within the grace window', function () {
     $inGrace = Tenant::factory()->create(['status' => 'active', 'paid_until' => now()->subDays(2)]);
     $safe = Tenant::factory()->create(['status' => 'active', 'paid_until' => now()->addDays(30)]);
     $suspended = Tenant::factory()->suspended()->create(['paid_until' => now()->subDays(2)]);
-    $unenrolled = Tenant::factory()->create(['status' => 'active', 'paid_until' => null]);
+    // Only non-active tenants can be unenrolled — Tenant::booted() gives every
+    // Active tenant a paid_until.
+    $unenrolled = Tenant::factory()->pending()->create(['paid_until' => null]);
 
     Livewire::test(AtRiskTenants::class)
         ->assertCanSeeTableRecords([$dueSoon, $inGrace])

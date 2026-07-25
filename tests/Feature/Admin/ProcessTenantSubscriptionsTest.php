@@ -77,6 +77,67 @@ it('sends no reminder on other days', function () {
     Mail::assertNothingQueued();
 });
 
+// ── Post-lapse grace reminder (reminder_days includes -1) ────────────────────
+
+it('queues a grace reminder the day after the period lapsed', function () {
+    $tenant = Tenant::factory()->create(['paid_until' => now()->subDay()]);
+
+    artisan('tenants:process-subscriptions')->assertSuccessful();
+
+    Mail::assertQueued(SubscriptionRenewalReminderMail::class, fn ($m) => $m->hasTo($tenant->email) && $m->isGrace());
+});
+
+it('uses trial grace wording for tenants still on the trial plan', function () {
+    Tenant::factory()->create(['plan' => 'trial', 'paid_until' => now()->subDay()]);
+
+    artisan('tenants:process-subscriptions')->assertSuccessful();
+
+    Mail::assertQueued(SubscriptionRenewalReminderMail::class, fn ($m) => $m->langKey() === 'trial_grace_reminder');
+});
+
+it('uses subscription grace wording for tenants on a paid plan', function () {
+    // The lapse lifecycle is plan-agnostic — only the copy differs by tier.
+    Tenant::factory()->create(['plan' => 'basic', 'paid_until' => now()->subDay()]);
+
+    artisan('tenants:process-subscriptions')->assertSuccessful();
+
+    Mail::assertQueued(SubscriptionRenewalReminderMail::class, fn ($m) => $m->langKey() === 'subscription_grace_reminder');
+});
+
+it('reports grace days remaining and the suspension date, never a negative count', function () {
+    $tenant = Tenant::factory()->create(['paid_until' => now()->subDay()]);
+    $graceDays = (int) config('billing.grace_days');
+
+    artisan('tenants:process-subscriptions')->assertSuccessful();
+
+    Mail::assertQueued(SubscriptionRenewalReminderMail::class, fn ($m) => $m->displayDays() === $graceDays
+        && $m->suspendsOn()->toDateString() === $tenant->paid_until->addDays($graceDays)->toDateString()
+    );
+});
+
+it('renders the grace days in the body, not the raw negative threshold', function () {
+    // Regression: Mailable::buildViewData() merges public properties after the
+    // with() array, so a view variable named `daysLeft` was silently overwritten
+    // by the raw -1 threshold — the subject read "7 day(s)" while the body read
+    // "-1 day(s)". Asserting the accessor alone did not catch it; render instead.
+    $tenant = Tenant::factory()->create(['plan' => 'trial', 'paid_until' => now()->subDay()]);
+
+    $body = (new SubscriptionRenewalReminderMail($tenant, -1))->locale('en')->render();
+
+    expect($body)->toContain('You have 7 day(s) left')
+        ->and($body)->not->toContain('-1 day(s)');
+});
+
+it('sends no grace reminder once past the grace window, it suspends instead', function () {
+    User::factory()->admin()->create();
+    $tenant = Tenant::factory()->create(['paid_until' => now()->subDays(8)]);
+
+    artisan('tenants:process-subscriptions')->assertSuccessful();
+
+    expect($tenant->refresh()->status->value)->toBe('suspended');
+    Mail::assertNothingQueued();
+});
+
 it('keeps a tenant active inside the 7-day grace period', function () {
     $tenant = Tenant::factory()->create(['paid_until' => now()->subDays(3)]);
 
@@ -101,11 +162,14 @@ it('suspends a tenant past the grace period and notifies the admins', function (
 });
 
 it('skips tenants that are not enrolled (paid_until null)', function () {
-    $tenant = Tenant::factory()->create(['paid_until' => null]);
+    // Only a non-active tenant can be unenrolled now — Tenant::booted() gives
+    // every Active tenant a paid_until, precisely so none can hide from this sweep.
+    $tenant = Tenant::factory()->pending()->create(['paid_until' => null]);
 
     artisan('tenants:process-subscriptions')->assertSuccessful();
 
-    expect($tenant->refresh()->status->value)->toBe('active');
+    expect($tenant->refresh()->status->value)->toBe('pending')
+        ->and($tenant->paid_until)->toBeNull();
     Mail::assertNothingQueued();
     Notification::assertNothingSent();
 });

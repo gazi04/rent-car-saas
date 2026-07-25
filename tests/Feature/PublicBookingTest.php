@@ -114,6 +114,110 @@ it('filters vehicles by max price', function () {
         ->assertDontSee('Expensive Car');
 });
 
+it('filters vehicles by fuel type', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+
+    publicVehicle(['name' => 'Electric Car', 'fuel_type' => 'electric']);
+    publicVehicle(['name' => 'Petrol Car', 'fuel_type' => 'petrol']);
+
+    tenancy()->end();
+
+    $this->get(tenant_url('ardi', '/vehicles?fuelType=electric'))
+        ->assertSee('Electric Car')
+        ->assertDontSee('Petrol Car');
+});
+
+it('filters vehicles by minimum seats', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+
+    publicVehicle(['name' => 'Small Car', 'seats' => 2]);
+    publicVehicle(['name' => 'Big Van', 'seats' => 7]);
+
+    tenancy()->end();
+
+    $this->get(tenant_url('ardi', '/vehicles?seats=5'))
+        ->assertSee('Big Van')
+        ->assertDontSee('Small Car');
+});
+
+it('filters vehicles by year', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+
+    publicVehicle(['name' => 'Old Car', 'year' => 2016]);
+    publicVehicle(['name' => 'New Car', 'year' => 2024]);
+
+    tenancy()->end();
+
+    $this->get(tenant_url('ardi', '/vehicles?year=2024'))
+        ->assertSee('New Car')
+        ->assertDontSee('Old Car');
+});
+
+it('searches vehicles by name, case-insensitively', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+
+    publicVehicle(['name' => 'Toyota Corolla']);
+    publicVehicle(['name' => 'BMW 320i']);
+
+    tenancy()->end();
+
+    $this->get(tenant_url('ardi', '/vehicles?search=corolla'))
+        ->assertSee('Toyota Corolla')
+        ->assertDontSee('BMW 320i');
+});
+
+it('sorts vehicles by price ascending and descending', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+
+    publicVehicle(['name' => 'Cheap Car', 'daily_rate' => 30]);
+    publicVehicle(['name' => 'Expensive Car', 'daily_rate' => 200]);
+
+    tenancy()->end();
+
+    $asc = $this->get(tenant_url('ardi', '/vehicles?sort=price_asc'))->getContent();
+    expect(strpos($asc, 'Cheap Car'))->toBeLessThan(strpos($asc, 'Expensive Car'));
+
+    $desc = $this->get(tenant_url('ardi', '/vehicles?sort=price_desc'))->getContent();
+    expect(strpos($desc, 'Expensive Car'))->toBeLessThan(strpos($desc, 'Cheap Car'));
+});
+
+it('excludes vehicles with a conflicting booking from the availability date filter', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+
+    $booked = publicVehicle(['name' => 'Booked Car']);
+    Booking::factory()->forVehicle($booked)->confirmed()->create([
+        'start_date' => '2030-06-01',
+        'end_date' => '2030-06-05',
+    ]);
+
+    publicVehicle(['name' => 'Free Car']);
+
+    tenancy()->end();
+
+    $this->get(tenant_url('ardi', '/vehicles?start_date=2030-06-02&end_date=2030-06-04'))
+        ->assertSee('Free Car')
+        ->assertDontSee('Booked Car');
+});
+
+it('ignores a malformed date-range filter instead of erroring', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+
+    publicVehicle(['name' => 'Any Car']);
+
+    tenancy()->end();
+
+    $this->get(tenant_url('ardi', '/vehicles?start_date=not-a-date&end_date=also-not-a-date'))
+        ->assertOk()
+        ->assertSee('Any Car');
+});
+
 // ── Availability endpoint ────────────────────────────────────────────────────
 
 it('returns blocking bookings and blocked dates for a vehicle', function () {
@@ -240,6 +344,23 @@ it('price preview matches PricingService::calculate', function () {
     );
 
     $component->assertSet('priceBreakdown.total', $expected['total']);
+});
+
+it('prefills dates from the query string forwarded off the listing filter', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+    $vehicle = publicVehicle(['daily_rate' => 60]);
+    tenancy()->end();
+
+    $expected = app(PricingService::class)->calculate(
+        $vehicle,
+        Carbon::parse('2030-06-01'),
+        Carbon::parse('2030-06-04'),
+    );
+
+    $this->get(tenant_url('ardi', "/vehicles/{$vehicle->id}/book?start_date=2030-06-01&end_date=2030-06-04"))
+        ->assertOk()
+        ->assertSee(number_format($expected['total'], 2));
 });
 
 it('blocks advancing from step 1 when dates are missing', function () {
