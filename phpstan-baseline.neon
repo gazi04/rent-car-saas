@@ -139,18 +139,6 @@ parameters:
 			path: app/Filament/Operator/Pages/Reports.php
 
 		-
-			message: '#^Cannot call method where\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 7
-			path: app/Filament/Operator/Pages/Reports.php
-
-		-
-			message: '#^Cannot call method whereIn\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Filament/Operator/Pages/Reports.php
-
-		-
 			message: '#^Dynamic call to static method Illuminate\\Contracts\\Auth\\Guard\:\:user\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 1
@@ -164,6 +152,18 @@ parameters:
 
 		-
 			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Booking\>\:\:whereIn\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: app/Filament/Operator/Pages/Reports.php
+
+		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:where\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 7
+			path: app/Filament/Operator/Pages/Reports.php
+
+		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:whereIn\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 1
 			path: app/Filament/Operator/Pages/Reports.php
@@ -427,14 +427,14 @@ parameters:
 			path: app/Filament/Operator/Resources/Vehicles/VehicleResource.php
 
 		-
-			message: '#^Cannot call method whereNotNull\(\) on mixed\.$#'
-			identifier: method.nonObject
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:whereNotNull\(\)\.$#'
+			identifier: staticMethod.dynamicCall
 			count: 2
 			path: app/Filament/Operator/Resources/Waitlist/Tables/WaitlistEntriesTable.php
 
 		-
-			message: '#^Cannot call method whereNull\(\) on mixed\.$#'
-			identifier: method.nonObject
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:whereNull\(\)\.$#'
+			identifier: staticMethod.dynamicCall
 			count: 2
 			path: app/Filament/Operator/Resources/Waitlist/Tables/WaitlistEntriesTable.php
 
@@ -617,12 +617,6 @@ parameters:
 			identifier: cast.useless
 			count: 1
 			path: app/Filament/Resources/Plans/PlanResource.php
-
-		-
-			message: '#^Cannot call method withCount\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Filament/Resources/Plans/Tables/PlansTable.php
 
 		-
 			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Tenant\>\:\:count\(\)\.$#'
@@ -1501,12 +1495,6 @@ parameters:
 			path: app/Providers/FortifyServiceProvider.php
 
 		-
-			message: '#^Parameter \#2 \$action of static method Illuminate\\Support\\Facades\\Route\:\:post\(\) expects array\|\(callable\(\)\: mixed\)\|string\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Providers/TenancyServiceProvider.php
-
-		-
 			message: '#^Parameter \#2 \$listener of static method Illuminate\\Support\\Facades\\Event\:\:listen\(\) expects array\|\(callable\(\)\: mixed\)\|Illuminate\\Events\\QueuedClosure\|string\|null, mixed given\.$#'
 			identifier: argument.type
 			count: 1
@@ -1639,12 +1627,6 @@ parameters:
 			path: app/Services/Ai/VehicleListingWriter.php
 
 		-
-			message: '#^Cannot call method where\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 2
-			path: app/Services/AvailabilityService.php
-
-		-
 			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\BlockedDate\>\:\:exists\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 1
@@ -1671,12 +1653,6 @@ parameters:
 		-
 			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Booking\>\:\:whereIn\(\)\.$#'
 			identifier: staticMethod.dynamicCall
-			count: 1
-			path: app/Services/AvailabilityService.php
-
-		-
-			message: '#^Parameter \#1 \$column of method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\BlockedDate\>\:\:where\(\) expects array\<int\|string, mixed\>\|\(Closure\(Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\BlockedDate\>\)\: Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\BlockedDate\>\)\|\(Closure\(Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\BlockedDate\>\)\: void\)\|Illuminate\\Contracts\\Database\\Query\\Expression\|string, Closure\(mixed\)\: mixed given\.$#'
-			identifier: argument.type
 			count: 1
 			path: app/Services/AvailabilityService.php
 

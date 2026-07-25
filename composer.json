@@ -89,10 +89,10 @@
             "phpstan analyse --generate-baseline"
         ],
         "test:type-coverage": [
-            "pest --type-coverage --min=98"
+            "pest --type-coverage --min=100"
         ],
         "test:mutation": [
-            "pest --mutate --testsuite=Unit,Feature --covered-only"
+            "pest --mutate --parallel --testsuite=Unit,Feature --covered-only --min=78"
         ],
         "deps:unused": [
             "composer-unused"
@@ -101,6 +101,7 @@
             "@php artisan config:clear --ansi",
             "@lint:check",
             "@types:check",
+            "@test:type-coverage",
             "@php artisan test --testsuite=Unit,Feature,Arch"
         ],
         "post-autoload-dump": [
