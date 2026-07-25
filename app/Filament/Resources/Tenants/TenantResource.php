@@ -21,6 +21,8 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\Models\Activity;
 
 class TenantResource extends Resource
@@ -38,6 +40,50 @@ class TenantResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return TenantForm::configure($schema);
+    }
+
+    /**
+     * Global search (§15.8): find a tenant by name, contact email, or subdomain.
+     *
+     * @return array<int, string>
+     */
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name', 'email', 'domains.domain'];
+    }
+
+    /**
+     * Context shown under each search hit so the admin can tell tenants apart.
+     *
+     * @return array<string, string>
+     */
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        if (! $record instanceof Tenant) {
+            return [];
+        }
+
+        return [
+            'Status' => $record->status->getLabel(),
+            'Plan' => $record->plan,
+            'Subdomain' => $record->domains->pluck('domain')->implode(', ') ?: '—',
+        ];
+    }
+
+    /**
+     * Deep-link a hit to the tenant overview page (§15.4), not the edit form.
+     */
+    public static function getGlobalSearchResultUrl(Model $record): ?string
+    {
+        return static::getUrl('view', ['record' => $record]);
+    }
+
+    /**
+     * Eager-load domains so rendering the subdomain detail doesn't N+1.
+     */
+    public static function getGlobalSearchEloquentQuery(): Builder
+    {
+        return parent::getGlobalSearchEloquentQuery()->with('domains');
     }
 
     public static function table(Table $table): Table

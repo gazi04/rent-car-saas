@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 
 class PlanResource extends Resource
 {
@@ -27,6 +28,28 @@ class PlanResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return PlanForm::configure($schema);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public static function getGloballySearchableAttributes(): array
+    {
+        return ['name'];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public static function getGlobalSearchResultDetails(Model $record): array
+    {
+        if (! $record instanceof Plan) {
+            return [];
+        }
+
+        return [
+            'Price' => '€'.number_format((float) $record->price, 2),
+        ];
     }
 
     public static function table(Table $table): Table
