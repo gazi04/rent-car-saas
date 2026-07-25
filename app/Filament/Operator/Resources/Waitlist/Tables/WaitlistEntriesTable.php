@@ -9,6 +9,7 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class WaitlistEntriesTable
 {
@@ -55,7 +56,7 @@ class WaitlistEntriesTable
                         'waiting' => __('panel.waitlist_waiting'),
                         'notified' => __('panel.waitlist_notified'),
                     ])
-                    ->query(fn ($query, array $data) => match ($data['value'] ?? null) {
+                    ->query(fn (Builder $query, array $data): Builder => match ($data['value'] ?? null) {
                         'waiting' => $query->whereNull('notified_at'),
                         'notified' => $query->whereNotNull('notified_at'),
                         default => $query,
@@ -69,7 +70,7 @@ class WaitlistEntriesTable
                         'dates' => __('panel.waitlist_type_dates'),
                         'stock_alert' => __('panel.waitlist_type_stock_alert'),
                     ])
-                    ->query(fn ($query, array $data) => match ($data['value'] ?? null) {
+                    ->query(fn (Builder $query, array $data): Builder => match ($data['value'] ?? null) {
                         'dates' => $query->whereNotNull('start_date'),
                         'stock_alert' => $query->whereNull('start_date'),
                         default => $query,

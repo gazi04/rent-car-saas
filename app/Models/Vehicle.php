@@ -145,11 +145,11 @@ class Vehicle extends Model implements HasMedia
     protected function availableBetween(Builder $query, CarbonImmutable $start, CarbonImmutable $end): Builder
     {
         return $query
-            ->whereDoesntHave('bookings', fn ($q) => $q
+            ->whereDoesntHave('bookings', fn (Builder $q) => $q
                 ->whereIn('status', BookingStatus::blocking())
                 ->where('start_date', '<', $end)
                 ->where('end_date', '>', $start))
-            ->whereDoesntHave('blockedDates', fn ($q) => $q
+            ->whereDoesntHave('blockedDates', fn (Builder $q) => $q
                 ->where('start_date', '<', $end)
                 ->where('end_date', '>', $start));
     }

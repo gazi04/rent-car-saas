@@ -9,6 +9,7 @@ use App\Models\Tenant;
 use App\Models\Vehicle;
 use App\Services\WaitlistService;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -62,7 +63,7 @@ class SweepWaitlistJob implements ShouldQueue
     {
         // Only vehicles someone is actually waiting on.
         Vehicle::query()
-            ->whereHas('waitlistEntries', fn ($query) => $query->whereNull('notified_at')->whereNotNull('start_date'))
+            ->whereHas('waitlistEntries', fn (Builder $query) => $query->whereNull('notified_at')->whereNotNull('start_date'))
             ->each(function (Vehicle $vehicle) use ($waitlist): void {
                 $waitlist->notifyMatching($vehicle);
             });
@@ -76,7 +77,7 @@ class SweepWaitlistJob implements ShouldQueue
     private function sweepStockAlerts(WaitlistService $waitlist): void
     {
         Vehicle::query()
-            ->whereHas('waitlistEntries', fn ($query) => $query->whereNull('notified_at')->whereNull('start_date'))
+            ->whereHas('waitlistEntries', fn (Builder $query) => $query->whereNull('notified_at')->whereNull('start_date'))
             ->each(function (Vehicle $vehicle) use ($waitlist): void {
                 $waitlist->notifyStockAlerts($vehicle);
             });

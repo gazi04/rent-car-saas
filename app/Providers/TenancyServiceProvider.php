@@ -148,7 +148,7 @@ class TenancyServiceProvider extends ServiceProvider
      */
     protected function makeLivewireUpdateRouteTenancyAware(): void
     {
-        Livewire::setUpdateRoute(fn ($handle, string $path) => Route::post($path, $handle)
+        Livewire::setUpdateRoute(fn (array $handle, string $path) => Route::post($path, $handle)
             ->middleware([
                 'web',
                 'universal',

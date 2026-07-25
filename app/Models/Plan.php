@@ -27,7 +27,7 @@ class Plan extends Model
     use HasFactory;
 
     /** The one plan slug the app branches on (trial-vs-paid reminder copy, extend-trial action). */
-    public const TRIAL_SLUG = 'trial';
+    public const string TRIAL_SLUG = 'trial';
 
     /**
      * @return array<string, string>

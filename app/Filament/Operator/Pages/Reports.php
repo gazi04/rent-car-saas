@@ -16,6 +16,7 @@ use Filament\Pages\Page;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Date;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -47,7 +48,7 @@ class Reports extends Page
      * day-column grid stops being readable and the payload grows with
      * days x fleet size. Long ranges are answered by utilisation() above.
      */
-    public const MAX_HEATMAP_DAYS = 31;
+    public const int MAX_HEATMAP_DAYS = 31;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChartBar;
 
@@ -145,7 +146,7 @@ class Reports extends Page
         $rangeDays = max(1, (int) $rangeStart->diffInDays($rangeEnd->copy()->addDay()->startOfDay()));
 
         return Vehicle::query()
-            ->with(['bookings' => fn ($query) => $query
+            ->with(['bookings' => fn (Relation $query) => $query
                 ->whereIn('status', BookingStatus::blocking())
                 ->where('start_date', '<=', $rangeEnd)
                 ->where('end_date', '>=', $rangeStart)])
@@ -239,11 +240,11 @@ class Reports extends Page
 
         $vehicles = Vehicle::query()
             ->with([
-                'bookings' => fn ($query) => $query
+                'bookings' => fn (Relation $query) => $query
                     ->where('status', '!=', BookingStatus::Cancelled)
                     ->where('start_date', '<=', $rangeEnd)
                     ->where('end_date', '>=', $rangeStart),
-                'blockedDates' => fn ($query) => $query
+                'blockedDates' => fn (Relation $query) => $query
                     ->where('start_date', '<=', $rangeEnd)
                     ->where('end_date', '>=', $rangeStart),
             ])

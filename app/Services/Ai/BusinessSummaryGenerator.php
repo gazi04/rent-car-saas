@@ -10,6 +10,7 @@ use App\Exceptions\AiRequestFailedException;
 use App\Models\Booking;
 use App\Models\Vehicle;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Laravel\Ai\Responses\StructuredAgentResponse;
 use Throwable;
 
@@ -65,11 +66,11 @@ class BusinessSummaryGenerator
     {
         $previousStart = $periodStart->copy()->subDays($days);
 
-        $inPeriod = fn ($start, $end) => Booking::query()
+        $inPeriod = fn (CarbonInterface $start, CarbonInterface $end): Builder => Booking::query()
             ->where('start_date', '<=', $end)
             ->where('end_date', '>=', $start);
 
-        $revenue = fn ($start, $end): float => (float) $inPeriod($start, $end)
+        $revenue = fn (CarbonInterface $start, CarbonInterface $end): float => (float) $inPeriod($start, $end)
             ->whereIn('status', [BookingStatus::Active, BookingStatus::Completed])
             ->sum('total');
 
@@ -90,7 +91,7 @@ class BusinessSummaryGenerator
                 ->count(),
             'fleet_size' => Vehicle::query()->count(),
             'vehicles_with_no_bookings_this_period' => Vehicle::query()
-                ->whereDoesntHave('bookings', function ($query) use ($periodStart): void {
+                ->whereDoesntHave('bookings', function (Builder $query) use ($periodStart): void {
                     $query->where('start_date', '<=', now())
                         ->where('end_date', '>=', $periodStart)
                         ->whereIn('status', BookingStatus::blocking());

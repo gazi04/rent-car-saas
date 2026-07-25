@@ -81,8 +81,8 @@ class BookingsTable
                             ->seconds(false),
                     ])
                     ->query(fn (Builder $query, array $data): Builder => $query
-                        ->when($data['from'], fn ($q, $v) => $q->where('start_date', '>=', $v))
-                        ->when($data['until'], fn ($q, $v) => $q->where('start_date', '<=', $v))),
+                        ->when($data['from'], fn (Builder $q, mixed $v) => $q->where('start_date', '>=', $v))
+                        ->when($data['until'], fn (Builder $q, mixed $v) => $q->where('start_date', '<=', $v))),
             ])
             ->recordActions([
                 self::confirmAction(),

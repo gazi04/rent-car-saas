@@ -17,6 +17,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class UsersTable
 {
@@ -140,7 +141,7 @@ class UsersTable
         return User::query()
             ->where('tenant_id', $tenantId)
             ->where('role', 'operator')
-            ->when($ignoreUserId !== null, fn ($query) => $query->whereKeyNot($ignoreUserId))
+            ->when($ignoreUserId !== null, fn (Builder $query): Builder => $query->whereKeyNot($ignoreUserId))
             ->exists();
     }
 

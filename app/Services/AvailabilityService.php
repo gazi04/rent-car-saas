@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Enums\BookingStatus;
 use App\Models\Vehicle;
 use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use InvalidArgumentException;
 
 class AvailabilityService
@@ -19,7 +20,7 @@ class AvailabilityService
             return false;
         }
 
-        $overlaps = fn ($q) => $q->where('start_date', '<', $end)->where('end_date', '>', $start);
+        $overlaps = fn (Builder $q) => $q->where('start_date', '<', $end)->where('end_date', '>', $start);
 
         return ! $vehicle->blockedDates()->where($overlaps)->exists();
     }

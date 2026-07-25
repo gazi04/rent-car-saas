@@ -8,13 +8,14 @@ use Filament\Actions\EditAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class PlansTable
 {
     public static function configure(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn ($query) => $query->withCount('tenants'))
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->withCount('tenants'))
             ->defaultSort('sort_order')
             ->columns([
                 TextColumn::make('name')

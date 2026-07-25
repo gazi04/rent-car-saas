@@ -39,7 +39,7 @@ class ActivitiesTable
                     ->searchable(),
                 TextColumn::make('properties')
                     ->label('Details')
-                    ->formatStateUsing(fn ($state): string => filled((array) $state) ? (string) json_encode($state) : '—')
+                    ->formatStateUsing(fn (mixed $state): string => filled((array) $state) ? (string) json_encode($state) : '—')
                     ->wrap()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])

@@ -10,6 +10,7 @@ use App\Models\Vehicle;
 use BackedEnum;
 use Laravel\Ai\Files\Image;
 use Laravel\Ai\Responses\StructuredAgentResponse;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Throwable;
 
 /**
@@ -102,7 +103,7 @@ class VehicleListingWriter
 
         $attachments = $vehicle->getMedia('vehicle_photos')
             ->take((int) config('ai.max_photos'))
-            ->map(function ($media): ?Image {
+            ->map(function (Media $media): ?Image {
                 $path = $media->hasGeneratedConversion('web') ? $media->getPath('web') : $media->getPath();
 
                 if (! is_file($path)) {
