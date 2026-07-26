@@ -9,6 +9,7 @@ use App\Models\Vehicle;
 use App\Services\BookingService;
 use App\Services\PricingService;
 use Illuminate\Support\Facades\Date;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
@@ -59,6 +60,8 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
     public string $notes = '';
 
     public bool $slotTaken = false;
+
+    public ?string $submitError = null;
 
     public function mount(Vehicle $vehicle): void
     {
@@ -124,6 +127,19 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
 
     public function submit(): void
     {
+        // Highest-impact public action in the app (real row, vehicle-date lock,
+        // operator email) — keyed per vehicle + IP, same pattern as waitlist/
+        // stock-alert. Checked before validate() so invalid attempts are free;
+        // hit() lands after validate() but before the actual booking attempt,
+        // so a genuine customer retrying after a slot conflict still spends budget.
+        $key = 'booking-submit:'.$this->vehicle->id.':'.request()->ip();
+
+        if (RateLimiter::tooManyAttempts($key, maxAttempts: 5)) {
+            $this->submitError = __('booking.submit_throttled');
+
+            return;
+        }
+
         $this->validate([
             'startDate' => 'required|date',
             'endDate' => 'required|date|after:startDate',
@@ -135,6 +151,7 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
         ]);
 
         $this->slotTaken = false;
+        RateLimiter::hit($key, decaySeconds: 3600);
 
         try {
             $booking = resolve(BookingService::class)->create([
@@ -456,6 +473,10 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
             <div class="rounded-lg bg-amber-50 border border-amber-200 p-3 mb-6 text-xs text-amber-800">
                 {{ __('booking.pending_notice') }}
             </div>
+
+            @if ($submitError)
+                <p class="mt-1 mb-4 text-sm text-red-600">{{ $submitError }}</p>
+            @endif
 
             <div class="flex gap-3">
                 <button wire:click="prevStep"

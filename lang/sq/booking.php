@@ -164,6 +164,7 @@ return [
     'stock_alert_joined_heading' => 'Jeni në listë',
     'stock_alert_joined_body' => 'Ju dërgojmë email sapo ky automjet të jetë sërish i disponueshëm.',
     'stock_alert_throttled' => 'Shumë kërkesa. Ju lutemi provoni më vonë.',
+    'submit_throttled' => 'Shumë kërkesa. Ju lutemi provoni më vonë.',
 
     // AI storefront FAQ concierge (#4)
     'concierge_launcher' => 'Bëni një pyetje',

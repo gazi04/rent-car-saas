@@ -164,6 +164,7 @@ return [
     'stock_alert_joined_heading' => 'You are on the list',
     'stock_alert_joined_body' => 'We will email you as soon as this vehicle is available again.',
     'stock_alert_throttled' => 'Too many requests. Please try again later.',
+    'submit_throttled' => 'Too many requests. Please try again later.',
 
     // AI storefront FAQ concierge (#4)
     'concierge_launcher' => 'Ask a question',
