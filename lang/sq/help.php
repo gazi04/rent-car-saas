@@ -74,6 +74,24 @@ return [
         ],
     ],
 
+    'customers' => [
+        'title' => 'Klientët',
+        'body' => [
+            'Çdo rezervim i përfunduar krijon ose përditëson automatikisht një klient këtu, i identifikuar sipas numrit të telefonit.',
+            'Përdoreni këtë listë për të parë historikun e rezervimeve të një klienti para se të konfirmoni një rezervim të ri.',
+            'Editimi i një klienti këtu nuk ndryshon rezervimet e tij të kaluara — ato ruajnë detajet e regjistruara në atë kohë.',
+        ],
+    ],
+
+    'reviews' => [
+        'title' => 'Vlerësimet',
+        'body' => [
+            'Klientët lënë një vlerësim përmes një lidhjeje të nënshkruar, pa token, të dërguar me email pas qirasë — pa nevojë për llogari nga ana e tyre.',
+            'Vlerësimet shfaqen në faqen tuaj publike vetëm pasi t\'i aprovoni këtu; asgjë nuk shfaqet automatikisht.',
+            'Një vlerësim mund të dorëzohet vetëm një herë për çdo rezervim.',
+        ],
+    ],
+
     'bookings' => [
         'title' => 'Rezervimet',
         'body' => [

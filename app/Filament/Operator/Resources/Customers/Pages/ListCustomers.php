@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Operator\Resources\Customers\Pages;
 
 use App\Filament\Operator\Resources\Customers\CustomerResource;
+use App\Filament\Support\HelpAction;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
@@ -15,6 +16,7 @@ class ListCustomers extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
+            HelpAction::make('customers'),
             CreateAction::make(),
         ];
     }

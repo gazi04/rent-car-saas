@@ -74,6 +74,24 @@ return [
         ],
     ],
 
+    'customers' => [
+        'title' => 'Customers',
+        'body' => [
+            'Every completed booking automatically creates or updates a customer record here, keyed by phone number.',
+            'Use this list to look up a renter\'s booking history before confirming a new reservation.',
+            'Editing a customer here does not change any of their past bookings — those keep the details recorded at the time.',
+        ],
+    ],
+
+    'reviews' => [
+        'title' => 'Reviews',
+        'body' => [
+            'Customers leave a review via a signed, tokenless link emailed after their rental — no account required on their end.',
+            'Reviews only appear on your public site once you approve them here; nothing is shown automatically.',
+            'A review can only be submitted once per booking.',
+        ],
+    ],
+
     'bookings' => [
         'title' => 'Bookings',
         'body' => [
