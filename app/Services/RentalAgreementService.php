@@ -16,7 +16,7 @@ class RentalAgreementService
     {
         $contract = $booking->contract;
 
-        if ($contract && ! $force && Storage::exists($contract->path)) {
+        if ($contract !== null && ! $force && Storage::exists($contract->path)) {
             return $contract;
         }
 

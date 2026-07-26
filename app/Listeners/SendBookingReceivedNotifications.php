@@ -17,7 +17,7 @@ class SendBookingReceivedNotifications implements ShouldQueue
         $booking = $event->booking;
         $operators = User::query()->where('tenant_id', $booking->tenant_id)->get();
 
-        if ($booking->customer_email) {
+        if (filled($booking->customer_email)) {
             Mail::to($booking->customer_email)
                 ->locale($booking->locale ?? 'sq')
                 ->queue(BookingReceivedMail::forTenantDomain($booking));

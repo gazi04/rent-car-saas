@@ -61,7 +61,7 @@ class BrandingSettings extends Page
         }
 
         $this->form->fill(array_merge($settings, [
-            'logo' => $logoMedia ? [$logoMedia->uuid] : [],
+            'logo' => $logoMedia !== null ? [$logoMedia->uuid] : [],
         ]));
     }
 

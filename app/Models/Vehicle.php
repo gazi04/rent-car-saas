@@ -109,8 +109,9 @@ class Vehicle extends Model implements HasMedia
         /** @var array<string, string> $content */
         $content = $this->description ?? [];
         $locale ??= app()->getLocale();
+        $first = reset($content);
 
-        return $content[$locale] ?? $content['en'] ?? (reset($content) ?: '');
+        return $content[$locale] ?? $content['en'] ?? ($first !== false ? $first : '');
     }
 
     public function registerMediaCollections(): void

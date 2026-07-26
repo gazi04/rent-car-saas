@@ -128,8 +128,6 @@ class TenantsTable
      * paid_until = now() + billing.trial_days puts the tenant into the daily
      * subscription sweep (reminders -> grace -> suspend). An existing paid_until
      * is never overwritten (re-approving must not reset a paid period).
-     *
-     * TODO (Notifications step): send "operator approved" email.
      */
     protected static function approveAction(): Action
     {
@@ -407,8 +405,6 @@ class TenantsTable
 
     /**
      * Reject an operator (cancel them).
-     *
-     * TODO (Notifications step): send "operator rejected" email.
      */
     protected static function rejectAction(): Action
     {

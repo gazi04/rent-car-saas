@@ -13,7 +13,7 @@ class SendBookingRejectedEmail implements ShouldQueue
     {
         $booking = $event->booking;
 
-        if (! $booking->customer_email) {
+        if (blank($booking->customer_email)) {
             return;
         }
 

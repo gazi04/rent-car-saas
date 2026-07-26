@@ -45,7 +45,8 @@ class AiBusinessSummary extends Model
         /** @var array<string, string> $content */
         $content = $this->content ?? [];
         $locale ??= app()->getLocale();
+        $first = reset($content);
 
-        return $content[$locale] ?? $content['en'] ?? (reset($content) ?: '');
+        return $content[$locale] ?? $content['en'] ?? ($first !== false ? $first : '');
     }
 }

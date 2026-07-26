@@ -45,11 +45,11 @@ class PricingService
     private function selectRate(Vehicle $vehicle, int $hours, int $days): array
     {
         if ($hours < 24 && $vehicle->hourly_rate !== null) {
-            return [RateType::Hourly, $hours * (float) $vehicle->hourly_rate];
+            return [RateType::Hourly, $hours * $vehicle->hourly_rate];
         }
 
         if ($days >= 30 && $vehicle->monthly_rate !== null) {
-            return [RateType::Monthly, ceil($days / 30) * (float) $vehicle->monthly_rate];
+            return [RateType::Monthly, ceil($days / 30) * $vehicle->monthly_rate];
         }
 
         if ($days >= 7 && $vehicle->weekly_rate !== null) {

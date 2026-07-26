@@ -43,7 +43,7 @@ class ProcessTenantSubscriptions extends Command
             ->cursor();
 
         foreach ($tenants as $tenant) {
-            if ($tenant->paid_until?->addDays($graceDays)->isPast()) {
+            if ($tenant->paid_until !== null && $tenant->paid_until->addDays($graceDays)->isPast()) {
                 $this->suspend($tenant);
             } else {
                 $this->remindIfDue($tenant);
@@ -67,7 +67,7 @@ class ProcessTenantSubscriptions extends Command
         $reminderDays = config('billing.reminder_days');
 
         foreach ($reminderDays as $days) {
-            if ($tenant->paid_until?->isSameDay(now()->addDays($days))) {
+            if ($tenant->paid_until !== null && $tenant->paid_until->isSameDay(now()->addDays($days))) {
                 Mail::to($tenant->email)
                     ->locale($tenant->operatorLocale())
                     ->queue(new SubscriptionRenewalReminderMail($tenant, $days));

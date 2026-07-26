@@ -38,7 +38,7 @@ class AtRiskTenants extends TableWidget
                     ->description(fn (Tenant $record): string => $record->paid_until?->diffForHumans() ?? ''),
                 TextColumn::make('state')
                     ->badge()
-                    ->state(fn (Tenant $record): string => $record->paid_until?->isPast() ? 'Grace' : 'Due soon')
+                    ->state(fn (Tenant $record): string => $record->paid_until !== null && $record->paid_until->isPast() ? 'Grace' : 'Due soon')
                     ->color(fn (string $state): string => $state === 'Grace' ? 'danger' : 'warning'),
             ]);
     }

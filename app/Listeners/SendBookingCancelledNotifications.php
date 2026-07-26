@@ -16,7 +16,7 @@ class SendBookingCancelledNotifications implements ShouldQueue
         $booking = $event->booking;
         $cancelledBy = $event->cancelledBy;
 
-        if ($booking->customer_email) {
+        if (filled($booking->customer_email)) {
             Mail::to($booking->customer_email)
                 ->locale($booking->locale ?? 'sq')
                 ->queue(new BookingCancelledMail($booking));

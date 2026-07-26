@@ -124,7 +124,7 @@ class AvailabilityCalendar extends FullCalendarWidget
             ->where('start_date', '<', $end)
             ->where('end_date', '>', $start);
 
-        if ($this->vehicleFilter) {
+        if ($this->vehicleFilter !== null) {
             $bookingQuery->where('vehicle_id', $this->vehicleFilter);
             $blockedQuery->where('vehicle_id', $this->vehicleFilter);
         }
@@ -147,7 +147,7 @@ class AvailabilityCalendar extends FullCalendarWidget
         foreach ($blockedQuery->get() as $block) {
             $events[] = EventData::make()
                 ->id('block-'.$block->id)
-                ->title(__('panel.legend_blocked').($block->reason ? ' · '.$block->reason : ''))
+                ->title(__('panel.legend_blocked').(filled($block->reason) ? ' · '.$block->reason : ''))
                 ->start($block->start_date)
                 ->end($block->end_date)
                 ->backgroundColor('#9ca3af')
@@ -198,7 +198,7 @@ class AvailabilityCalendar extends FullCalendarWidget
 
         $blockId = $event['extendedProps']['block_id'] ?? null;
 
-        if (! $blockId) {
+        if (blank($blockId)) {
             return;
         }
 
@@ -214,10 +214,10 @@ class AvailabilityCalendar extends FullCalendarWidget
             ->modalDescription(function (array $arguments): string {
                 $block = BlockedDate::query()->with('vehicle')->whereKey($arguments['block_id'] ?? null)->first();
 
-                return $block
+                return $block !== null
                     ? ($block->vehicle->name ?? '').' · '
                         .$block->start_date->toDateString().' → '.$block->end_date->toDateString()
-                        .($block->reason ? ' · '.$block->reason : '')
+                        .(filled($block->reason) ? ' · '.$block->reason : '')
                     : '';
             })
             ->color('danger')
@@ -258,7 +258,7 @@ class AvailabilityCalendar extends FullCalendarWidget
                     $vehicleId = $get('vehicle_id');
                     $start = $get('start_date');
 
-                    if (! $vehicleId || ! $start || ! $value) {
+                    if (blank($vehicleId) || blank($start) || blank($value)) {
                         return;
                     }
 
@@ -300,7 +300,7 @@ class AvailabilityCalendar extends FullCalendarWidget
                     $schema->fill([
                         'start_date' => $arguments['start'] ?? null,
                         'end_date' => $arguments['end'] ?? null,
-                        'vehicle_id' => $this->vehicleFilter ?: null,
+                        'vehicle_id' => $this->vehicleFilter,
                     ]);
                 })
                 ->using(fn (array $data, string $model): BlockedDate => $model::create([

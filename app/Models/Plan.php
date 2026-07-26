@@ -94,7 +94,7 @@ class Plan extends Model
 
         if ($ensureSlug !== null && ! isset($options[$ensureSlug])) {
             $archived = self::query()->where('slug', $ensureSlug)->value('name');
-            $options[$ensureSlug] = $archived ? $archived.' (archived)' : $ensureSlug;
+            $options[$ensureSlug] = is_string($archived) && $archived !== '' ? $archived.' (archived)' : $ensureSlug;
         }
 
         return $options;

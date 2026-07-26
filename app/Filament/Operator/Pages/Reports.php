@@ -470,8 +470,8 @@ class Reports extends Page
         $end = $this->data['end_date'] ?? null;
 
         return [
-            ($start ? Date::parse($start) : now()->startOfMonth())->startOfDay(),
-            ($end ? Date::parse($end) : now()->endOfMonth())->endOfDay(),
+            ($start !== null && $start !== '' ? Date::parse($start) : now()->startOfMonth())->startOfDay(),
+            ($end !== null && $end !== '' ? Date::parse($end) : now()->endOfMonth())->endOfDay(),
         ];
     }
 

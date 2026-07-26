@@ -16,7 +16,7 @@ class SendBookingConfirmedEmail implements ShouldQueue
     {
         $booking = $event->booking;
 
-        if (! $booking->customer_email) {
+        if (blank($booking->customer_email)) {
             return;
         }
 
@@ -26,10 +26,10 @@ class SendBookingConfirmedEmail implements ShouldQueue
         $tenant = Tenant::query()->find($booking->tenant_id);
         $rootUrl = $tenant?->publicRootUrl();
 
-        if ($rootUrl) {
+        if ($rootUrl !== null) {
             // forceRootUrl alone is not enough: the generator swaps in the current
             // request's scheme, so an https root would still emit http links.
-            URL::forceScheme(parse_url((string) $rootUrl, PHP_URL_SCHEME) ?: 'http');
+            URL::forceScheme(parse_url($rootUrl, PHP_URL_SCHEME) ?? 'http');
             URL::forceRootUrl($rootUrl);
 
             $agreementUrl = URL::temporarySignedRoute(

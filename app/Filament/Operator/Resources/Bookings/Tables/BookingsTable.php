@@ -97,7 +97,6 @@ class BookingsTable
 
     /**
      * Pending → Confirmed.
-     * TODO (Notifications step): BookingService::confirm() will dispatch BookingConfirmed event.
      */
     protected static function confirmAction(): Action
     {
@@ -114,7 +113,6 @@ class BookingsTable
 
     /**
      * Pending → Cancelled.
-     * TODO (Notifications step): BookingService::reject() will dispatch BookingRejected event.
      */
     protected static function rejectAction(): Action
     {
@@ -214,7 +212,6 @@ class BookingsTable
 
     /**
      * Any non-Completed status → Cancelled.
-     * TODO (Notifications step): BookingService::cancel() will dispatch BookingCancelled event.
      */
     protected static function cancelAction(): Action
     {

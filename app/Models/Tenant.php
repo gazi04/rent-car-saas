@@ -363,9 +363,9 @@ class Tenant extends BaseTenant implements HasMedia
         }
 
         $appUrl = (string) config('app.url');
-        $scheme = parse_url($appUrl, PHP_URL_SCHEME) ?: 'http';
+        $scheme = parse_url($appUrl, PHP_URL_SCHEME) ?? 'http';
         $port = parse_url($appUrl, PHP_URL_PORT);
 
-        return $scheme.'://'.$domain.($port ? ':'.$port : '');
+        return $scheme.'://'.$domain.($port !== null && $port !== false ? ':'.$port : '');
     }
 }

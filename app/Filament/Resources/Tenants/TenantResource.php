@@ -63,10 +63,12 @@ class TenantResource extends Resource
             return [];
         }
 
+        $subdomains = $record->domains->pluck('domain')->implode(', ');
+
         return [
             'Status' => $record->status->getLabel(),
             'Plan' => $record->plan,
-            'Subdomain' => $record->domains->pluck('domain')->implode(', ') ?: '—',
+            'Subdomain' => $subdomains !== '' ? $subdomains : '—',
         ];
     }
 
@@ -133,12 +135,16 @@ class TenantResource extends Resource
                             ->placeholder('—'),
                         TextEntry::make('operators')
                             ->label('Operator / staff')
-                            ->state(fn (Tenant $record): string => User::query()
-                                ->where('tenant_id', $record->id)
-                                ->whereIn('role', ['operator', 'staff'])
-                                ->get()
-                                ->map(fn (User $user): string => sprintf('%s (%s)', $user->name, $user->email))
-                                ->implode(', ') ?: '—'),
+                            ->state(function (Tenant $record): string {
+                                $operators = User::query()
+                                    ->where('tenant_id', $record->id)
+                                    ->whereIn('role', ['operator', 'staff'])
+                                    ->get()
+                                    ->map(fn (User $user): string => sprintf('%s (%s)', $user->name, $user->email))
+                                    ->implode(', ');
+
+                                return $operators !== '' ? $operators : '—';
+                            }),
                     ]),
                 Section::make('Usage')
                     ->columns(2)

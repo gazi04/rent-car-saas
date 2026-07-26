@@ -78,8 +78,8 @@ class VehicleListingWriter
         /** @var array{en?: string, sq?: string} $result */
         $result = $response->toArray();
 
-        $en = trim((string) ($result['en'] ?? ''));
-        $sq = trim((string) ($result['sq'] ?? ''));
+        $en = trim($result['en'] ?? '');
+        $sq = trim($result['sq'] ?? '');
 
         if ($en === '' || $sq === '') {
             throw AiRequestFailedException::malformedResponse();

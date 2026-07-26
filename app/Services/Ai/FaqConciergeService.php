@@ -43,7 +43,7 @@ class FaqConciergeService
             return $this->contactFallback($tenant);
         }
 
-        $answer = trim((string) ($result['answer'] ?? ''));
+        $answer = trim($result['answer'] ?? '');
 
         if ($answer === '') {
             throw AiRequestFailedException::malformedResponse();

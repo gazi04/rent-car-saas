@@ -56,15 +56,15 @@ class TemplateRenderer
     public function bookingVariables(Booking $booking): array
     {
         return [
-            'customer_name' => (string) $booking->customer_name,
-            'reference' => (string) $booking->reference,
-            'vehicle' => (string) $booking->vehicle->name,
+            'customer_name' => $booking->customer_name,
+            'reference' => $booking->reference,
+            'vehicle' => $booking->vehicle->name,
             'start_date' => $booking->start_date->format('d M Y'),
             'end_date' => $booking->end_date->format('d M Y'),
             'total' => '€'.number_format((float) $booking->total, 2),
             'deposit' => '€'.number_format((float) $booking->deposit, 2),
-            'operator' => (string) Tenant::query()->find($booking->tenant_id)->name,
-            'pickup_location' => (string) ($booking->pickup_location ?? ''),
+            'operator' => Tenant::query()->find($booking->tenant_id)->name,
+            'pickup_location' => $booking->pickup_location ?? '',
         ];
     }
 }
