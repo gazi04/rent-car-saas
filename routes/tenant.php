@@ -6,6 +6,7 @@ use App\Enums\BookingStatus;
 use App\Enums\VehicleStatus;
 use App\Http\Controllers\CancelBookingController;
 use App\Http\Controllers\DownloadAgreementController;
+use App\Http\Controllers\ShowCancelBookingController;
 use App\Http\Middleware\EnsureTenantIsActive;
 use App\Models\BlockedDate;
 use App\Models\Booking;
@@ -50,9 +51,17 @@ Route::middleware([
     Route::livewire('/booking/{booking:reference}/confirmation', 'pages::public.booking-confirmation')
         ->name('public.booking.confirmation');
 
-    // Signed 24-hour cancellation link — no auth required.
-    Route::get('/booking/{booking}/cancel', CancelBookingController::class)
+    // Signed 24-hour cancellation link — no auth required. GET renders a confirm
+    // page (no mutation, safe for email link-prescanners); POST performs the
+    // actual cancellation. Both are protected by the same signature — Laravel's
+    // hasValidSignature() hashes the URL string only, not the HTTP verb, so the
+    // exact GET URL doubles as a valid signed POST target with no re-signing.
+    Route::get('/booking/{booking}/cancel', ShowCancelBookingController::class)
         ->name('public.booking.cancel')
+        ->middleware('signed');
+
+    Route::post('/booking/{booking}/cancel', CancelBookingController::class)
+        ->name('public.booking.cancel.confirm')
         ->middleware('signed');
 
     // Signed ~30-day review-submission link — tokenless, no account required.

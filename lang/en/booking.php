@@ -117,6 +117,10 @@ return [
     'cancellation_confirmed' => 'Your booking has been cancelled successfully.',
     'booking_already_cancelled' => 'This booking has already been cancelled or completed.',
     'booking_not_cancellable' => 'This bookin is already confirmed. Please contact the operator directly to cancle or change it.',
+    'confirm_cancel_heading' => 'Cancel this booking?',
+    'confirm_cancel_body' => 'This will cancel your reservation. This cannot be undone.',
+    'confirm_cancel_button' => 'Yes, cancel this booking',
+    'keep_booking' => 'No, keep my booking',
 
     // Promo codes
     'promo_label' => 'Promo code',
