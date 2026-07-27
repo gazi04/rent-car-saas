@@ -5,6 +5,7 @@ use App\Console\Commands\ProcessTenantSubscriptions;
 use App\Console\Commands\ProcessVehicleMaintenance;
 use App\Console\Commands\RequestPendingReviews;
 use App\Console\Commands\SweepWaitlist;
+use App\Models\EmailLog;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -32,3 +33,7 @@ Schedule::command(SweepWaitlist::class)->dailyAt('08:00')->withoutOverlapping();
 // Daily review-request fan-out: next-day invitation email,
 // one queued job per eligible tenant.
 Schedule::command(RequestPendingReviews::class)->dailyAt('09:00')->withoutOverlapping();
+
+// Age out the email delivery log (mail.log_retention_days). It grows with send
+// volume and is an operational trail, not a business record.
+Schedule::command('model:prune', ['--model' => [EmailLog::class]])->dailyAt('04:00');

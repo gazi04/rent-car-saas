@@ -157,3 +157,29 @@ it('shows delivery health on the admin stats widget', function () {
         ->assertSee('Bounced')
         ->assertSee('5'); // 4 sent + 1 bounced this month
 });
+
+// ── Retention ────────────────────────────────────────────────────────────────
+
+it('prunes log rows past the retention window and keeps the rest', function () {
+    config(['mail.log_retention_days' => 90]);
+
+    $stale = EmailLog::factory()->create(['created_at' => now()->subDays(120)]);
+    $edge = EmailLog::factory()->create(['created_at' => now()->subDays(89)]);
+    $fresh = EmailLog::factory()->create(['created_at' => now()]);
+
+    $this->artisan('model:prune', ['--model' => [EmailLog::class]])->assertSuccessful();
+
+    expect(EmailLog::query()->find($stale->id))->toBeNull()
+        ->and(EmailLog::query()->find($edge->id))->not->toBeNull()
+        ->and(EmailLog::query()->find($fresh->id))->not->toBeNull();
+});
+
+it('honours a changed retention window', function () {
+    config(['mail.log_retention_days' => 7]);
+
+    $row = EmailLog::factory()->create(['created_at' => now()->subDays(30)]);
+
+    $this->artisan('model:prune', ['--model' => [EmailLog::class]])->assertSuccessful();
+
+    expect(EmailLog::query()->find($row->id))->toBeNull();
+});

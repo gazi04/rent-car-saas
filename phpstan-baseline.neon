@@ -439,7 +439,31 @@ parameters:
 			path: app/Filament/Resources/Tenants/Tables/TenantsTable.php
 
 		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\AiUsageLog\>\:\:count\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: app/Filament/Resources/Tenants/TenantResource.php
+
+		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\AiUsageLog\>\:\:sum\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: app/Filament/Resources/Tenants/TenantResource.php
+
+		-
 			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Booking\>\:\:count\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: app/Filament/Resources/Tenants/TenantResource.php
+
+		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\EmailLog\>\:\:count\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 2
+			path: app/Filament/Resources/Tenants/TenantResource.php
+
+		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\EmailLog\>\:\:whereIn\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 1
 			path: app/Filament/Resources/Tenants/TenantResource.php

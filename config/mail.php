@@ -117,4 +117,17 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Email Delivery Log Retention
+    |--------------------------------------------------------------------------
+    |
+    | How many days of email_logs rows to keep. The log is a delivery trail
+    | (was the reminder delivered, did it bounce), not a business record, so
+    | it ages out via EmailLog::prunable() on the daily `model:prune` run.
+    |
+    */
+
+    'log_retention_days' => (int) env('MAIL_LOG_RETENTION_DAYS', 90),
+
 ];

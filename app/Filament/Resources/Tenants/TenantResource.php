@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Tenants;
 
+use App\Enums\EmailStatus;
 use App\Filament\Resources\Tenants\Pages\CreateTenant;
 use App\Filament\Resources\Tenants\Pages\EditTenant;
 use App\Filament\Resources\Tenants\Pages\ListTenants;
@@ -10,7 +11,9 @@ use App\Filament\Resources\Tenants\RelationManagers\PaymentsRelationManager;
 use App\Filament\Resources\Tenants\RelationManagers\UsersRelationManager;
 use App\Filament\Resources\Tenants\Schemas\TenantForm;
 use App\Filament\Resources\Tenants\Tables\TenantsTable;
+use App\Models\AiUsageLog;
 use App\Models\Booking;
+use App\Models\EmailLog;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vehicle;
@@ -155,6 +158,31 @@ class TenantResource extends Resource
                         TextEntry::make('bookings_count')
                             ->label('Bookings')
                             ->state(fn (Tenant $record): int => Booking::query()->where('tenant_id', $record->id)->count()),
+                        // AI spend is €0 across the board while the app runs on the free
+                        // provider (config('ai.pricing') is empty). Shown anyway: the
+                        // call count is the real signal until a priced model is wired.
+                        TextEntry::make('ai_spend')
+                            ->label('AI spend (all time)')
+                            ->money('EUR')
+                            ->state(fn (Tenant $record): float => (float) AiUsageLog::query()
+                                ->where('tenant_id', $record->id)
+                                ->sum('estimated_cost')),
+                        TextEntry::make('ai_calls')
+                            ->label('AI calls')
+                            ->state(fn (Tenant $record): int => AiUsageLog::query()->where('tenant_id', $record->id)->count()),
+                        TextEntry::make('emails_sent')
+                            ->label('Emails (last 30 days)')
+                            ->state(fn (Tenant $record): int => EmailLog::query()
+                                ->where('tenant_id', $record->id)
+                                ->where('created_at', '>=', now()->subDays(30))
+                                ->count()),
+                        TextEntry::make('emails_bounced')
+                            ->label('Bounced / complained (last 30 days)')
+                            ->state(fn (Tenant $record): int => EmailLog::query()
+                                ->where('tenant_id', $record->id)
+                                ->whereIn('status', [EmailStatus::Bounced, EmailStatus::Complained])
+                                ->where('created_at', '>=', now()->subDays(30))
+                                ->count()),
                     ]),
                 Section::make('Last activity')
                     ->components([

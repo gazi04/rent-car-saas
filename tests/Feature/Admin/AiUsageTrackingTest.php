@@ -9,6 +9,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Services\Ai\AiCostEstimator;
 use Filament\Facades\Filament;
+use Illuminate\Support\Facades\Log;
 use Laravel\Ai\Responses\Data\Meta;
 use Laravel\Ai\Responses\Data\Usage;
 use Laravel\Ai\Responses\StructuredTextResponse;
@@ -72,6 +73,30 @@ it('estimates zero when no price row exists (free-provider beta reality)', funct
 
     expect($row->total_tokens)->toBe(0)
         ->and((float) $row->estimated_cost)->toBe(0.0);
+});
+
+it('warns once per model when a call is priced at zero for lack of a price row', function () {
+    Log::spy();
+
+    $estimator = new AiCostEstimator;
+    $usage = new Usage(1000, 500, 0, 0, 0);
+
+    expect($estimator->estimate('some-paid-model', $usage))->toBe(0.0)
+        ->and($estimator->estimate('some-paid-model', $usage))->toBe(0.0);
+
+    // Twice called, logged once — a busy queue must not flood the log.
+    Log::shouldHaveReceived('warning')
+        ->once()
+        ->withArgs(fn (string $message, array $context): bool => $context['model'] === 'some-paid-model');
+});
+
+it('stays silent when the model has a price row', function () {
+    config(['ai.pricing.priced-model' => ['input' => 10, 'output' => 30]]);
+    Log::spy();
+
+    (new AiCostEstimator)->estimate('priced-model', new Usage(1000, 500, 0, 0, 0));
+
+    Log::shouldNotHaveReceived('warning');
 });
 
 it('attributes the row to the active tenant', function () {
