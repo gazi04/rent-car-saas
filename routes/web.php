@@ -35,4 +35,4 @@ Route::domain(config('tenancy.central_domain'))
     ->post('webhooks/resend', ResendWebhookController::class)
     ->name('webhooks.resend');
 
-require __DIR__ . '/settings.php';
+require __DIR__.'/settings.php';

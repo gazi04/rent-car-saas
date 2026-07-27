@@ -6,7 +6,9 @@ use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -42,6 +44,14 @@ new #[Layout('layouts.auth')] #[Title('Start your rental business')] class exten
      */
     public function register(): void
     {
+        $key = 'operator-register:'.request()->ip();
+
+        if (RateLimiter::tooManyAttempts($key, maxAttempts: 3)) {
+            throw ValidationException::withMessages([
+                'email' => [__('Too many registration attempts. Please try again later.')],
+            ]);
+        }
+
         $base = config('tenancy.tenant_base_domain', 'localhost');
 
         $validated = $this->validate([
@@ -60,6 +70,8 @@ new #[Layout('layouts.auth')] #[Title('Start your rental business')] class exten
             ],
             'password' => $this->passwordRules(),
         ]);
+
+        RateLimiter::hit($key, decaySeconds: 3600);
 
         $tenant = Tenant::query()->create([
             'name' => $validated['name'],
