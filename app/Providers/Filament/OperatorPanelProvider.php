@@ -36,7 +36,7 @@ class OperatorPanelProvider extends PanelProvider
             ->path('dashboard')
             ->viteTheme('resources/css/filament/operator/theme.css')
             ->login()
-            ->brandName(fn (): string => tenant() ? (string) tenant('name') : 'Operator')
+            ->brandName(fn (): string => tenant() !== null ? (string) tenant('name') : 'Operator')
             ->colors([
                 'primary' => Color::Indigo,
             ])
