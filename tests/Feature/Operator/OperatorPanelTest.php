@@ -7,6 +7,7 @@ use Filament\Facades\Filament;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Livewire;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 
@@ -93,6 +94,32 @@ it('rejects a duplicate subdomain on registration', function () {
         ->set('password_confirmation', 'password')
         ->call('register')
         ->assertHasErrors(['subdomain']);
+});
+
+it('throttles repeated registration attempts from the same visitor', function () {
+    RateLimiter::clear('operator-register:127.0.0.1');
+
+    foreach (range(0, 2) as $i) {
+        Livewire::test('pages::auth.operator-register')
+            ->set('name', "Business {$i}")
+            ->set('email', "owner{$i}@example.com")
+            ->set('subdomain', "biz{$i}")
+            ->set('password', 'password')
+            ->set('password_confirmation', 'password')
+            ->call('register')
+            ->assertHasNoErrors();
+    }
+
+    Livewire::test('pages::auth.operator-register')
+        ->set('name', 'One More Business')
+        ->set('email', 'owner3@example.com')
+        ->set('subdomain', 'biz3')
+        ->set('password', 'password')
+        ->set('password_confirmation', 'password')
+        ->call('register')
+        ->assertHasErrors(['email']);
+
+    expect(Tenant::count())->toBe(3);
 });
 
 it('lets an approved operator reach the panel on their subdomain', function () {

@@ -3,7 +3,9 @@
 use App\Enums\PlanFeature;
 use App\Filament\Operator\Pages\Reports;
 use App\Filament\Operator\Resources\Bookings\Pages\ListBookings;
+use App\Filament\Operator\Resources\Customers\Pages\ListCustomers;
 use App\Filament\Operator\Resources\PromoCodes\Pages\ListPromoCodes;
+use App\Filament\Operator\Resources\Reviews\Pages\ListReviews;
 use App\Filament\Operator\Resources\ServiceRecords\Pages\ListServiceRecords;
 use App\Filament\Operator\Resources\Staff\Pages\ListStaff;
 use App\Filament\Operator\Resources\Vehicles\Pages\ListVehicles;
@@ -86,6 +88,24 @@ it('shows the staff help modal', function () {
         ->mountAction('help')
         ->assertMountedActionModalSee(__('help.staff.title'))
         ->assertMountedActionModalSee(__('help.staff.body')[0]);
+});
+
+it('shows the customers help modal', function () {
+    dashboardHelpOperator('customershelpen');
+
+    Livewire::test(ListCustomers::class)
+        ->mountAction('help')
+        ->assertMountedActionModalSee(__('help.customers.title'))
+        ->assertMountedActionModalSee(__('help.customers.body')[0]);
+});
+
+it('shows the reviews help modal', function () {
+    dashboardHelpOperator('reviewshelpen');
+
+    Livewire::test(ListReviews::class)
+        ->mountAction('help')
+        ->assertMountedActionModalSee(__('help.reviews.title'))
+        ->assertMountedActionModalSee(__('help.reviews.body')[0]);
 });
 
 it('shows the bookings help modal', function () {

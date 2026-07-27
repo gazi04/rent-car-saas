@@ -2,11 +2,14 @@
 
 use App\Enums\BookingStatus;
 use App\Enums\VehicleStatus;
+use App\Events\BookingCancelled;
 use App\Models\Booking;
 use App\Models\Tenant;
 use App\Models\Vehicle;
 use App\Services\PricingService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
 
@@ -445,6 +448,37 @@ it('bounces to step 1 and shows slot-taken flash on double booking', function ()
     expect(Booking::count())->toBe(1); // only the pre-existing one
 });
 
+it('throttles repeated booking submissions from the same visitor', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+    $vehicle = publicVehicle();
+    RateLimiter::clear('booking-submit:'.$vehicle->id.':127.0.0.1');
+
+    foreach (range(0, 4) as $i) {
+        Livewire::test('pages::public.vehicle-booking', ['vehicle' => $vehicle])
+            ->set('startDate', now()->addDays(10 + $i * 3)->toDateString())
+            ->set('endDate', now()->addDays(12 + $i * 3)->toDateString())
+            ->set('customerName', 'Test Renter')
+            ->set('customerPhone', '+38344000000')
+            ->set('customerEmail', "spam{$i}@example.com")
+            ->set('step', 3)
+            ->call('submit')
+            ->assertSet('submitError', null);
+    }
+
+    Livewire::test('pages::public.vehicle-booking', ['vehicle' => $vehicle])
+        ->set('startDate', now()->addDays(40)->toDateString())
+        ->set('endDate', now()->addDays(42)->toDateString())
+        ->set('customerName', 'Test Renter')
+        ->set('customerPhone', '+38344000000')
+        ->set('customerEmail', 'spam6@example.com')
+        ->set('step', 3)
+        ->call('submit')
+        ->assertSet('submitError', __('booking.submit_throttled'));
+
+    expect(Booking::count())->toBe(5);
+});
+
 // ── Confirmation page ────────────────────────────────────────────────────────
 
 it('confirmation page shows reference and pending notice', function () {
@@ -476,7 +510,7 @@ it('confirmation page is not reachable for another tenant booking', function () 
 
 // ── Cancellation ─────────────────────────────────────────────────────────────
 
-it('valid signed cancel link cancels the booking', function () {
+it('GET on a valid signed cancel link shows a confirm page without cancelling', function () {
     $tenant = publicTenant('ardi');
     tenancy()->initialize($tenant);
     $vehicle = publicVehicle();
@@ -493,12 +527,57 @@ it('valid signed cancel link cancels the booking', function () {
 
     $this->get($url)
         ->assertOk()
+        ->assertSee($booking->reference)
+        ->assertSee(__('booking.confirm_cancel_button'));
+
+    expect($booking->fresh()->status)->toBe(BookingStatus::Pending);
+});
+
+it('POST on a valid signed cancel link cancels the booking', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+    $vehicle = publicVehicle();
+    $booking = Booking::factory()->forVehicle($vehicle)->create();
+    tenancy()->end();
+
+    URL::forceRootUrl(tenant_url('ardi'));
+    $url = URL::temporarySignedRoute(
+        'public.booking.cancel',
+        now()->addDay(),
+        ['booking' => $booking->id],
+    );
+
+    $this->post($url)
+        ->assertOk()
         ->assertSee($booking->reference);
 
     expect($booking->fresh()->status)->toBe(BookingStatus::Cancelled);
 });
 
-it('expired signed cancel link returns 404', function () {
+it('POSTing the same valid signed cancel link twice is idempotent', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+    $vehicle = publicVehicle();
+    $booking = Booking::factory()->forVehicle($vehicle)->create();
+    tenancy()->end();
+
+    Event::fake([BookingCancelled::class]);
+
+    URL::forceRootUrl(tenant_url('ardi'));
+    $url = URL::temporarySignedRoute(
+        'public.booking.cancel',
+        now()->addDay(),
+        ['booking' => $booking->id],
+    );
+
+    $this->post($url)->assertOk();
+    $this->post($url)->assertOk();
+
+    expect($booking->fresh()->status)->toBe(BookingStatus::Cancelled);
+    Event::assertDispatchedTimes(BookingCancelled::class, 1);
+});
+
+it('expired signed cancel link returns 404 on GET and POST', function () {
     $tenant = publicTenant('ardi');
     tenancy()->initialize($tenant);
     $vehicle = publicVehicle();
@@ -513,9 +592,10 @@ it('expired signed cancel link returns 404', function () {
     );
 
     $this->get($url)->assertNotFound();
+    $this->post($url)->assertNotFound();
 });
 
-it('tampered signed cancel link returns 404', function () {
+it('tampered signed cancel link returns 404 on GET and POST', function () {
     $tenant = publicTenant('ardi');
     tenancy()->initialize($tenant);
     $vehicle = publicVehicle();
@@ -532,6 +612,7 @@ it('tampered signed cancel link returns 404', function () {
 
     // The URL itself is for the ardi subdomain — tamper by appending a param.
     $this->get($url.'&tamper=1')->assertNotFound();
+    $this->post($url.'&tamper=1')->assertNotFound();
 });
 
 it('confirmation page does not expose a self-minted cancel link', function () {
@@ -546,7 +627,7 @@ it('confirmation page does not expose a self-minted cancel link', function () {
         ->assertDontSee('signature=', escape: false);
 });
 
-it('signed cancel link does not cancel a Confirmed booking', function () {
+it('signed cancel link does not cancel a Confirmed booking on GET or POST', function () {
     $tenant = publicTenant('ardi');
     tenancy()->initialize($tenant);
     $vehicle = publicVehicle();
@@ -561,11 +642,13 @@ it('signed cancel link does not cancel a Confirmed booking', function () {
     );
 
     $this->get($url)->assertOk();
+    expect($booking->fresh()->status)->toBe(BookingStatus::Confirmed);
 
+    $this->post($url)->assertOk();
     expect($booking->fresh()->status)->toBe(BookingStatus::Confirmed);
 });
 
-it('signed cancel link does not cancel an Active booking', function () {
+it('signed cancel link does not cancel an Active booking on GET or POST', function () {
     $tenant = publicTenant('ardi');
     tenancy()->initialize($tenant);
     $vehicle = publicVehicle();
@@ -580,7 +663,9 @@ it('signed cancel link does not cancel an Active booking', function () {
     );
 
     $this->get($url)->assertOk();
+    expect($booking->fresh()->status)->toBe(BookingStatus::Active);
 
+    $this->post($url)->assertOk();
     expect($booking->fresh()->status)->toBe(BookingStatus::Active);
 });
 
