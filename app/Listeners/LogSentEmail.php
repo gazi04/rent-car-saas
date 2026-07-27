@@ -6,6 +6,7 @@ namespace App\Listeners;
 
 use App\Enums\EmailStatus;
 use App\Models\EmailLog;
+use App\Models\Tenant;
 use Illuminate\Mail\Events\MessageSent;
 use Throwable;
 
@@ -19,7 +20,7 @@ use Throwable;
  * the message, captured here as message_id so the webhook can match delivery
  * events back to this row (null under the log/array transports in dev/test).
  *
- * tenant_id comes from tenant()?->id: booking mail is queued inside a tenant
+ * tenant_id comes from Tenant::current()?->id: booking mail is queued inside a tenant
  * context (QueueTenancyBootstrapper re-initializes tenancy in the mail job), so
  * it attributes correctly; central mail (e.g. subscription reminders) has no
  * tenant and is logged as a Platform row. Best-effort — a logging failure must
@@ -43,7 +44,7 @@ class LogSentEmail
             $header = $message->getHeaders()->get('X-Resend-Email-ID');
 
             EmailLog::query()->create([
-                'tenant_id' => tenant()?->id,
+                'tenant_id' => Tenant::current()?->id,
                 'message_id' => $header?->getBodyAsString(),
                 'to_email' => $to[0]->getAddress(),
                 'subject' => $message->getSubject(),

@@ -5,6 +5,7 @@ namespace App\Filament\Operator\Resources\Bookings\Schemas;
 use App\Enums\BookingStatus;
 use App\Enums\PlanFeature;
 use App\Models\Booking;
+use App\Models\Tenant;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -46,7 +47,7 @@ class BookingForm
                         TextInput::make('promo_code')
                             ->label(__('panel.promo_code'))
                             ->maxLength(50)
-                            ->visible(fn (): bool => tenant()?->allowsFeature(PlanFeature::PromoCodes) ?? (bool) PlanFeature::PromoCodes->default()),
+                            ->visible(fn (): bool => Tenant::current()?->allowsFeature(PlanFeature::PromoCodes) ?? (bool) PlanFeature::PromoCodes->default()),
                     ]),
 
                 Section::make(__('panel.section_customer'))

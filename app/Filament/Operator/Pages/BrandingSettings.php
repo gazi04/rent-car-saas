@@ -4,6 +4,7 @@ namespace App\Filament\Operator\Pages;
 
 use App\Enums\PlanFeature;
 use App\Filament\Support\HelpAction;
+use App\Models\Tenant;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\ColorPicker;
@@ -37,7 +38,7 @@ class BrandingSettings extends Page
     public static function canAccess(): bool
     {
         return (auth()->user()?->isOwner() ?? false)
-            && (tenant()?->allowsFeature(PlanFeature::Branding) ?? (bool) PlanFeature::Branding->default());
+            && (Tenant::current()?->allowsFeature(PlanFeature::Branding) ?? (bool) PlanFeature::Branding->default());
     }
 
     /** @var array<string, mixed>|null */
@@ -45,8 +46,8 @@ class BrandingSettings extends Page
 
     public function mount(): void
     {
-        $settings = tenant()->settings();
-        $logoMedia = tenant()->getFirstMedia('logo');
+        $settings = Tenant::currentOrFail()->settings();
+        $logoMedia = Tenant::currentOrFail()->getFirstMedia('logo');
 
         // Content saved before the bilingual split lives under the un-suffixed
         // key; surface it in the Albanian fields so it isn't invisible here
@@ -85,7 +86,7 @@ class BrandingSettings extends Page
 
         return $schema
             ->statePath('data')
-            ->model(tenant())
+            ->model(Tenant::currentOrFail())
             ->components([
                 Tabs::make('branding')
                     ->tabs([
@@ -311,11 +312,11 @@ class BrandingSettings extends Page
             }
 
             if (array_key_exists($key, $data)) {
-                tenant()->setSetting($key, $data[$key]);
+                Tenant::currentOrFail()->setSetting($key, $data[$key]);
             }
         }
 
-        $this->form->model(tenant())->saveRelationships();
+        $this->form->model(Tenant::currentOrFail())->saveRelationships();
 
         Notification::make()
             ->title(__('branding.saved'))

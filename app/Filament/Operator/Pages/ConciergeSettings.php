@@ -4,6 +4,7 @@ namespace App\Filament\Operator\Pages;
 
 use App\Enums\PlanFeature;
 use App\Filament\Support\HelpAction;
+use App\Models\Tenant;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
@@ -40,7 +41,7 @@ class ConciergeSettings extends Page
     public static function canAccess(): bool
     {
         return (auth()->user()?->isOwner() ?? false)
-            && (tenant()?->allowsFeature(PlanFeature::AiConcierge) ?? (bool) PlanFeature::AiConcierge->default());
+            && (Tenant::current()?->allowsFeature(PlanFeature::AiConcierge) ?? (bool) PlanFeature::AiConcierge->default());
     }
 
     public static function getNavigationLabel(): string
@@ -58,7 +59,7 @@ class ConciergeSettings extends Page
 
     public function mount(): void
     {
-        $this->form->fill(tenant()->settings());
+        $this->form->fill(Tenant::currentOrFail()->settings());
     }
 
     /**
@@ -110,7 +111,7 @@ class ConciergeSettings extends Page
 
         foreach ($allowedKeys as $key) {
             if (array_key_exists($key, $data)) {
-                tenant()->setSetting($key, $data[$key]);
+                Tenant::currentOrFail()->setSetting($key, $data[$key]);
             }
         }
 

@@ -15,6 +15,7 @@ use App\Exceptions\VehicleNotAvailableException;
 use App\Models\Booking;
 use App\Models\Customer;
 use App\Models\PromoCode;
+use App\Models\Tenant;
 use App\Models\Vehicle;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Date;
@@ -193,7 +194,7 @@ class BookingService
     {
         $code = strtoupper(trim((string) ($data['promo_code'] ?? '')));
 
-        if ($code === '' || ! (tenant()?->allowsFeature(PlanFeature::PromoCodes) ?? (bool) PlanFeature::PromoCodes->default())) {
+        if ($code === '' || ! (Tenant::current()?->allowsFeature(PlanFeature::PromoCodes) ?? (bool) PlanFeature::PromoCodes->default())) {
             return null;
         }
 

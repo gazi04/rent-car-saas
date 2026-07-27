@@ -4,6 +4,7 @@ namespace App\Filament\Operator\Resources\Staff\Pages;
 
 use App\Enums\PlanFeature;
 use App\Filament\Operator\Resources\Staff\StaffResource;
+use App\Models\Tenant;
 use App\Models\User;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
@@ -19,7 +20,7 @@ class CreateStaff extends CreateRecord
      */
     protected function beforeCreate(): void
     {
-        $limit = tenant()?->featureLimit(PlanFeature::StaffSeatLimit);
+        $limit = Tenant::current()?->featureLimit(PlanFeature::StaffSeatLimit);
 
         if ($limit !== null && User::query()->where('tenant_id', tenant('id'))->where('role', 'staff')->count() >= $limit) {
             Notification::make()

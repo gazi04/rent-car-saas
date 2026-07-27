@@ -5,6 +5,7 @@ namespace App\Filament\Operator\Resources\Waitlist;
 use App\Enums\PlanFeature;
 use App\Filament\Operator\Resources\Waitlist\Pages\ListWaitlistEntries;
 use App\Filament\Operator\Resources\Waitlist\Tables\WaitlistEntriesTable;
+use App\Models\Tenant;
 use App\Models\WaitlistEntry;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -66,7 +67,7 @@ class WaitlistEntryResource extends Resource
 
     private static function allowsFeature(PlanFeature $feature): bool
     {
-        return tenant()?->allowsFeature($feature) ?? (bool) $feature->default();
+        return Tenant::current()?->allowsFeature($feature) ?? (bool) $feature->default();
     }
 
     public static function table(Table $table): Table

@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Tenant;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,7 +15,7 @@ class SetLocale
     public function handle(Request $request, Closure $next): Response
     {
         $locale = session('locale')
-            ?? tenant()?->setting('default_locale', config('branding.defaults.default_locale'))
+            ?? Tenant::current()?->setting('default_locale', config('branding.defaults.default_locale'))
             ?? 'sq';
 
         if (in_array($locale, self::SUPPORTED, strict: true)) {

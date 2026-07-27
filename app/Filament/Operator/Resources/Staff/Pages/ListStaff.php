@@ -5,6 +5,7 @@ namespace App\Filament\Operator\Resources\Staff\Pages;
 use App\Enums\PlanFeature;
 use App\Filament\Operator\Resources\Staff\StaffResource;
 use App\Filament\Support\HelpAction;
+use App\Models\Tenant;
 use App\Models\User;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
@@ -23,7 +24,7 @@ class ListStaff extends ListRecords
             CreateAction::make()
                 ->disabled(fn (): bool => self::atStaffSeatLimit())
                 ->tooltip(fn (): ?string => self::atStaffSeatLimit()
-                    ? (string) __('panel.staff_seat_limit_reached_body', ['limit' => tenant()?->featureLimit(PlanFeature::StaffSeatLimit)])
+                    ? (string) __('panel.staff_seat_limit_reached_body', ['limit' => Tenant::current()?->featureLimit(PlanFeature::StaffSeatLimit)])
                     : null),
         ];
     }
@@ -34,7 +35,7 @@ class ListStaff extends ListRecords
      */
     public static function atStaffSeatLimit(): bool
     {
-        $limit = tenant()?->featureLimit(PlanFeature::StaffSeatLimit);
+        $limit = Tenant::current()?->featureLimit(PlanFeature::StaffSeatLimit);
 
         return $limit !== null
             && User::query()->where('tenant_id', tenant('id'))->where('role', 'staff')->count() >= $limit;

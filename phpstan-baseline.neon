@@ -25,48 +25,6 @@ parameters:
 			path: app/Filament/Operator/Pages/BrandingSettings.php
 
 		-
-			message: '#^Cannot access offset non\-falsy\-string on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 2
-			path: app/Filament/Operator/Pages/BrandingSettings.php
-
-		-
-			message: '#^Cannot access offset string on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
-			count: 1
-			path: app/Filament/Operator/Pages/BrandingSettings.php
-
-		-
-			message: '#^Cannot access property \$uuid on mixed\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Filament/Operator/Pages/BrandingSettings.php
-
-		-
-			message: '#^Cannot call method allowsFeature\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Filament/Operator/Pages/BrandingSettings.php
-
-		-
-			message: '#^Cannot call method getFirstMedia\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Filament/Operator/Pages/BrandingSettings.php
-
-		-
-			message: '#^Cannot call method setSetting\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Filament/Operator/Pages/BrandingSettings.php
-
-		-
-			message: '#^Cannot call method settings\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Filament/Operator/Pages/BrandingSettings.php
-
-		-
 			message: '#^Dynamic call to static method Illuminate\\Contracts\\Auth\\Guard\:\:user\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 1
@@ -79,58 +37,10 @@ parameters:
 			path: app/Filament/Operator/Pages/BrandingSettings.php
 
 		-
-			message: '#^Parameter \#1 \$model of method Filament\\Schemas\\Schema\:\:model\(\) expects array\<string, mixed\>\|class\-string\<Illuminate\\Database\\Eloquent\\Model\>\|Closure\|Illuminate\\Database\\Eloquent\\Model\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 2
-			path: app/Filament/Operator/Pages/BrandingSettings.php
-
-		-
-			message: '#^Parameter \#1 \$state of method Filament\\Schemas\\Schema\:\:fill\(\) expects array\<string, mixed\>\|null, array given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Filament/Operator/Pages/BrandingSettings.php
-
-		-
-			message: '#^Parameter \#1 \.\.\.\$arrays of function array_merge expects array, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Filament/Operator/Pages/BrandingSettings.php
-
-		-
-			message: '#^Cannot call method allowsFeature\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Filament/Operator/Pages/ConciergeSettings.php
-
-		-
-			message: '#^Cannot call method setSetting\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Filament/Operator/Pages/ConciergeSettings.php
-
-		-
-			message: '#^Cannot call method settings\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Filament/Operator/Pages/ConciergeSettings.php
-
-		-
 			message: '#^Dynamic call to static method Illuminate\\Contracts\\Auth\\Guard\:\:user\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 1
 			path: app/Filament/Operator/Pages/ConciergeSettings.php
-
-		-
-			message: '#^Parameter \#1 \$state of method Filament\\Schemas\\Schema\:\:fill\(\) expects array\<string, mixed\>\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Filament/Operator/Pages/ConciergeSettings.php
-
-		-
-			message: '#^Cannot call method allowsFeature\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 2
-			path: app/Filament/Operator/Pages/Reports.php
 
 		-
 			message: '#^Dynamic call to static method Illuminate\\Contracts\\Auth\\Guard\:\:user\(\)\.$#'
@@ -169,12 +79,6 @@ parameters:
 			path: app/Filament/Operator/Pages/Reports.php
 
 		-
-			message: '#^Method App\\Filament\\Operator\\Pages\\Reports\:\:showsHeatmap\(\) should return bool but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: app/Filament/Operator/Pages/Reports.php
-
-		-
 			message: '#^PHPDoc tag @var with type array\<string, int\> is not subtype of type array\<string, int\<0, max\>\>\.$#'
 			identifier: varTag.type
 			count: 1
@@ -193,46 +97,10 @@ parameters:
 			path: app/Filament/Operator/Pages/Reports.php
 
 		-
-			message: '#^Cannot call method allowsFeature\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Filament/Operator/Pages/TemplateSettings.php
-
-		-
-			message: '#^Cannot call method setSetting\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Filament/Operator/Pages/TemplateSettings.php
-
-		-
-			message: '#^Cannot call method settings\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Filament/Operator/Pages/TemplateSettings.php
-
-		-
 			message: '#^Dynamic call to static method Illuminate\\Contracts\\Auth\\Guard\:\:user\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 1
 			path: app/Filament/Operator/Pages/TemplateSettings.php
-
-		-
-			message: '#^Parameter \#1 \$state of method Filament\\Schemas\\Schema\:\:fill\(\) expects array\<string, mixed\>\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Filament/Operator/Pages/TemplateSettings.php
-
-		-
-			message: '#^Anonymous function should return bool but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: app/Filament/Operator/Resources/Bookings/Schemas/BookingForm.php
-
-		-
-			message: '#^Cannot call method allowsFeature\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Filament/Operator/Resources/Bookings/Schemas/BookingForm.php
 
 		-
 			message: '#^Cannot cast mixed to int\.$#'
@@ -263,12 +131,6 @@ parameters:
 			identifier: staticMethod.dynamicCall
 			count: 1
 			path: app/Filament/Operator/Resources/Customers/Tables/CustomersTable.php
-
-		-
-			message: '#^Cannot call method allowsFeature\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Filament/Operator/Resources/PromoCodes/PromoCodeResource.php
 
 		-
 			message: '#^Dynamic call to static method Illuminate\\Contracts\\Auth\\Guard\:\:user\(\)\.$#'
@@ -307,38 +169,14 @@ parameters:
 			path: app/Filament/Operator/Resources/ServiceRecords/Tables/ServiceRecordsTable.php
 
 		-
-			message: '#^Cannot call method featureLimit\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Filament/Operator/Resources/Staff/Pages/CreateStaff.php
-
-		-
 			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\User\>\:\:count\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 1
 			path: app/Filament/Operator/Resources/Staff/Pages/CreateStaff.php
 
 		-
-			message: '#^Parameter \#2 \$replace of function __ expects array\<string, bool\|float\|int\|string\|null\>, array\<string, mixed\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Filament/Operator/Resources/Staff/Pages/CreateStaff.php
-
-		-
-			message: '#^Cannot call method featureLimit\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 2
-			path: app/Filament/Operator/Resources/Staff/Pages/ListStaff.php
-
-		-
 			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\User\>\:\:count\(\)\.$#'
 			identifier: staticMethod.dynamicCall
-			count: 1
-			path: app/Filament/Operator/Resources/Staff/Pages/ListStaff.php
-
-		-
-			message: '#^Parameter \#2 \$replace of function __ expects array\<string, bool\|float\|int\|string\|null\>, array\<string, mixed\> given\.$#'
-			identifier: argument.type
 			count: 1
 			path: app/Filament/Operator/Resources/Staff/Pages/ListStaff.php
 
@@ -349,8 +187,8 @@ parameters:
 			path: app/Filament/Operator/Resources/Staff/StaffResource.php
 
 		-
-			message: '#^Cannot call method featureLimit\(\) on mixed\.$#'
-			identifier: method.nonObject
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Vehicle\>\:\:count\(\)\.$#'
+			identifier: staticMethod.dynamicCall
 			count: 1
 			path: app/Filament/Operator/Resources/Vehicles/Pages/CreateVehicle.php
 
@@ -358,55 +196,7 @@ parameters:
 			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Vehicle\>\:\:count\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 1
-			path: app/Filament/Operator/Resources/Vehicles/Pages/CreateVehicle.php
-
-		-
-			message: '#^Parameter \#2 \$replace of function __ expects array\<string, bool\|float\|int\|string\|null\>, array\<string, mixed\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Filament/Operator/Resources/Vehicles/Pages/CreateVehicle.php
-
-		-
-			message: '#^Cannot call method featureLimit\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 2
 			path: app/Filament/Operator/Resources/Vehicles/Pages/ListVehicles.php
-
-		-
-			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Vehicle\>\:\:count\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: app/Filament/Operator/Resources/Vehicles/Pages/ListVehicles.php
-
-		-
-			message: '#^Parameter \#2 \$replace of function __ expects array\<string, bool\|float\|int\|string\|null\>, array\<string, mixed\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Filament/Operator/Resources/Vehicles/Pages/ListVehicles.php
-
-		-
-			message: '#^Anonymous function should return bool but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: app/Filament/Operator/Resources/Vehicles/Schemas/VehicleForm.php
-
-		-
-			message: '#^Anonymous function should return int but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: app/Filament/Operator/Resources/Vehicles/Schemas/VehicleForm.php
-
-		-
-			message: '#^Cannot call method allowsFeature\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 2
-			path: app/Filament/Operator/Resources/Vehicles/Schemas/VehicleForm.php
-
-		-
-			message: '#^Cannot call method featureLimit\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Filament/Operator/Resources/Vehicles/Schemas/VehicleForm.php
 
 		-
 			message: '#^Dynamic call to static method Illuminate\\Contracts\\Auth\\Guard\:\:user\(\)\.$#'
@@ -427,20 +217,8 @@ parameters:
 			path: app/Filament/Operator/Resources/Waitlist/Tables/WaitlistEntriesTable.php
 
 		-
-			message: '#^Cannot call method allowsFeature\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Filament/Operator/Resources/Waitlist/WaitlistEntryResource.php
-
-		-
 			message: '#^Dynamic call to static method Illuminate\\Contracts\\Auth\\Guard\:\:user\(\)\.$#'
 			identifier: staticMethod.dynamicCall
-			count: 1
-			path: app/Filament/Operator/Resources/Waitlist/WaitlistEntryResource.php
-
-		-
-			message: '#^Method App\\Filament\\Operator\\Resources\\Waitlist\\WaitlistEntryResource\:\:allowsFeature\(\) should return bool but returns mixed\.$#'
-			identifier: return.type
 			count: 1
 			path: app/Filament/Operator/Resources/Waitlist/WaitlistEntryResource.php
 
@@ -527,12 +305,6 @@ parameters:
 			identifier: method.childParameterType
 			count: 1
 			path: app/Filament/Operator/Widgets/AvailabilityCalendar.php
-
-		-
-			message: '#^Cannot call method allowsFeature\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 2
-			path: app/Filament/Operator/Widgets/BusinessSummaryWidget.php
 
 		-
 			message: '#^Dynamic call to static method Illuminate\\Contracts\\Auth\\Guard\:\:user\(\)\.$#'
@@ -799,24 +571,6 @@ parameters:
 			path: app/Http/Controllers/ResendWebhookController.php
 
 		-
-			message: '#^Cannot access property \$name on mixed\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Http/Middleware/EnsureTenantIsActive.php
-
-		-
-			message: '#^Cannot access property \$status on mixed\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: app/Http/Middleware/EnsureTenantIsActive.php
-
-		-
-			message: '#^Cannot access property \$value on mixed\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Http/Middleware/EnsureTenantIsActive.php
-
-		-
 			message: '#^Method App\\Http\\Middleware\\EnsureTenantIsActive\:\:handle\(\) should return Symfony\\Component\\HttpFoundation\\Response but returns mixed\.$#'
 			identifier: return.type
 			count: 1
@@ -827,12 +581,6 @@ parameters:
 			identifier: return.type
 			count: 1
 			path: app/Http/Middleware/ResolveFilamentPanelForSharedRoutes.php
-
-		-
-			message: '#^Cannot call method setting\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Http/Middleware/SetLocale.php
 
 		-
 			message: '#^Method App\\Http\\Middleware\\SetLocale\:\:handle\(\) should return Symfony\\Component\\HttpFoundation\\Response but returns mixed\.$#'
@@ -923,18 +671,6 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: app/Listeners/LogImpersonationStart.php
-
-		-
-			message: '#^Cannot access property \$id on mixed\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Listeners/LogSentEmail.php
-
-		-
-			message: '#^Cannot access property \$id on mixed\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Listeners/RecordAiUsage.php
 
 		-
 			message: '#^Cannot access property \$name on App\\Models\\Vehicle\|null\.$#'
@@ -1249,12 +985,6 @@ parameters:
 			path: app/Providers/Filament/AdminPanelProvider.php
 
 		-
-			message: '#^Cannot cast mixed to string\.$#'
-			identifier: cast.string
-			count: 1
-			path: app/Providers/Filament/OperatorPanelProvider.php
-
-		-
 			message: '#^Parameter \#1 \$value of static method Illuminate\\Support\\Str\:\:lower\(\) expects string, mixed given\.$#'
 			identifier: argument.type
 			count: 1
@@ -1403,12 +1133,6 @@ parameters:
 			identifier: staticMethod.dynamicCall
 			count: 1
 			path: app/Services/AvailabilityService.php
-
-		-
-			message: '#^Cannot call method allowsFeature\(\) on mixed\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: app/Services/BookingService.php
 
 		-
 			message: '#^Cannot cast mixed to string\.$#'

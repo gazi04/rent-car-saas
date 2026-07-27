@@ -6,6 +6,7 @@ use App\Enums\PlanFeature;
 use App\Exceptions\AiRequestFailedException;
 use App\Filament\Support\HelpAction;
 use App\Models\AiBusinessSummary;
+use App\Models\Tenant;
 use App\Services\Ai\BusinessSummaryGenerator;
 use Filament\Actions\Action;
 use Filament\Actions\Concerns\InteractsWithActions;
@@ -35,7 +36,7 @@ class BusinessSummaryWidget extends Widget implements HasActions, HasSchemas
     public static function canView(): bool
     {
         return (auth()->user()?->isOwner() ?? false)
-            && (tenant()?->allowsFeature(PlanFeature::AiBusinessSummary) ?? (bool) PlanFeature::AiBusinessSummary->default());
+            && (Tenant::current()?->allowsFeature(PlanFeature::AiBusinessSummary) ?? (bool) PlanFeature::AiBusinessSummary->default());
     }
 
     public function latestSummary(): ?AiBusinessSummary
@@ -51,7 +52,7 @@ class BusinessSummaryWidget extends Widget implements HasActions, HasSchemas
     public function generate(): void
     {
         if (! (auth()->user()?->isOwner() ?? false)
-            || ! (tenant()?->allowsFeature(PlanFeature::AiBusinessSummary) ?? (bool) PlanFeature::AiBusinessSummary->default())) {
+            || ! (Tenant::current()?->allowsFeature(PlanFeature::AiBusinessSummary) ?? (bool) PlanFeature::AiBusinessSummary->default())) {
             Notification::make()->title(__('panel.unauthorized'))->danger()->send();
 
             return;

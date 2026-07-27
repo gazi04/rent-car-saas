@@ -6,6 +6,7 @@ use App\Enums\BookingStatus;
 use App\Enums\PlanFeature;
 use App\Filament\Support\HelpAction;
 use App\Models\Booking;
+use App\Models\Tenant;
 use App\Models\Vehicle;
 use BackedEnum;
 use Carbon\CarbonImmutable;
@@ -72,7 +73,7 @@ class Reports extends Page
     public static function canAccess(): bool
     {
         return (auth()->user()?->isOwner() ?? false)
-            && (tenant()?->allowsFeature(PlanFeature::Reports) ?? (bool) PlanFeature::Reports->default());
+            && (Tenant::current()?->allowsFeature(PlanFeature::Reports) ?? (bool) PlanFeature::Reports->default());
     }
 
     /** @var array<string, mixed>|null */
@@ -189,7 +190,7 @@ class Reports extends Page
      */
     public function showsHeatmap(): bool
     {
-        return tenant()?->allowsFeature(PlanFeature::FleetHeatmap)
+        return Tenant::current()?->allowsFeature(PlanFeature::FleetHeatmap)
             ?? (bool) PlanFeature::FleetHeatmap->default();
     }
 

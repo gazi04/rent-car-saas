@@ -4,6 +4,7 @@ namespace App\Listeners;
 
 use App\Ai\Contracts\ReportsAiUsage;
 use App\Models\AiUsageLog;
+use App\Models\Tenant;
 use App\Services\Ai\AiCostEstimator;
 use Laravel\Ai\Events\AgentPrompted;
 use Laravel\Ai\Responses\StreamedAgentResponse;
@@ -42,7 +43,7 @@ class RecordAiUsage
             $model = $response->meta->model ?? $event->prompt->model;
 
             AiUsageLog::query()->create([
-                'tenant_id' => tenant()?->id,
+                'tenant_id' => Tenant::current()?->id,
                 'feature' => $agent->aiFeature(),
                 'provider' => $response->meta->provider ?? '',
                 'model' => $model,

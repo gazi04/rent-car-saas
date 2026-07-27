@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use RuntimeException;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -370,5 +371,35 @@ class Tenant extends BaseTenant implements HasMedia
         $port = parse_url($appUrl, PHP_URL_PORT);
 
         return (is_string($scheme) ? $scheme : 'http').'://'.$domain.($port !== null && $port !== false ? ':'.$port : '');
+    }
+
+    /**
+     * The tenant resolved for the current request, or null in central context.
+     *
+     * stancl's tenant() helper is declared to return mixed, so every call site
+     * that chains off it (allowsFeature, featureLimit, settings, …) reads as an
+     * untyped call to static analysis. Prefer this accessor over tenant().
+     */
+    public static function current(): ?self
+    {
+        $tenant = tenant();
+
+        return $tenant instanceof self ? $tenant : null;
+    }
+
+    /**
+     * The current tenant, for code paths that cannot run without one (operator
+     * panel pages, tenant-scoped settings writes). Fails loudly rather than
+     * silently no-oping if tenancy was never initialized.
+     */
+    public static function currentOrFail(): self
+    {
+        $tenant = self::current();
+
+        if ($tenant === null) {
+            throw new RuntimeException('No tenant is resolved for the current request.');
+        }
+
+        return $tenant;
     }
 }

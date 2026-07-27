@@ -6,6 +6,7 @@ namespace App\Providers\Filament;
 
 use App\Http\Middleware\EnsureTenantIsActive;
 use App\Http\Middleware\SetUserLocale;
+use App\Models\Tenant;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -36,7 +37,11 @@ class OperatorPanelProvider extends PanelProvider
             ->path('dashboard')
             ->viteTheme('resources/css/filament/operator/theme.css')
             ->login()
-            ->brandName(fn (): string => tenant() !== null ? (string) tenant('name') : 'Operator')
+            ->brandName(function (): string {
+                $tenant = Tenant::current();
+
+                return $tenant === null ? 'Operator' : $tenant->name;
+            })
             ->colors([
                 'primary' => Color::Indigo,
             ])

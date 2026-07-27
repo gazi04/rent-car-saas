@@ -8,6 +8,7 @@ use App\Enums\Transmission;
 use App\Enums\VehicleCategory;
 use App\Enums\VehicleStatus;
 use App\Exceptions\AiRequestFailedException;
+use App\Models\Tenant;
 use App\Models\Vehicle;
 use App\Services\Ai\PricingSuggestionService;
 use App\Services\Ai\VehicleListingWriter;
@@ -88,7 +89,7 @@ class VehicleForm
                                     ->label(__('panel.ai_suggest_price'))
                                     ->icon('heroicon-m-sparkles')
                                     ->visible(fn (?Vehicle $record): bool => $record instanceof Vehicle
-                                        && (tenant()?->allowsFeature(PlanFeature::AiPricingSuggestions) ?? (bool) PlanFeature::AiPricingSuggestions->default()))
+                                        && (Tenant::current()?->allowsFeature(PlanFeature::AiPricingSuggestions) ?? (bool) PlanFeature::AiPricingSuggestions->default()))
                                     ->requiresConfirmation()
                                     ->modalHeading(__('panel.ai_suggest_price'))
                                     ->modalDescription(__('panel.ai_suggest_price_confirm'))
@@ -156,7 +157,7 @@ class VehicleForm
                             ->disk('public')
                             ->multiple()
                             // Plan cap; 8 stays the app-wide ceiling for unlimited plans.
-                            ->maxFiles(fn (): int => min(tenant()?->featureLimit(PlanFeature::PhotosPerVehicle) ?? 8, 8))
+                            ->maxFiles(fn (): int => min(Tenant::current()?->featureLimit(PlanFeature::PhotosPerVehicle) ?? 8, 8))
                             ->reorderable()
                             ->image()
                             ->imageEditor()
@@ -200,7 +201,7 @@ class VehicleForm
                                 Action::make('generateDescription')
                                     ->label(__('panel.ai_generate'))
                                     ->icon('heroicon-m-sparkles')
-                                    ->visible(fn (): bool => tenant()?->allowsFeature(PlanFeature::AiListingWriter) ?? (bool) PlanFeature::AiListingWriter->default())
+                                    ->visible(fn (): bool => Tenant::current()?->allowsFeature(PlanFeature::AiListingWriter) ?? (bool) PlanFeature::AiListingWriter->default())
                                     ->action(function (Get $get, Set $set, ?Vehicle $record): void {
                                         try {
                                             $description = resolve(VehicleListingWriter::class)->write(

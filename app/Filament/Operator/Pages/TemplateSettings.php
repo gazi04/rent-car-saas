@@ -4,6 +4,7 @@ namespace App\Filament\Operator\Pages;
 
 use App\Enums\PlanFeature;
 use App\Filament\Support\HelpAction;
+use App\Models\Tenant;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
@@ -36,7 +37,7 @@ class TemplateSettings extends Page
     public static function canAccess(): bool
     {
         return (auth()->user()?->isOwner() ?? false)
-            && (tenant()?->allowsFeature(PlanFeature::Templates) ?? (bool) PlanFeature::Templates->default());
+            && (Tenant::current()?->allowsFeature(PlanFeature::Templates) ?? (bool) PlanFeature::Templates->default());
     }
 
     public static function getNavigationLabel(): string
@@ -54,7 +55,7 @@ class TemplateSettings extends Page
 
     public function mount(): void
     {
-        $this->form->fill(tenant()->settings());
+        $this->form->fill(Tenant::currentOrFail()->settings());
     }
 
     /**
@@ -158,7 +159,7 @@ class TemplateSettings extends Page
 
         foreach ($allowedKeys as $key) {
             if (array_key_exists($key, $data)) {
-                tenant()->setSetting($key, $data[$key]);
+                Tenant::currentOrFail()->setSetting($key, $data[$key]);
             }
         }
 

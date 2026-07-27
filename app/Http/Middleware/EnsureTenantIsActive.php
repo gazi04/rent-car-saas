@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Enums\TenantStatus;
+use App\Models\Tenant;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,7 +18,7 @@ class EnsureTenantIsActive
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $tenant = tenant();
+        $tenant = Tenant::current();
 
         if ($tenant !== null && $tenant->status !== TenantStatus::Active) {
             $view = str_starts_with((string) $request->route()?->getName(), 'filament.')

@@ -9,6 +9,7 @@ use App\Filament\Operator\Resources\PromoCodes\Pages\ListPromoCodes;
 use App\Filament\Operator\Resources\PromoCodes\Schemas\PromoCodeForm;
 use App\Filament\Operator\Resources\PromoCodes\Tables\PromoCodesTable;
 use App\Models\PromoCode;
+use App\Models\Tenant;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -48,7 +49,7 @@ class PromoCodeResource extends Resource
     public static function canAccess(): bool
     {
         return (auth()->user()?->isOwner() ?? false)
-            && (tenant()?->allowsFeature(PlanFeature::PromoCodes) ?? (bool) PlanFeature::PromoCodes->default());
+            && (Tenant::current()?->allowsFeature(PlanFeature::PromoCodes) ?? (bool) PlanFeature::PromoCodes->default());
     }
 
     public static function form(Schema $schema): Schema

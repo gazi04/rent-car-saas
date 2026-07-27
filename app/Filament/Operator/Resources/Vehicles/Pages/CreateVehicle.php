@@ -4,6 +4,7 @@ namespace App\Filament\Operator\Resources\Vehicles\Pages;
 
 use App\Enums\PlanFeature;
 use App\Filament\Operator\Resources\Vehicles\VehicleResource;
+use App\Models\Tenant;
 use App\Models\Vehicle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
@@ -18,7 +19,7 @@ class CreateVehicle extends CreateRecord
      */
     protected function beforeCreate(): void
     {
-        $limit = tenant()?->featureLimit(PlanFeature::VehicleLimit);
+        $limit = Tenant::current()?->featureLimit(PlanFeature::VehicleLimit);
 
         if ($limit !== null && Vehicle::query()->count() >= $limit) {
             Notification::make()
