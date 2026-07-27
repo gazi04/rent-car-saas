@@ -43,6 +43,14 @@ return [
     'tenant_base_domain' => env('TENANT_BASE_DOMAIN', 'localhost'),
 
     /**
+     * How long a signup may sit pending (or cancelled) before the admin panel
+     * offers to purge it. Subdomains are globally unique and are held for as
+     * long as the tenant row exists, so abandoned signups need a release path.
+     * Only affects when the manual Purge action appears — nothing auto-deletes.
+     */
+    'abandoned_after_days' => (int) env('TENANT_ABANDONED_AFTER_DAYS', 30),
+
+    /**
      * Host the Super Admin (Filament) panel is served from. A central domain.
      * Locally "admin.localhost"; production overrides via env (e.g. admin.yourdomain.com).
      */

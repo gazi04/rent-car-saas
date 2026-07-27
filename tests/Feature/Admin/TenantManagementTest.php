@@ -2,13 +2,17 @@
 
 use App\Filament\Resources\Tenants\Pages\CreateTenant;
 use App\Filament\Resources\Tenants\Pages\ListTenants;
+use App\Models\Booking;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Models\Vehicle;
 use Filament\Facades\Filament;
 use Livewire\Livewire;
+use Spatie\Activitylog\Models\Activity;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\assertDatabaseHas;
+use function Pest\Laravel\assertDatabaseMissing;
 
 beforeEach(function () {
     // Filament resolves the "current panel" from the request host. Tests call
@@ -124,4 +128,60 @@ it('rejects a tenant', function () {
     Livewire::test(ListTenants::class)->callTableAction('reject', $tenant);
 
     expect($tenant->refresh()->status->value)->toBe('cancelled');
+});
+
+// ── Purging abandoned signups (frees the subdomain) ──────────────────────────
+
+it('purges an abandoned signup and frees its subdomain', function () {
+    actingAs(User::factory()->admin()->create());
+
+    $tenant = Tenant::factory()->pending()->withDomain('ghostco')->create([
+        'created_at' => now()->subDays(60),
+    ]);
+    User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'operator']);
+
+    Livewire::test(ListTenants::class)->callTableAction('purge', $tenant);
+
+    assertDatabaseMissing('tenants', ['id' => $tenant->id]);
+    assertDatabaseMissing('domains', ['tenant_id' => $tenant->id]);
+
+    // The whole point: the subdomain is re-registerable afterwards.
+    expect(Tenant::factory()->withDomain('ghostco')->create())->toBeInstanceOf(Tenant::class);
+});
+
+it('records who purged which subdomain before the row disappears', function () {
+    $admin = User::factory()->admin()->create();
+    actingAs($admin);
+
+    $tenant = Tenant::factory()->pending()->withDomain('audited')->create([
+        'created_at' => now()->subDays(60),
+    ]);
+
+    Livewire::test(ListTenants::class)->callTableAction('purge', $tenant);
+
+    $activity = Activity::query()->where('description', 'purged')->sole();
+
+    expect($activity->causer_id)->toBe($admin->id)
+        ->and($activity->properties->get('domains'))->toContain(tenant_domain('audited'));
+});
+
+it('hides the purge action for tenants that are active, recent, or have bookings', function () {
+    actingAs(User::factory()->admin()->create());
+
+    $active = Tenant::factory()->create([
+        'status' => 'active',
+        'created_at' => now()->subDays(60),
+    ]);
+
+    $recent = Tenant::factory()->pending()->create(['created_at' => now()->subDays(2)]);
+
+    $withBookings = Tenant::factory()->pending()->create(['created_at' => now()->subDays(60)]);
+    tenancy()->initialize($withBookings);
+    Booking::factory()->create(['vehicle_id' => Vehicle::factory()->create()->id]);
+    tenancy()->end();
+
+    Livewire::test(ListTenants::class)
+        ->assertTableActionHidden('purge', $active)
+        ->assertTableActionHidden('purge', $recent)
+        ->assertTableActionHidden('purge', $withBookings);
 });

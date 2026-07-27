@@ -22,6 +22,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use STS\FilamentImpersonate\Actions\Impersonate;
@@ -77,6 +78,7 @@ class TenantsTable
                 self::suspendAction(),
                 self::reactivateAction(),
                 self::rejectAction(),
+                self::purgeAction(),
                 EditAction::make(),
             ])
             ->toolbarActions([
@@ -418,5 +420,62 @@ class TenantsTable
 
                 self::logAdminAction($record, 'rejected');
             });
+    }
+
+    /**
+     * Permanently delete an abandoned signup, freeing its subdomain.
+     *
+     * domains.domain is globally unique, so a never-approved signup holds its
+     * subdomain forever — rejecting only flips the status. This is the only way
+     * to release one. Deliberately manual: deleting cascades to the tenant's
+     * domains, users and data, so an admin decides case by case rather than a
+     * sweep doing it unattended. Restricted to signups that never became a real
+     * business — pending/cancelled, past the abandonment window, no bookings.
+     */
+    protected static function purgeAction(): Action
+    {
+        return Action::make('purge')
+            ->label('Purge')
+            ->icon('heroicon-o-trash')
+            ->color('danger')
+            ->requiresConfirmation()
+            ->modalHeading('Purge abandoned signup')
+            ->modalDescription(function (Tenant $record): string {
+                $domains = $record->domains->pluck('domain')->implode(', ');
+
+                return sprintf(
+                    'Permanently deletes %s and frees the subdomain %s for re-registration. Its users and settings go with it. This cannot be undone.',
+                    $record->name,
+                    $domains === '' ? '—' : $domains,
+                );
+            })
+            ->modalSubmitActionLabel('Purge permanently')
+            ->visible(fn (Tenant $record): bool => self::isAbandoned($record))
+            ->action(function (Tenant $record): void {
+                // Log before the delete: activity() needs the subject row to exist.
+                self::logAdminAction($record, 'purged', [
+                    'domains' => $record->domains->pluck('domain')->all(),
+                    'status' => $record->status->value,
+                ]);
+
+                $record->delete();
+            });
+    }
+
+    /**
+     * A signup that never became a business: pending or cancelled, older than
+     * the abandonment window, and with no bookings to preserve.
+     */
+    protected static function isAbandoned(Tenant $record): bool
+    {
+        if (! in_array($record->status, [TenantStatus::Pending, TenantStatus::Cancelled], true)) {
+            return false;
+        }
+
+        if ($record->created_at->isAfter(now()->subDays(Config::integer('tenancy.abandoned_after_days')))) {
+            return false;
+        }
+
+        return $record->bookings->isEmpty();
     }
 }

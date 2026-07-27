@@ -145,6 +145,17 @@ class Tenant extends BaseTenant implements HasMedia
     }
 
     /**
+     * This tenant's bookings, queried from central context (where the
+     * BelongsToTenant global scope is inactive) — e.g. the admin panel.
+     *
+     * @return HasMany<Booking, $this>
+     */
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class, 'tenant_id');
+    }
+
+    /**
      * @return HasMany<TenantSetting, $this>
      */
     public function tenantSettings(): HasMany
