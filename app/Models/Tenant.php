@@ -363,9 +363,12 @@ class Tenant extends BaseTenant implements HasMedia
         }
 
         $appUrl = (string) config('app.url');
-        $scheme = parse_url($appUrl, PHP_URL_SCHEME) ?? 'http';
+
+        // parse_url() returns false (not null) on a malformed URL — ?? would let that
+        // through and interpolate as '', yielding "://domain" and 403ing every signed link.
+        $scheme = parse_url($appUrl, PHP_URL_SCHEME);
         $port = parse_url($appUrl, PHP_URL_PORT);
 
-        return $scheme.'://'.$domain.($port !== null && $port !== false ? ':'.$port : '');
+        return (is_string($scheme) ? $scheme : 'http').'://'.$domain.($port !== null && $port !== false ? ':'.$port : '');
     }
 }

@@ -27,9 +27,13 @@ class SendBookingConfirmedEmail implements ShouldQueue
         $rootUrl = $tenant?->publicRootUrl();
 
         if ($rootUrl !== null) {
+            // parse_url() returns false (not null) on a malformed URL, so ?? would
+            // leak false into forceScheme()'s ?string parameter.
+            $scheme = parse_url($rootUrl, PHP_URL_SCHEME);
+
             // forceRootUrl alone is not enough: the generator swaps in the current
             // request's scheme, so an https root would still emit http links.
-            URL::forceScheme(parse_url($rootUrl, PHP_URL_SCHEME) ?? 'http');
+            URL::forceScheme(is_string($scheme) ? $scheme : 'http');
             URL::forceRootUrl($rootUrl);
 
             $agreementUrl = URL::temporarySignedRoute(

@@ -943,12 +943,6 @@ parameters:
 			path: app/Listeners/SendBookingCancelledNotifications.php
 
 		-
-			message: '#^Parameter \#1 \$scheme of static method Illuminate\\Support\\Facades\\URL\:\:forceScheme\(\) expects string\|null, string\|false given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Listeners/SendBookingConfirmedEmail.php
-
-		-
 			message: '#^Cannot access property \$name on App\\Models\\Vehicle\|null\.$#'
 			identifier: property.nonObject
 			count: 1
@@ -1009,12 +1003,6 @@ parameters:
 			path: app/Mail/BookingReceivedMail.php
 
 		-
-			message: '#^Parameter \#1 \$scheme of static method Illuminate\\Support\\Facades\\URL\:\:forceScheme\(\) expects string\|null, string\|false given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Mail/BookingReceivedMail.php
-
-		-
 			message: '#^Cannot access property \$email on App\\Models\\Tenant\|null\.$#'
 			identifier: property.nonObject
 			count: 1
@@ -1046,12 +1034,6 @@ parameters:
 
 		-
 			message: '#^Parameter \#1 \$address of class Illuminate\\Mail\\Mailables\\Address constructor expects string, string\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Mail/BookingReviewRequestMail.php
-
-		-
-			message: '#^Parameter \#1 \$scheme of static method Illuminate\\Support\\Facades\\URL\:\:forceScheme\(\) expects string\|null, string\|false given\.$#'
 			identifier: argument.type
 			count: 1
 			path: app/Mail/BookingReviewRequestMail.php
@@ -1099,12 +1081,6 @@ parameters:
 			path: app/Mail/VehicleBackInStockMail.php
 
 		-
-			message: '#^Parameter \#1 \$scheme of static method Illuminate\\Support\\Facades\\URL\:\:forceScheme\(\) expects string\|null, string\|false given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Mail/VehicleBackInStockMail.php
-
-		-
 			message: '#^Cannot access property \$email on App\\Models\\Tenant\|null\.$#'
 			identifier: property.nonObject
 			count: 1
@@ -1118,12 +1094,6 @@ parameters:
 
 		-
 			message: '#^Parameter \#1 \$address of class Illuminate\\Mail\\Mailables\\Address constructor expects string, string\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Mail/WaitlistSlotOpenMail.php
-
-		-
-			message: '#^Parameter \#1 \$scheme of static method Illuminate\\Support\\Facades\\URL\:\:forceScheme\(\) expects string\|null, string\|false given\.$#'
 			identifier: argument.type
 			count: 1
 			path: app/Mail/WaitlistSlotOpenMail.php
