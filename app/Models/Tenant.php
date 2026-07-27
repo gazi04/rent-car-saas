@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Mail\Mailables\Address;
+use Illuminate\Support\Facades\Config;
 use RuntimeException;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -371,6 +373,17 @@ class Tenant extends BaseTenant implements HasMedia
         $port = parse_url($appUrl, PHP_URL_PORT);
 
         return (is_string($scheme) ? $scheme : 'http').'://'.$domain.($port !== null && $port !== false ? ':'.$port : '');
+    }
+
+    /**
+     * The From address for customer-facing mail.
+     *
+     * tenants.email is nullable, so fall back to the platform address rather
+     * than handing null to Address and breaking every email this tenant sends.
+     */
+    public function senderAddress(): Address
+    {
+        return new Address($this->email ?? Config::string('mail.from.address'), $this->name);
     }
 
     /**

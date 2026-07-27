@@ -63,7 +63,7 @@ class TemplateRenderer
             'end_date' => $booking->end_date->format('d M Y'),
             'total' => '€'.number_format((float) $booking->total, 2),
             'deposit' => '€'.number_format((float) $booking->deposit, 2),
-            'operator' => Tenant::query()->find($booking->tenant_id)->name,
+            'operator' => Tenant::query()->findOrFail($booking->tenant_id)->name,
             'pickup_location' => $booking->pickup_location ?? '',
         ];
     }

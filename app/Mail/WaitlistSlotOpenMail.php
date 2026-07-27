@@ -8,7 +8,6 @@ use App\Models\WaitlistEntry;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -61,17 +60,17 @@ class WaitlistSlotOpenMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
-        $tenant = Tenant::query()->find($this->entry->tenant_id);
+        $tenant = Tenant::query()->findOrFail($this->entry->tenant_id);
 
         return new Envelope(
-            from: new Address($tenant->email, $tenant->name),
+            from: $tenant->senderAddress(),
             subject: __('emails.waitlist_slot_open.subject', ['operator' => $tenant->name]),
         );
     }
 
     public function content(): Content
     {
-        $tenant = Tenant::query()->find($this->entry->tenant_id);
+        $tenant = Tenant::query()->findOrFail($this->entry->tenant_id);
 
         return new Content(
             markdown: 'emails.waitlist-slot-open',

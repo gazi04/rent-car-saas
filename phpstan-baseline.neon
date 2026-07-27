@@ -685,96 +685,6 @@ parameters:
 			path: app/Listeners/SendBookingReceivedNotifications.php
 
 		-
-			message: '#^Cannot access property \$email on App\\Models\\Tenant\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Mail/BookingCancelledMail.php
-
-		-
-			message: '#^Cannot access property \$name on App\\Models\\Tenant\|null\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: app/Mail/BookingCancelledMail.php
-
-		-
-			message: '#^Parameter \#1 \$address of class Illuminate\\Mail\\Mailables\\Address constructor expects string, string\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Mail/BookingCancelledMail.php
-
-		-
-			message: '#^Cannot access property \$email on App\\Models\\Tenant\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Mail/BookingConfirmedMail.php
-
-		-
-			message: '#^Cannot access property \$name on App\\Models\\Tenant\|null\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: app/Mail/BookingConfirmedMail.php
-
-		-
-			message: '#^Parameter \#1 \$address of class Illuminate\\Mail\\Mailables\\Address constructor expects string, string\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Mail/BookingConfirmedMail.php
-
-		-
-			message: '#^Cannot access property \$email on App\\Models\\Tenant\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Mail/BookingReceivedMail.php
-
-		-
-			message: '#^Cannot access property \$name on App\\Models\\Tenant\|null\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: app/Mail/BookingReceivedMail.php
-
-		-
-			message: '#^Parameter \#1 \$address of class Illuminate\\Mail\\Mailables\\Address constructor expects string, string\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Mail/BookingReceivedMail.php
-
-		-
-			message: '#^Cannot access property \$email on App\\Models\\Tenant\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Mail/BookingRejectedMail.php
-
-		-
-			message: '#^Cannot access property \$name on App\\Models\\Tenant\|null\.$#'
-			identifier: property.nonObject
-			count: 2
-			path: app/Mail/BookingRejectedMail.php
-
-		-
-			message: '#^Parameter \#1 \$address of class Illuminate\\Mail\\Mailables\\Address constructor expects string, string\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Mail/BookingRejectedMail.php
-
-		-
-			message: '#^Cannot access property \$email on App\\Models\\Tenant\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Mail/BookingReviewRequestMail.php
-
-		-
-			message: '#^Cannot access property \$name on App\\Models\\Tenant\|null\.$#'
-			identifier: property.nonObject
-			count: 3
-			path: app/Mail/BookingReviewRequestMail.php
-
-		-
-			message: '#^Parameter \#1 \$address of class Illuminate\\Mail\\Mailables\\Address constructor expects string, string\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Mail/BookingReviewRequestMail.php
-
-		-
 			message: '#^Cannot access property \$name on App\\Models\\Vehicle\|null\.$#'
 			identifier: property.nonObject
 			count: 1
@@ -793,46 +703,10 @@ parameters:
 			path: app/Mail/SubscriptionRenewalReminderMail.php
 
 		-
-			message: '#^Cannot access property \$email on App\\Models\\Tenant\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Mail/VehicleBackInStockMail.php
-
-		-
-			message: '#^Cannot access property \$name on App\\Models\\Tenant\|null\.$#'
-			identifier: property.nonObject
-			count: 3
-			path: app/Mail/VehicleBackInStockMail.php
-
-		-
 			message: '#^Cannot access property \$name on App\\Models\\Vehicle\|null\.$#'
 			identifier: property.nonObject
 			count: 1
 			path: app/Mail/VehicleBackInStockMail.php
-
-		-
-			message: '#^Parameter \#1 \$address of class Illuminate\\Mail\\Mailables\\Address constructor expects string, string\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Mail/VehicleBackInStockMail.php
-
-		-
-			message: '#^Cannot access property \$email on App\\Models\\Tenant\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Mail/WaitlistSlotOpenMail.php
-
-		-
-			message: '#^Cannot access property \$name on App\\Models\\Tenant\|null\.$#'
-			identifier: property.nonObject
-			count: 3
-			path: app/Mail/WaitlistSlotOpenMail.php
-
-		-
-			message: '#^Parameter \#1 \$address of class Illuminate\\Mail\\Mailables\\Address constructor expects string, string\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Mail/WaitlistSlotOpenMail.php
 
 		-
 			message: '#^PHPDoc tag @var with type array\<string, string\> is not subtype of type array\{\}\|string\.$#'
@@ -1181,12 +1055,6 @@ parameters:
 			identifier: binaryOp.invalid
 			count: 1
 			path: app/Services/Media/TenantAwarePathGenerator.php
-
-		-
-			message: '#^Cannot access property \$name on App\\Models\\Tenant\|null\.$#'
-			identifier: property.nonObject
-			count: 1
-			path: app/Services/TemplateRenderer.php
 
 		-
 			message: '#^Cannot access property \$name on App\\Models\\Vehicle\|null\.$#'

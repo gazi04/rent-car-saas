@@ -20,6 +20,7 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\BookingService;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
@@ -419,4 +420,29 @@ test('signed cancel link follows app.url scheme and port on the tenant domain', 
 
     expect($mail->cancelUrl)->toStartWith('https://'.tenant_domain('m9tenant').':8443/')
         ->and($mail->cancelUrl)->toContain('signature=');
+});
+
+// ── Envelope robustness: nullable tenant.email, missing tenant row ───────────
+
+test('customer email still sends from the platform address when the tenant has no email', function () {
+    config(['mail.from.address' => 'noreply@platform.test']);
+
+    $this->tenant->update(['email' => null]);
+
+    $booking = $this->service->create(notifBookingData($this->vehicle));
+
+    $envelope = (new BookingReceivedMail($booking))->envelope();
+
+    expect($envelope->from?->address)->toBe('noreply@platform.test')
+        ->and($envelope->from?->name)->toBe($this->tenant->name);
+});
+
+test('a mailable whose tenant row is gone fails loudly instead of reading a property on null', function () {
+    $booking = $this->service->create(notifBookingData($this->vehicle));
+
+    tenancy()->end();
+    Tenant::query()->whereKey($this->tenant->id)->delete();
+
+    expect(fn () => (new BookingReceivedMail($booking))->envelope())
+        ->toThrow(ModelNotFoundException::class);
 });

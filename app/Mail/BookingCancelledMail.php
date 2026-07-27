@@ -9,7 +9,6 @@ use App\Services\TemplateRenderer;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
-use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -24,10 +23,10 @@ class BookingCancelledMail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
-        $tenant = Tenant::query()->find($this->booking->tenant_id);
+        $tenant = Tenant::query()->findOrFail($this->booking->tenant_id);
 
         return new Envelope(
-            from: new Address($tenant->email, $tenant->name),
+            from: $tenant->senderAddress(),
             subject: resolve(TemplateRenderer::class)->resolve(
                 $this->booking,
                 'tmpl_email_cancelled_subject',
@@ -40,7 +39,7 @@ class BookingCancelledMail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         $renderer = resolve(TemplateRenderer::class);
-        $operator = Tenant::query()->find($this->booking->tenant_id)->name;
+        $operator = Tenant::query()->findOrFail($this->booking->tenant_id)->name;
 
         return new Content(
             markdown: 'emails.booking-cancelled',
