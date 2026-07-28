@@ -33,6 +33,9 @@ class PlansTable
                 IconColumn::make('is_active')
                     ->label('Active')
                     ->boolean(),
+                IconColumn::make('is_trial')
+                    ->label('Trial')
+                    ->boolean(),
                 TextColumn::make('sort_order')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

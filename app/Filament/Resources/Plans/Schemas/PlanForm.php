@@ -56,6 +56,11 @@ class PlanForm
                             ->label('Active (selectable for tenants and payments)')
                             ->default(true)
                             ->columnSpanFull(),
+                        Toggle::make('is_trial')
+                            ->label('Trial plan')
+                            ->helperText('Marks this as the trial tier — flagging it here automatically unflags any other plan. Self-registration and trial-status checks key off whichever plan has this on.')
+                            ->default(false)
+                            ->columnSpanFull(),
                     ]),
 
                 // One control per PlanFeature case — a new enum case shows up

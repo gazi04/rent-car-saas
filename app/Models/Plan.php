@@ -20,14 +20,57 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * @property array<string, mixed>|null $features
  */
-#[Fillable(['name', 'slug', 'description', 'price', 'features', 'is_active', 'sort_order'])]
+#[Fillable(['name', 'slug', 'description', 'price', 'features', 'is_active', 'is_trial', 'sort_order'])]
 class Plan extends Model
 {
     /** @use HasFactory<PlanFactory> */
     use HasFactory;
 
-    /** The one plan slug the app branches on (trial-vs-paid reminder copy, extend-trial action). */
+    /**
+     * Fallback trial slug, used only when no plan row is flagged is_trial
+     * (fresh installs before PlanSeeder runs, and most test factories, which
+     * don't create a backing Plan row). Source of truth is Plan::trialSlug().
+     */
     public const string TRIAL_SLUG = 'trial';
+
+    /** Memoized per-request; invalidated whenever a Plan is saved or deleted. */
+    private static ?string $trialSlugCache = null;
+
+    protected static function booted(): void
+    {
+        static::saved(function (self $plan): void {
+            self::$trialSlugCache = null;
+
+            if ($plan->is_trial) {
+                // Enforce "only one trial plan": unflag every other row in a
+                // single UPDATE. Deliberately bypasses Eloquent events on
+                // those rows — this is bookkeeping, not a change any
+                // observer should react to.
+                self::query()->whereKeyNot($plan->id)->where('is_trial', true)->update(['is_trial' => false]);
+            }
+        });
+
+        static::deleted(function (): void {
+            self::$trialSlugCache = null;
+        });
+    }
+
+    /**
+     * The slug currently flagged as the trial tier. Falls back to
+     * TRIAL_SLUG when no plan is flagged — the reason isOnTrial() keeps
+     * working unchanged in suites that create tenants with no backing Plan
+     * row.
+     */
+    public static function trialSlug(): string
+    {
+        if (self::$trialSlugCache !== null) {
+            return self::$trialSlugCache;
+        }
+
+        $slug = self::query()->where('is_trial', true)->value('slug');
+
+        return self::$trialSlugCache = is_string($slug) ? $slug : self::TRIAL_SLUG;
+    }
 
     /**
      * @return array<string, string>
@@ -38,6 +81,7 @@ class Plan extends Model
             'features' => 'array',
             'price' => 'decimal:2',
             'is_active' => 'boolean',
+            'is_trial' => 'boolean',
         ];
     }
 

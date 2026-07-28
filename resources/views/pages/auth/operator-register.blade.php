@@ -1,6 +1,7 @@
 <?php
 
 use App\Concerns\PasswordValidationRules;
+use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
@@ -78,7 +79,7 @@ new #[Layout('layouts.auth')] #[Title('Start your rental business')] class exten
             'email' => $validated['email'],
             'phone' => $validated['phone'] ?: null,
             'status' => 'pending',
-            'plan' => 'trial',
+            'plan' => Plan::trialSlug(),
         ]);
 
         $tenant->domains()->create([

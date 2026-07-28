@@ -24,6 +24,7 @@ class PlanSeeder extends Seeder
                 'description' => '30-day free trial with full access.',
                 'price' => 0,
                 'features' => [],
+                'is_trial' => true,
                 'sort_order' => 0,
             ],
             [

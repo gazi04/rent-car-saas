@@ -104,7 +104,7 @@ class Tenant extends BaseTenant implements HasMedia
 
     public function isOnTrial(): bool
     {
-        return $this->plan === Plan::TRIAL_SLUG;
+        return $this->plan === Plan::trialSlug();
     }
 
     /**
