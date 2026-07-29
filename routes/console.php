@@ -37,3 +37,8 @@ Schedule::command(RequestPendingReviews::class)->dailyAt('09:00')->withoutOverla
 // Age out the email delivery log (mail.log_retention_days). It grows with send
 // volume and is an operational trail, not a business record.
 Schedule::command('model:prune', ['--model' => [EmailLog::class]])->dailyAt('04:00');
+
+// Age out Pulse's rolling window. Same reasoning as the email log above:
+// diagnostics, not a business record — and the pulse_* tables grow on every
+// request, so this is the one that would grow fastest if left unswept.
+Schedule::command('pulse:trim')->hourly();
