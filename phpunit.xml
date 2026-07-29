@@ -17,6 +17,9 @@
         <testsuite name="Arch">
             <directory>tests/Arch</directory>
         </testsuite>
+        <testsuite name="Browser">
+            <directory>tests/Browser</directory>
+        </testsuite>
     </testsuites>
     <source>
         <include>
@@ -35,7 +38,19 @@
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
+        <!--
+        Browser suite only: a real Chromium process only gets its tenant identity
+        from a Host header override (visit(...)->withHost(...)) — its actual
+        navigated origin is wherever Pest's local server binds, not any tenant
+        subdomain. If session.domain doesn't match that real origin the browser
+        silently drops the session cookie. Pin it here rather than leave it to
+        inherit whatever a developer's own .env has (e.g. .lvh.me locally).
+        Must be the literal string "null" — env() only maps that exact string to
+        PHP null; an empty string is a different, non-equivalent value.
+        -->
+        <env name="SESSION_DOMAIN" value="null"/>
         <env name="PULSE_ENABLED" value="false"/>
+        <env name="SENTRY_LARAVEL_DSN" value=""/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
     </php>
