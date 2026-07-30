@@ -22,6 +22,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -33,6 +34,11 @@ class TenantsTable
     {
         return $table
             ->recordUrl(fn (Tenant $record): string => ViewTenant::getUrl(['record' => $record]))
+            // isAbandoned() below needs to know whether a tenant has any bookings.
+            // Counting in the list query keeps that one aggregate for the whole page
+            // instead of a per-row lookup — and reading ->bookings there would have
+            // hydrated every booking row just to ask if the collection was empty.
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->withCount('bookings'))
             ->columns([
                 TextColumn::make('name')
                     ->searchable()
@@ -476,6 +482,9 @@ class TenantsTable
             return false;
         }
 
-        return $record->bookings->isEmpty();
+        // bookings_count comes from the list query's withCount(). loadCount() covers
+        // any caller handing over a Tenant that never went through that query — an
+        // explicit aggregate either way, so nothing here lazy-loads booking rows.
+        return ($record->bookings_count ?? $record->loadCount('bookings')->bookings_count) === 0;
     }
 }

@@ -26,6 +26,7 @@ use Stancl\Tenancy\Database\Models\Tenant as BaseTenant;
  * @property TenantStatus $status
  * @property CarbonImmutable|null $trial_ends_at
  * @property CarbonImmutable|null $paid_until
+ * @property-read int|null $bookings_count set by withCount('bookings'), null when not counted
  */
 #[Fillable(['id', 'name', 'email', 'phone', 'status', 'plan', 'trial_ends_at', 'paid_until'])]
 #[Hidden(['stripe_id', 'stripe_subscription_id'])]

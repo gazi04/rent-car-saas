@@ -43,13 +43,24 @@ class TenantAwarePathGenerator implements PathGenerator
     /**
      * The Tenant model IS the tenant (its own `id` is the tenant key); every other
      * media-owning model (e.g. Vehicle) belongs to a tenant via `tenant_id`.
+     *
+     * Media read back from the database (a Filament upload field or image column
+     * rendering an existing photo) arrives without its `model` relation loaded, and
+     * touching `$media->model` there is an implicit lazy load — fatal under
+     * Model::preventLazyLoading(). loadMissing() is an explicit load, so it resolves
+     * the owner without tripping that guard, and is a no-op right after an upload,
+     * where Spatie has already set the relation.
      */
     protected function resolveTenantId(Media $media): string
     {
-        $model = $media->model;
+        // The owner's key is the tenant key here, so skip the query entirely.
+        if ($media->model_type === Tenant::class) {
+            return (string) $media->model_id;
+        }
+
+        $model = $media->loadMissing('model')->model;
 
         return match (true) {
-            $model instanceof Tenant => (string) $model->id,
             $model instanceof Vehicle => (string) $model->tenant_id,
             default => throw new RuntimeException(
                 'No tenant-id resolution rule for media model type ['.$media->model_type.'].'

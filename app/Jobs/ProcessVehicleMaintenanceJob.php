@@ -45,9 +45,17 @@ class ProcessVehicleMaintenanceJob implements ShouldQueue
                 ->where('role', 'operator')
                 ->get();
 
+            // each() chunks, so a tenant with two or more due records hydrates them
+            // in one multi-row result — which is the only case where Laravel arms
+            // preventLazyLoading(). Both branches below read $record->vehicle, so
+            // without this eager load that is an implicit lazy load: a hard failure
+            // outside production, an N+1 inside it. whereHas('vehicle') already
+            // excludes trashed vehicles and the eager load applies the same scopes,
+            // so every surviving row still has a non-null vehicle.
             ServiceRecord::query()
                 ->whereNotNull('next_due_on')
                 ->whereHas('vehicle')
+                ->with('vehicle')
                 ->each(function (ServiceRecord $record) use ($owners): void {
                     if ($record->next_due_on->isPast() || $record->next_due_on->isToday()) {
                         $this->autoBlock($record, $owners);

@@ -8,6 +8,7 @@ use App\Listeners\LogImpersonationStart;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -45,6 +46,12 @@ class AppServiceProvider extends ServiceProvider
         DB::prohibitDestructiveCommands(
             app()->isProduction(),
         );
+
+        // Turn every lazy-loaded relationship into a failure in dev and CI, where
+        // an N+1 is a test failure — not in production, where the same strictness
+        // would turn a missed eager-load into a 500 for a customer mid-booking.
+        // Same production/non-production split as prohibitDestructiveCommands above.
+        Model::preventLazyLoading(! app()->isProduction());
 
         Password::defaults(fn (): ?Password => app()->isProduction()
             ? Password::min(12)
