@@ -129,6 +129,23 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        // Ships Laravel log records to Sentry as logs (separate from exception
+        // capture, which needs none of this and is already wired in bootstrap/app.php).
+        //
+        // Inert as shipped, and deliberately so: it reaches Sentry only once it is
+        // named in LOG_STACK *and* SENTRY_ENABLE_LOGS=true. Enabling just one does
+        // nothing, which is easy to misread as "logging to Sentry is on".
+        //
+        // Level is its own variable rather than LOG_LEVEL. Sharing LOG_LEVEL would
+        // tie a third-party egress volume to the local file verbosity — and since
+        // .env.example ships LOG_LEVEL=debug, adding this channel to the stack would
+        // have started forwarding every debug line the moment it was switched on.
+        // Available levels: debug, info, notice, warning, error, critical, alert, emergency.
+        'sentry_logs' => [
+            'driver' => 'sentry_logs',
+            'level' => env('SENTRY_LOGS_LEVEL', 'error'),
+        ],
+
     ],
 
 ];

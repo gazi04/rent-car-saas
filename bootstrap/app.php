@@ -7,6 +7,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Sentry\Laravel\Integration;
 use Stancl\Tenancy\Exceptions\TenantCouldNotBeIdentifiedOnDomainException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
@@ -53,4 +54,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(
             fn (HttpExceptionInterface $e) => $e->getStatusCode() === 403 ? abort(404) : null,
         );
+
+        Integration::handles($exceptions);
     })->create();

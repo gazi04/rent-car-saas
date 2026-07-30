@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 return [
@@ -131,8 +132,23 @@ return [
     | storage. By default, no PHP classes will be unserialized from your
     | cache to prevent gadget chain attacks if your APP_KEY is leaked.
     |
+    | Laravel 13's default of `false` breaks Laravel Pulse: its cards cache their
+    | query results as Collections of stdClass, so every cached card came back as
+    | __PHP_Incomplete_Class and the dashboard 500'd on its second render. This
+    | cannot be scoped to a dedicated Pulse store — CacheManager::getSerializableClasses()
+    | takes the per-store config but ignores it and reads this global key.
+    |
+    | These two are the safest possible entries on such a list: stdClass has no
+    | magic methods at all, and Collection has no __wakeup or __destruct, so
+    | neither can start a gadget chain. Anything nested inside them that is not
+    | listed here still unserializes to an incomplete object. Keep this list
+    | minimal — add a class only with a specific reason, never a broad `true`.
+    |
     */
 
-    'serializable_classes' => false,
+    'serializable_classes' => [
+        Collection::class,
+        stdClass::class,
+    ],
 
 ];
