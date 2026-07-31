@@ -191,3 +191,21 @@ it('renders the photo gallery for a vehicle with several photos', function () {
         $response->assertSee("/vehicle_photos/{$photo->id}/", escape: false);
     }
 });
+
+it('renders the details page for a vehicle saved with no description at all', function () {
+    $tenant = showTenant('shownodesc');
+
+    tenancy()->initialize($tenant);
+    // The shape the operator panel actually writes when both description boxes
+    // are left empty — keys present, values null. Not the same as a null column,
+    // and not a shape any factory produces, which is why this went unnoticed.
+    $vehicle = showVehicle(['name' => 'Undescribed Car', 'description' => ['en' => null, 'sq' => null]]);
+    tenancy()->end();
+
+    $this->get(tenant_url('shownodesc', "/vehicles/{$vehicle->id}"))
+        ->assertOk()
+        ->assertSee('Undescribed Car');
+
+    $this->get(tenant_url('shownodesc', "/vehicles/{$vehicle->id}/book"))
+        ->assertOk();
+});
