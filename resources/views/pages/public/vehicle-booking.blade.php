@@ -373,21 +373,21 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
             <div class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('booking.customer_name') }} *</label>
-                    <input wire:model="customerName" type="text" autocomplete="name"
+                    <input wire:model="customerName" type="text" autocomplete="name" data-test="customer-name"
                            class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary">
                     @error('customerName') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('booking.customer_phone') }} *</label>
-                    <input wire:model="customerPhone" type="tel" autocomplete="tel"
+                    <input wire:model="customerPhone" type="tel" autocomplete="tel" data-test="customer-phone"
                            class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary">
                     @error('customerPhone') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('booking.customer_email') }} *</label>
-                    <input wire:model="customerEmail" type="email" autocomplete="email"
+                    <input wire:model="customerEmail" type="email" autocomplete="email" data-test="customer-email"
                            class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary">
                     @error('customerEmail') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>

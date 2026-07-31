@@ -5,16 +5,34 @@ use App\Exceptions\AiRequestFailedException;
 use App\Services\Ai\FaqConciergeService;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 new class extends Component
 {
     /**
+     * How many prior turns are worth grounding an answer on. Past this the
+     * marginal answer quality is nil and every extra turn is paid for on every
+     * subsequent ask, since the whole history is re-sent each time.
+     */
+    private const int MAX_HISTORY_TURNS = 20;
+
+    /**
      * Conversation so far, oldest first. Lives only in component state — passed
      * to the agent as history and gone when the page unloads (no storage).
      *
+     * Locked because this is not the server's record of the chat: it is whatever
+     * the browser sends back, and history() splices it into the model prompt
+     * verbatim. Unlocked, a crafted /livewire/update payload can forge `assistant`
+     * turns — which the agent yields as AssistantMessage, i.e. words the model
+     * believes it said itself — defeating both the FAQ-only grounding and the
+     * `confident` fallback gate. It can also carry unbounded history, which the
+     * limiters in ask() do not bound because they count asks, not tokens.
+     * ask() still appends server-side; the lock only rejects client-side changes.
+     *
      * @var list<array{role: string, content: string}>
      */
+    #[Locked]
     public array $messages = [];
 
     public string $question = '';
@@ -71,7 +89,7 @@ new class extends Component
                 tenant(),
                 $question,
                 app()->getLocale(),
-                array_slice($this->messages, 0, -1),
+                $this->history(),
             );
         } catch (AiRequestFailedException) {
             $this->messages[] = ['role' => 'assistant', 'content' => __('booking.concierge_error')];
@@ -80,6 +98,22 @@ new class extends Component
         }
 
         $this->messages[] = ['role' => 'assistant', 'content' => $answer];
+    }
+
+    /**
+     * Prior turns to ground the next answer on: everything except the question
+     * just appended, capped to the most recent MAX_HISTORY_TURNS. The lock on
+     * $messages stops a forged history; this caps an honest one — a page left
+     * open all afternoon would otherwise grow the prompt, and the spend, on
+     * every turn without ever tripping the per-ask limiters.
+     *
+     * @return list<array{role: string, content: string}>
+     */
+    private function history(): array
+    {
+        $prior = array_slice($this->messages, 0, -1);
+
+        return array_slice($prior, -self::MAX_HISTORY_TURNS);
     }
 }; ?>
 
