@@ -58,6 +58,30 @@ it('shows public vehicles on the listing and hides private ones', function () {
         ->assertDontSee('Hidden Car');
 });
 
+it('renders the listing for vehicles that already have photos', function () {
+    $tenant = publicTenant('ardiphotos');
+    tenancy()->initialize($tenant);
+    fakeTenantDisks();
+
+    // One photo each across two vehicles is enough: the listing eager-loads
+    // media for the whole page, so the hydration is two rows — and a multi-row
+    // hydration is the only thing that arms preventLazyLoading() on Media.
+    // Without that, nothing here exercises the tenant-aware path generator
+    // against media read back from the database.
+    $first = publicVehicle(['name' => 'Photographed Golf']);
+    $second = publicVehicle(['name' => 'Photographed Passat']);
+    attachVehiclePhotos($first, 1);
+    attachVehiclePhotos($second, 1);
+
+    tenancy()->end();
+
+    $this->get(tenant_url('ardiphotos', '/vehicles'))
+        ->assertOk()
+        ->assertSee('Photographed Golf')
+        ->assertSee('Photographed Passat')
+        ->assertSee("/storage/tenants/{$tenant->id}/vehicle_photos/", escape: false);
+});
+
 it('does not show tenant B vehicles on tenant A subdomain', function () {
     $tenantA = publicTenant('alpha');
     $tenantB = publicTenant('beta');

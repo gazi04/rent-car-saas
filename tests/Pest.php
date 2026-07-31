@@ -4,7 +4,11 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vehicle;
 use Filament\Facades\Filament;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Tests\TestCase;
 
 /*
@@ -157,4 +161,65 @@ function reportsOperatorFor(string $domain): array
 function reportRange(): array
 {
     return ['start_date' => '2030-06-01', 'end_date' => '2030-06-30'];
+}
+
+/**
+ * Fake both disks a tenant writes to — 'public' (media library) and 'local'
+ * (rental-agreement PDFs).
+ *
+ * MUST be called after tenancy()->initialize(): FilesystemTenancyBootstrapper
+ * rewrites disk roots on every initialize and silently undoes an earlier fake,
+ * which is how real files end up in storage/tenant{id}/ (see the note at
+ * tests/Feature/RentalAgreementTest.php:33-36). Re-call it after every context
+ * switch that re-initializes tenancy.
+ */
+function fakeTenantDisks(): void
+{
+    Storage::fake('public');
+    Storage::fake('local');
+}
+
+/**
+ * Attach $count fake photos to $vehicle's vehicle_photos collection.
+ *
+ * Two is the meaningful default. Builder::hydrate() only arms
+ * Model::preventLazyLoading() on models from a multi-row result, so a
+ * one-photo vehicle can never catch an implicit lazy load on a Media row —
+ * which is exactly how the TenantAwarePathGenerator bug reached production.
+ *
+ * @return EloquentCollection<int, Media>
+ */
+function attachVehiclePhotos(Vehicle $vehicle, int $count = 2, int $width = 400, int $height = 300): EloquentCollection
+{
+    assertDiskIsFaked('public');
+
+    /** @var EloquentCollection<int, Media> $media */
+    $media = new EloquentCollection;
+
+    foreach (range(1, $count) as $index) {
+        $media->push(
+            $vehicle->addMedia(UploadedFile::fake()->image("photo-{$index}.jpg", $width, $height))
+                ->toMediaCollection('vehicle_photos')
+        );
+    }
+
+    return $media;
+}
+
+/**
+ * Refuse to write media unless $disk is currently a Storage::fake().
+ *
+ * The shutdown sweep at the top of this file only clears storage/tenant*. Media
+ * goes to the central 'public' disk at storage/app/public/tenants/{id}/, which
+ * nothing sweeps — so one missing Storage::fake() leaks files into the repo
+ * permanently and silently. Fail loudly at the call site instead.
+ */
+function assertDiskIsFaked(string $disk): void
+{
+    if (! str_contains(Storage::disk($disk)->path(''), 'framework/testing/disks')) {
+        throw new RuntimeException(
+            "Disk [{$disk}] is not faked — call fakeTenantDisks() after tenancy()->initialize() before writing media, ".
+            'or this test will leave real files in storage/.'
+        );
+    }
 }

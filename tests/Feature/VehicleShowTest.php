@@ -166,3 +166,28 @@ it('renders the vehicle listing with every curated layout', function (string $la
         ->assertOk()
         ->assertSee('Layout List Car');
 })->with(['card-block', 'two-column', 'f-shape']);
+
+it('renders the photo gallery for a vehicle with several photos', function () {
+    $tenant = showTenant('showgallery');
+
+    tenancy()->initialize($tenant);
+    fakeTenantDisks();
+    $vehicle = showVehicle(['name' => 'Gallery Car']);
+
+    // Plurality lives *within* one vehicle here: getMedia() returns three rows in
+    // one hydration, which arms all three, and the gallery then asks each for two
+    // conversion URLs. The Vehicle itself is route-model-bound — a single row that
+    // is never armed — so this pins the media side, not the vehicle side.
+    $photos = attachVehiclePhotos($vehicle, 3);
+
+    tenancy()->end();
+
+    $response = $this->get(tenant_url('showgallery', "/vehicles/{$vehicle->id}"))
+        ->assertOk()
+        ->assertSee('Gallery Car')
+        ->assertSee('/conversions/', escape: false);
+
+    foreach ($photos as $photo) {
+        $response->assertSee("/vehicle_photos/{$photo->id}/", escape: false);
+    }
+});

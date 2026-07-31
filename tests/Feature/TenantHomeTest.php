@@ -198,3 +198,27 @@ it('falls back to the default layout when the stored layout value is invalid', f
         ->assertOk()
         ->assertSee(__('booking.home_hero_heading'));
 });
+
+it('renders featured vehicles with their cover photos on the home page', function () {
+    $tenant = homeTenant('homephotos');
+
+    tenancy()->initialize($tenant);
+    fakeTenantDisks();
+
+    // Two vehicles, one photo each: the featured query eager-loads media for the
+    // whole page, so the media hydration is multi-row — the only shape that arms
+    // preventLazyLoading() and therefore the only shape that actually exercises
+    // the tenant-aware path generator on this page.
+    $first = homeVehicle(['name' => 'Featured Golf']);
+    $second = homeVehicle(['name' => 'Featured Passat']);
+    attachVehiclePhotos($first, 1);
+    attachVehiclePhotos($second, 1);
+
+    tenancy()->end();
+
+    $this->get(tenant_url('homephotos', '/'))
+        ->assertOk()
+        ->assertSee('Featured Golf')
+        ->assertSee('Featured Passat')
+        ->assertSee("/storage/tenants/{$tenant->id}/vehicle_photos/", escape: false);
+});

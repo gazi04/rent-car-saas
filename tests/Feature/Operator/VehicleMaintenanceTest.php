@@ -202,6 +202,63 @@ it('skips a service record whose vehicle was soft-deleted, without fataling the 
     expect($liveRecord->blocked_date_id)->not->toBeNull();
 });
 
+/*
+ * The two sweeps below deliberately leave TWO records standing where every other
+ * test in this file leaves one. The sweep iterates with ->each(), which chunks —
+ * and Builder::hydrate() only arms Model::preventLazyLoading() on models from a
+ * multi-row result. With a single record the guard is never armed, so reading
+ * $record->vehicle inside the loop looks safe; with two it is an implicit lazy
+ * load. The soft-delete test above looks like it covers this but does not: its
+ * first vehicle is trashed, so whereHas('vehicle') filters the result back down
+ * to one row.
+ */
+
+it('auto-blocks two overdue records in one sweep without lazy-loading either vehicle', function () {
+    [$tenant] = maintenanceTenant('maintpair', [PlanFeature::MaintenanceReminders->value => true], 'pairplan');
+
+    $vehicles = collect(['Golf', 'Passat'])->map(fn (string $name): Vehicle => Vehicle::factory()->create(['name' => $name]));
+
+    $records = $vehicles->map(fn (Vehicle $vehicle): ServiceRecord => ServiceRecord::factory()
+        ->overdue()
+        ->create(['vehicle_id' => $vehicle->id]));
+
+    // No Mail::fake() needed: autoBlock() sends no mail, which keeps this the
+    // deterministic reproducer — the reminder path's queued mail is throttled.
+    (new ProcessVehicleMaintenanceJob($tenant))->handle();
+
+    expect(BlockedDate::query()->count())->toBe(2);
+
+    foreach ($records as $record) {
+        expect($record->fresh()->blocked_date_id)->not->toBeNull();
+    }
+
+    foreach ($vehicles as $vehicle) {
+        expect($vehicle->fresh()->status)->toBe(VehicleStatus::UnderMaintenance);
+    }
+});
+
+it('reminds on two due-soon records in one sweep without lazy-loading either vehicle', function () {
+    Mail::fake();
+
+    [$tenant, $owner] = maintenanceTenant('maintpairdue', [PlanFeature::MaintenanceReminders->value => true], 'pairdueplan');
+
+    $records = collect(['Clio', 'Megane'])->map(fn (string $name): ServiceRecord => ServiceRecord::factory()
+        ->due()
+        ->create(['vehicle_id' => Vehicle::factory()->create(['name' => $name])->id]));
+
+    // Covers the other violating read — the bell-notification body — which the
+    // overdue path above never reaches.
+    (new ProcessVehicleMaintenanceJob($tenant))->handle();
+
+    foreach ($records as $record) {
+        expect($record->fresh()->reminder_sent_at)->not->toBeNull();
+    }
+
+    Mail::assertQueued(ServiceDueMail::class, 2);
+
+    expect($owner->notifications()->count())->toBe(2);
+});
+
 it('queues maintenance jobs only for active tenants with the feature enabled', function () {
     Queue::fake();
 

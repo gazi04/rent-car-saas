@@ -2,6 +2,7 @@
 
 use App\Enums\VehicleStatus;
 use App\Filament\Operator\Resources\Vehicles\Pages\CreateVehicle;
+use App\Filament\Operator\Resources\Vehicles\Pages\ListVehicles;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vehicle;
@@ -9,6 +10,7 @@ use Filament\Facades\Filament;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 use function Pest\Laravel\actingAs;
 
@@ -213,6 +215,56 @@ it('stores vehicle photos under a tenants/{tenant_id}/vehicle_photos/{media_id}/
 
     expect($media->getPath())->toContain($expectedPrefix)
         ->and($media->getPathRelativeToRoot())->toStartWith($expectedPrefix);
+});
+
+it('resolves the storage path for media read back from the database, without lazy loading its owner', function () {
+    [$tenant] = fleetOperator('ardi.localhost');
+    tenancy()->initialize($tenant);
+    Storage::fake('public');
+
+    $vehicle = Vehicle::factory()->create();
+
+    // Two photos, deliberately: Builder::hydrate() only arms preventLazyLoading()
+    // on models from a multi-row result, so a single-photo vehicle would never
+    // catch an implicit lazy load here.
+    foreach (['front.jpg', 'rear.jpg'] as $file) {
+        $vehicle->addMedia(UploadedFile::fake()->image($file, 800, 600))
+            ->toMediaCollection('vehicle_photos');
+    }
+
+    // Straight from the DB, so the `model` relation is not preloaded the way it is
+    // on the instances addMedia() hands back — the state every Filament photo field
+    // and image column starts from.
+    $media = Media::query()->where('model_id', $vehicle->getKey())->get();
+
+    expect($media)->toHaveCount(2);
+
+    foreach ($media as $photo) {
+        expect($photo->getPathRelativeToRoot())
+            ->toStartWith("tenants/{$tenant->id}/vehicle_photos/{$photo->id}/");
+    }
+});
+
+it('renders the vehicle list for a vehicle that already has photos', function () {
+    [$tenant, $operator] = fleetOperator('ardi.localhost');
+    tenancy()->initialize($tenant);
+    Storage::fake('public');
+    Filament::setCurrentPanel(Filament::getPanel('operator'));
+    actingAs($operator);
+
+    $vehicle = Vehicle::factory()->create();
+
+    // Two, for the same multi-row hydration reason as the test above.
+    foreach (['front.jpg', 'rear.jpg'] as $file) {
+        $vehicle->addMedia(UploadedFile::fake()->image($file, 800, 600))
+            ->toMediaCollection('vehicle_photos');
+    }
+
+    // The cover image column asks each media row for its URL, which runs the
+    // tenant-aware path generator over media straight out of the database.
+    Livewire::test(ListVehicles::class)
+        ->assertSuccessful()
+        ->assertCanSeeTableRecords([$vehicle]);
 });
 
 it('keeps vehicle photos from different tenants under separate storage roots', function () {
