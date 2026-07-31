@@ -7,6 +7,7 @@ use Filament\Facades\Filament;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Tests\TestCase;
@@ -78,6 +79,20 @@ pest()->extend(TestCase::class)
 // committed/locked — RefreshDatabase's wrapping transaction would make that impossible.
 pest()->extend(TestCase::class)
     ->in('Postgres');
+
+// Browser suite: a real Chromium process driving real HTTP requests against the
+// app, same RefreshDatabase binding as Feature — Pest's browser runtime makes
+// SQLite :memory: visible to that browser process, so no DB config differs here.
+pest()->extend(TestCase::class)
+    ->use(RefreshDatabase::class)
+    ->in('Browser');
+
+// Journeys are plain in-process Feature tests — they stay in the `composer test`
+// gate, unlike the Postgres and Browser carve-outs, which are excluded for
+// infrastructure reasons (a live Postgres connection, a Playwright binary) that
+// don't apply here. The group exists so that if the time budget ever moves,
+// carving them out is `--exclude-group=journey` rather than a refactor.
+pest()->group('journey')->in('Feature/Journeys');
 
 /*
 |--------------------------------------------------------------------------
@@ -164,6 +179,59 @@ function reportRange(): array
 }
 
 /**
+ * A tenant on $subdomain plus its verified operator owner.
+ *
+ * Deliberately does NOT initialize tenancy, unlike reportsOperatorFor() above: a
+ * journey test crosses the operator/visitor boundary several times, and which
+ * side it is standing on at any moment is the thing under test. Call
+ * actAsOperator()/actAsVisitor() to move.
+ *
+ * @return array{0: Tenant, 1: User}
+ */
+function journeyTenant(string $subdomain): array
+{
+    $tenant = Tenant::factory()->withDomain($subdomain)->create();
+
+    $operator = new User;
+    $operator->forceFill([
+        'tenant_id' => $tenant->id,
+        'role' => 'operator',
+        'name' => 'Operator',
+        'email' => fake()->unique()->safeEmail(),
+        'password' => bcrypt('password'),
+        'email_verified_at' => now(),
+    ])->save();
+
+    return [$tenant, $operator];
+}
+
+/**
+ * Step into the operator panel as $user.
+ *
+ * The order is not interchangeable: User::canAccessPanel() reads tenant('id'),
+ * so tenancy has to be live before the panel resolves, and the actor has to be
+ * set after both. Same sequence as reportsOperatorFor() and every panel test in
+ * the suite.
+ */
+function actAsOperator(Tenant $tenant, User $user): void
+{
+    tenancy()->initialize($tenant);
+    Filament::setCurrentPanel(Filament::getPanel('operator'));
+    Pest\Laravel\actingAs($user);
+}
+
+/**
+ * Step back out to an anonymous storefront visitor. Ending tenancy matters as
+ * much as the logout: a subsequent tenant_url() request must re-resolve the
+ * tenant from its subdomain, which is half of what a journey is proving.
+ */
+function actAsVisitor(): void
+{
+    Auth::logout();
+    tenancy()->end();
+}
+
+/**
  * Fake both disks a tenant writes to — 'public' (media library) and 'local'
  * (rental-agreement PDFs).
  *
@@ -204,6 +272,19 @@ function attachVehiclePhotos(Vehicle $vehicle, int $count = 2, int $width = 400,
     }
 
     return $media;
+}
+
+/**
+ * Attach a fake logo to $tenant. The collection is singleFile(), so a tenant
+ * can only ever hold one — plurality for the tenant-logo path is achieved with
+ * two tenants, not two logos.
+ */
+function attachTenantLogo(Tenant $tenant, int $width = 200, int $height = 200): Media
+{
+    assertDiskIsFaked('public');
+
+    return $tenant->addMedia(UploadedFile::fake()->image('logo.png', $width, $height))
+        ->toMediaCollection('logo');
 }
 
 /**
