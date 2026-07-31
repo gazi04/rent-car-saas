@@ -23,10 +23,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          persist-credentials: false
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
           php-version: '8.5'
           tools: composer:v2
@@ -55,11 +57,8 @@ jobs:
           cp .env.example .env
           php artisan key:generate
 
-      - name: Run Type Analysis
-        run: composer types:check
-
-      - name: Run Tests
-        run: ./vendor/bin/pest --ci
+      - name: Run CI Gate
+        run: composer test
 
   postgres:
     runs-on: ubuntu-latest
@@ -114,3 +113,50 @@ jobs:
 
       - name: Run Postgres Concurrency Tests
         run: php artisan test --testsuite=Postgres
+
+  browser:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.5'
+          tools: composer:v2
+          extensions: sockets
+
+      - name: Add Flux Credentials Loaded From ENV
+        run: composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
+
+      - name: Install Dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: npm
+
+      - name: Install NPM Dependencies
+        run: npm ci
+
+      - name: Build assets
+        run: npm run build
+
+      # Chrome only, matching Pest's default browser — the other two Playwright
+      # engines would just be an unused download on every run.
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Prepare Environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run Browser Tests
+        run: composer test:browser

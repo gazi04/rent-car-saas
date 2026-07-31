@@ -1,0 +1,57 @@
+name: security-audit
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.5'
+          tools: composer:v2
+
+      - name: Add Flux Credentials Loaded From ENV
+        run: composer config http-basic.composer.fluxui.dev "${{ secrets.FLUX_USERNAME }}" "${{ secrets.FLUX_LICENSE_KEY }}"
+
+      - name: Install Dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: npm
+
+      - name: Install NPM Dependencies
+        run: npm ci
+
+      - name: Composer Audit
+        id: composer_audit
+        continue-on-error: true
+        run: composer audit --no-interaction
+
+      - name: NPM Audit
+        id: npm_audit
+        continue-on-error: true
+        run: npm audit --audit-level=high
+
+      - name: Fail If Either Audit Found Something
+        if: steps.composer_audit.outcome == 'failure' || steps.npm_audit.outcome == 'failure'
+        run: |
+          echo "composer audit: ${{ steps.composer_audit.outcome }}"
+          echo "npm audit: ${{ steps.npm_audit.outcome }}"
+          exit 1
