@@ -33,6 +33,7 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
  * @property int $year
  * @property string $daily_rate
  * @property string|null $weekly_rate
+ * @property array<string, string|null>|null $description Bilingual {en, sq}; either side may be null when the operator left that box empty.
  */
 #[Fillable(['tenant_id', 'name', 'plate', 'category', 'year', 'fuel_type', 'transmission', 'seats', 'daily_rate', 'hourly_rate', 'weekly_rate', 'monthly_rate', 'discount_type', 'discount_value', 'mileage_limit', 'deposit', 'description', 'custom_fields', 'status', 'is_public'])]
 class Vehicle extends Model implements HasMedia
@@ -106,12 +107,23 @@ class Vehicle extends Model implements HasMedia
      */
     public function descriptionFor(?string $locale = null): string
     {
-        /** @var array<string, string> $content */
-        $content = $this->description ?? [];
+        $content = is_array($this->description) ? $this->description : [];
         $locale ??= app()->getLocale();
-        $first = reset($content);
 
-        return $content[$locale] ?? $content['en'] ?? ($first !== false ? $first : '');
+        // Each candidate is checked for actual content, not merely for presence.
+        // The panel form writes description.en/description.sq as keys, so a
+        // vehicle saved with both boxes empty stores {en: null, sq: null} rather
+        // than a null column — a plain ?? chain skips those nulls but then falls
+        // through to the first *value*, which is itself null, and this returns
+        // string. The is_string() check also earns the return type honestly,
+        // which a JSON column cannot otherwise guarantee.
+        foreach ([$content[$locale] ?? null, $content['en'] ?? null, ...array_values($content)] as $candidate) {
+            if (is_string($candidate) && $candidate !== '') {
+                return $candidate;
+            }
+        }
+
+        return '';
     }
 
     public function registerMediaCollections(): void
