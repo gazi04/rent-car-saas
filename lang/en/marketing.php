@@ -7,6 +7,7 @@ return [
     // Header
     'nav_features' => 'Features',
     'nav_pricing' => 'Pricing',
+    'nav_menu' => 'Menu',
     'nav_start_trial' => 'Start free trial',
 
     // Hero

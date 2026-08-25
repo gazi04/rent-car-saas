@@ -7,6 +7,7 @@ return [
     // Header
     'nav_features' => 'Veçoritë',
     'nav_pricing' => 'Çmimet',
+    'nav_menu' => 'Menyja',
     'nav_start_trial' => 'Fillo provën falas',
 
     // Hero

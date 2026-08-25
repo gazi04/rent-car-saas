@@ -3,6 +3,8 @@
 return [
     // Nav / header
     'language_toggle' => 'Shqip',
+    'skip_to_content' => 'Skip to content',
+    'nav_menu' => 'Menu',
     'nav_home' => 'Home',
     'nav_vehicles' => 'Vehicles',
     'nav_about' => 'About us',
@@ -41,12 +43,18 @@ return [
     'photo_next' => 'Next photo',
     'photo_show' => 'Show photo :number',
 
+    // Shared UI primitives (resources/views/components/ui/*)
+    'currency_symbol' => '€',
+    'rating_out_of_five' => ':rating out of 5',
+    'review_star_label' => '{1} :count star|[2,*] :count stars',
+
     // Listing
     'browse_fleet' => 'Browse Our Fleet',
     'no_vehicles' => 'No vehicles available at the moment.',
     'book_now' => 'Book Now',
     'per_day' => 'per day',
     'seats' => ':count seats',
+    'filters_toggle' => 'Filters',
     'filters_category' => 'Category',
     'filters_transmission' => 'Transmission',
     'filters_fuel_type' => 'Fuel type',

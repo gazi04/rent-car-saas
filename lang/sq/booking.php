@@ -3,6 +3,8 @@
 return [
     // Nav / header
     'language_toggle' => 'English',
+    'skip_to_content' => 'Kalo te përmbajtja',
+    'nav_menu' => 'Menyja',
     'nav_home' => 'Ballina',
     'nav_vehicles' => 'Veturat',
     'nav_about' => 'Rreth nesh',
@@ -41,12 +43,18 @@ return [
     'photo_next' => 'Fotoja tjetër',
     'photo_show' => 'Shfaq foton :number',
 
+    // Shared UI primitives (resources/views/components/ui/*)
+    'currency_symbol' => '€',
+    'rating_out_of_five' => ':rating nga 5',
+    'review_star_label' => '{1} :count yll|[2,*] :count yje',
+
     // Listing
     'browse_fleet' => 'Shfleto flotën tonë',
     'no_vehicles' => 'Nuk ka automjete të disponueshme momentalisht.',
     'book_now' => 'Rezervo tani',
     'per_day' => 'në ditë',
     'seats' => ':count ulëse',
+    'filters_toggle' => 'Filtrat',
     'filters_category' => 'Kategoria',
     'filters_transmission' => 'Transmisioni',
     'filters_fuel_type' => 'Karburanti',
