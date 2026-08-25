@@ -5,15 +5,18 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Listeners\LogImpersonationStart;
+use App\Models\Plan;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\View\View as ViewContract;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use STS\FilamentImpersonate\Events\EnterImpersonation;
@@ -34,6 +37,24 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->composeMarketingPricing();
+    }
+
+    /**
+     * Feed live plan prices to the public marketing page.
+     *
+     * The pricing table used to hardcode €15/€29/€49 in the Blade markup while
+     * the real prices live in the `plans` table and are editable from the admin
+     * panel. An admin changing a price there would have left the landing page
+     * quietly advertising the old one. A view composer keeps the route as a
+     * plain Route::view (so `route:cache` still works) and runs the query only
+     * when that page is actually rendered.
+     */
+    private function composeMarketingPricing(): void
+    {
+        View::composer('marketing.home', function (ViewContract $view): void {
+            $view->with('plans', Plan::activeInDisplayOrder());
+        });
     }
 
     /**

@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\PlanFeature;
 use Database\Factories\PlanFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -111,6 +112,23 @@ class Plan extends Model
     }
 
     /**
+     * Active plans in display order — the single definition of "the plans".
+     *
+     * Used by the public pricing table (via the view composer in
+     * AppServiceProvider) and by options() below, so the marketing page and the
+     * admin pickers cannot disagree about which plans exist or in what order.
+     *
+     * @return Collection<int, self>
+     */
+    public static function activeInDisplayOrder(): Collection
+    {
+        return self::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
+    }
+
+    /**
      * Options for admin plan pickers: active plans in display order, plus the
      * given slug when it points at an archived plan (so a tenant already on an
      * archived plan doesn't lose its current value in the form).
@@ -119,9 +137,7 @@ class Plan extends Model
      */
     public static function options(?string $ensureSlug = null): array
     {
-        $options = self::query()
-            ->where('is_active', true)
-            ->orderBy('sort_order')
+        $options = self::activeInDisplayOrder()
             ->pluck('name', 'slug')
             ->all();
 
