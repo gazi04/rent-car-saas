@@ -173,28 +173,36 @@ it('does not leak another tenant vehicles into the featured section', function (
 
 // ── Layout rendering ──────────────────────────────────────────────────────────
 
-it('renders the home page with every curated layout', function (string $layout) {
-    $tenant = homeTenant('homelay'.str_replace('-', '', $layout));
+/*
+ * The seven selectable home layouts were consolidated into one shell, so the
+ * per-variant dataset and the invalid-slug fallback test both described a
+ * concept that no longer exists. What still needs asserting is simply that the
+ * one shell renders its sections.
+ */
+it('renders the home page shell with its hero, services and fleet', function () {
+    $tenant = homeTenant('homeshell');
 
     tenancy()->initialize($tenant);
-    $tenant->setSetting('layout_home', $layout);
     homeVehicle(['name' => 'Layout Car']);
     tenancy()->end();
 
-    $this->get(tenant_url('homelay'.str_replace('-', '', $layout), '/'))
+    $this->get(tenant_url('homeshell', '/'))
         ->assertOk()
-        ->assertSee(__('booking.home_hero_heading'));
-})->with(['two-column', 'split-screen', 'f-shape', 'z-shape', 'card-block', 'asymmetrical', 'full-screen']);
+        ->assertSee(__('booking.home_hero_heading'))
+        ->assertSee(__('booking.home_services_heading'))
+        ->assertSee(__('booking.featured_vehicles'))
+        ->assertSee('Layout Car');
+});
 
-it('falls back to the default layout when the stored layout value is invalid', function () {
-    $tenant = homeTenant('homebadlay');
+it('ignores a stale layout setting left over from the old variant system', function () {
+    $tenant = homeTenant('homestalelay');
 
     tenancy()->initialize($tenant);
-    // Bypass the allow-list guard by writing directly to the settings table.
+    // Written straight to the table: the key is no longer on the allow-list.
     $tenant->tenantSettings()->create(['key' => 'layout_home', 'value' => '../../etc/passwd']);
     tenancy()->end();
 
-    $this->get(tenant_url('homebadlay', '/'))
+    $this->get(tenant_url('homestalelay', '/'))
         ->assertOk()
         ->assertSee(__('booking.home_hero_heading'));
 });

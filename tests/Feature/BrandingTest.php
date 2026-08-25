@@ -184,6 +184,37 @@ it('rejects an unlisted font_family value at the model layer, bypassing the Fila
     assertDatabaseMissing('tenant_settings', ['key' => 'font_family', 'value' => 'EvilFont']);
 });
 
+/*
+ * The storefront layout calls @fonts([$alias]). Vite THROWS on an alias that is
+ * not in the built manifest, so a drift between config/branding.php and
+ * vite.config.js is not a cosmetic fallback — it is a 500 on every page for
+ * every tenant using that font. This is the guard against that.
+ */
+it('has a built font-manifest entry for every curated font', function () {
+    $manifestPath = public_path('build/fonts-manifest.json');
+
+    if (! file_exists($manifestPath)) {
+        $this->markTestSkipped('Frontend assets are not built; CI builds before running the gate.');
+    }
+
+    /** @var array{families?: array<string, mixed>} $manifest */
+    $manifest = json_decode((string) file_get_contents($manifestPath), true);
+    $built = array_keys($manifest['families'] ?? []);
+
+    /** @var array<string, array{label: string, alias: string}> $fonts */
+    $fonts = config('branding.fonts', []);
+
+    foreach ($fonts as $name => $font) {
+        // assertContains, not expect()->toContain(): the latter is variadic and
+        // would read the message as a second needle.
+        $this->assertContains(
+            $font['alias'],
+            $built,
+            "vite.config.js has no bunny() entry for '{$name}' (alias '{$font['alias']}')."
+        );
+    }
+});
+
 it('rejects an unlisted default_locale value at the model layer, bypassing the Filament form', function () {
     [$tenant] = brandingSetup('valueguard8');
 
@@ -469,33 +500,19 @@ it('socialFacebookUrl returns the stored value when it is a valid https URL', fu
 
 // ── Layout settings ────────────────────────────────────────────────────────────
 
-it('saves a curated layout for each public page', function () {
-    [$tenant] = brandingSetup('layoutok');
+/*
+ * There is one shell per public page now, so there is no layout to choose and
+ * no per-page allow-list to enforce. What still matters is that the removed
+ * keys cannot sneak back in through the settings writer.
+ */
+it('no longer accepts a layout setting through the branding form', function () {
+    brandingSetup('layoutgone');
 
     Livewire::test(BrandingSettings::class)
         ->set('data.layout_home', 'card-block')
-        ->set('data.layout_vehicles', 'f-shape')
-        ->set('data.layout_vehicle_show', 'two-column')
-        ->call('save')
-        ->assertHasNoErrors();
-
-    tenancy()->end();
-    tenancy()->initialize($tenant);
-
-    expect($tenant->setting('layout_home'))->toBe('card-block')
-        ->and($tenant->setting('layout_vehicles'))->toBe('f-shape')
-        ->and($tenant->setting('layout_vehicle_show'))->toBe('two-column');
-});
-
-it('rejects a layout that is not curated for that page', function () {
-    brandingSetup('layoutbad');
-
-    // full-screen is allowed for home but NOT for the vehicle list.
-    Livewire::test(BrandingSettings::class)
-        ->set('data.layout_vehicles', 'full-screen')
         ->call('save');
 
-    assertDatabaseMissing('tenant_settings', ['key' => 'layout_vehicles', 'value' => 'full-screen']);
+    assertDatabaseMissing('tenant_settings', ['key' => 'layout_home']);
 });
 
 it('saves operator home page content settings per language', function () {

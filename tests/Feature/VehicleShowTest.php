@@ -139,33 +139,37 @@ it('returns 404 when requesting another tenant vehicle', function () {
 
 // ── Layout rendering ──────────────────────────────────────────────────────────
 
-it('renders the vehicle details page with every curated layout', function (string $layout) {
-    $sub = 'showlay'.str_replace('-', '', $layout);
-    $tenant = showTenant($sub);
+/*
+ * The three vehicle-detail and three listing layouts became one shell each, so
+ * the per-variant datasets are gone. These assert the surviving shells render.
+ */
+it('renders the vehicle details shell with its rates and specs', function () {
+    $tenant = showTenant('showshell');
 
     tenancy()->initialize($tenant);
-    $tenant->setSetting('layout_vehicle_show', $layout);
     $vehicle = showVehicle(['name' => 'Layout Show Car']);
     tenancy()->end();
 
-    $this->get(tenant_url($sub, "/vehicles/{$vehicle->id}"))
+    $this->get(tenant_url('showshell', "/vehicles/{$vehicle->id}"))
         ->assertOk()
-        ->assertSee('Layout Show Car');
-})->with(['split-screen', 'two-column', 'z-shape']);
+        ->assertSee('Layout Show Car')
+        ->assertSee(__('booking.rates_heading'))
+        ->assertSee(__('booking.book_now'));
+});
 
-it('renders the vehicle listing with every curated layout', function (string $layout) {
-    $sub = 'listlay'.str_replace('-', '', $layout);
-    $tenant = showTenant($sub);
+it('renders the vehicle listing shell with its filters and cards', function () {
+    $tenant = showTenant('listshell');
 
     tenancy()->initialize($tenant);
-    $tenant->setSetting('layout_vehicles', $layout);
     showVehicle(['name' => 'Layout List Car']);
     tenancy()->end();
 
-    $this->get(tenant_url($sub, '/vehicles'))
+    $this->get(tenant_url('listshell', '/vehicles'))
         ->assertOk()
-        ->assertSee('Layout List Car');
-})->with(['card-block', 'two-column', 'f-shape']);
+        ->assertSee('Layout List Car')
+        ->assertSee(__('booking.browse_fleet'))
+        ->assertSee(__('booking.filters_search'));
+});
 
 it('renders the photo gallery for a vehicle with several photos', function () {
     $tenant = showTenant('showgallery');
