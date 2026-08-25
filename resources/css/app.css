@@ -26,9 +26,58 @@
     --color-accent: var(--color-neutral-800);
     --color-accent-content: var(--color-neutral-800);
     --color-accent-foreground: var(--color-white);
+}
 
+/*
+ * Semantic design tokens for the customer-facing surfaces (storefront,
+ * marketing, auth). Two rules govern this block:
+ *
+ * 1. Tailwind emits @theme inside `@layer theme`. The per-tenant brand
+ *    override in layouts/public.blade.php is an UNLAYERED <style>, and
+ *    unlayered declarations beat any cascade layer regardless of source
+ *    order — that is the entire mechanism by which a tenant's colour wins
+ *    over the default below. Never move that block into a layer.
+ *
+ * 2. Values are literal, never var(--color-gray-*). Tailwind tree-shakes
+ *    unused default-theme variables, so once no view emits a `bg-gray-50`
+ *    utility the alias would resolve to nothing. `@theme static` opts this
+ *    block out of the used-only optimisation, which matters because several
+ *    tokens here are read solely from a runtime <style> and never from a
+ *    utility class.
+ *
+ * Platform surfaces (marketing, auth) emit no tenant override, so they render
+ * the platform blue below. That is deliberate — they are simply un-overridden.
+ */
+@theme static {
     --color-primary: #2563eb;
     --color-secondary: #1e40af;
+    --color-on-primary: #ffffff;
+
+    /* Neutrals. --color-ink-faint is #6b7280 (4.83:1 on white), not #9ca3af
+       (2.54:1), so muted text still clears WCAG AA. */
+    --color-surface: #f9fafb;
+    --color-surface-raised: #ffffff;
+    --color-surface-sunken: #f3f4f6;
+    --color-ink: #111827;
+    --color-ink-muted: #4b5563;
+    --color-ink-faint: #6b7280;
+    --color-ink-inverse: #ffffff;
+    --color-line: #e5e7eb;
+    --color-line-strong: #d1d5db;
+
+    /* Status. One green, one red, one amber — resolving the emerald-vs-green
+       split between the waitlist/concierge and the booking pages. */
+    --color-positive: #059669;
+    --color-positive-surface: #ecfdf5;
+    --color-critical: #dc2626;
+    --color-critical-surface: #fef2f2;
+    --color-notice: #b45309;
+    --color-notice-surface: #fffbeb;
+    --color-star: #fbbf24;
+
+    /* Shape: two radii and rounded-full. Nothing else. */
+    --radius-control: 0.5rem;
+    --radius-panel: 0.75rem;
 }
 
 @layer theme {
@@ -47,6 +96,21 @@
     ::backdrop,
     ::file-selector-button {
         border-color: var(--color-gray-200, currentColor);
+    }
+
+    /* Honour the OS "reduce motion" setting. The storefront animates the
+       gallery track, the concierge panel and several hover transitions; a
+       visitor who has asked for stillness should get it. */
+    @media (prefers-reduced-motion: reduce) {
+
+        *,
+        ::before,
+        ::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
     }
 }
 

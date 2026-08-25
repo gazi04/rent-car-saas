@@ -36,7 +36,6 @@ return [
     'tab_content' => 'Home page content',
     'content_lang_sq' => 'Albanian',
     'content_lang_en' => 'English',
-    'tab_layout' => 'Layouts',
     'tab_contact_footer' => 'Contact & Footer',
 
     'section_hero' => 'Hero section',
@@ -54,17 +53,4 @@ return [
     'service_title' => 'Title',
     'service_text' => 'Description',
 
-    'section_layouts' => 'Page layouts',
-    'layouts_hint' => 'Choose a pre-designed layout for each page of your public website.',
-    'layout_home' => 'Home page layout',
-    'layout_vehicles' => 'Vehicle list layout',
-    'layout_vehicle_show' => 'Vehicle details layout',
-
-    'layout_two_column' => 'Two-Column Layout',
-    'layout_split_screen' => 'Split Screen Layout',
-    'layout_f_shape' => 'F-Shape Layout',
-    'layout_z_shape' => 'Z-Shape Layout',
-    'layout_card_block' => 'Card / Block Layout',
-    'layout_asymmetrical' => 'Asymmetrical Layout',
-    'layout_full_screen' => 'Full Screen Layout',
 ];

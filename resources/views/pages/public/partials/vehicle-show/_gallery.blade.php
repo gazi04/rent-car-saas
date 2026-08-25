@@ -1,44 +1,68 @@
-{{-- Alpine image carousel. $photos = [['web' => url, 'thumb' => url], …] --}}
+{{-- Alpine image carousel. $photos = [['web' => url, 'thumb' => url], …]
+
+     Touch-swipe and arrow keys were added alongside the buttons: on a phone the
+     arrows overlay the photo, and swiping is what a visitor actually reaches for. --}}
 @if (count($photos) > 0)
-    <div x-data="{ current: 0, count: {{ count($photos) }} }" class="select-none" wire:ignore.self>
+    <div x-data="{
+            current: 0,
+            count: {{ count($photos) }},
+            touchX: null,
+            next() { this.current = (this.current + 1) % this.count },
+            prev() { this.current = (this.current - 1 + this.count) % this.count },
+            onTouchEnd(e) {
+                if (this.touchX === null) return;
+                const dx = e.changedTouches[0].clientX - this.touchX;
+                if (Math.abs(dx) > 40) { dx < 0 ? this.next() : this.prev() }
+                this.touchX = null;
+            },
+         }"
+         class="select-none"
+         wire:ignore.self
+         role="group"
+         aria-roledescription="carousel"
+         aria-label="{{ $vehicle->name }}">
         {{-- Main slide track --}}
-        <div class="relative rounded-lg overflow-hidden bg-gray-100 aspect-video">
+        <div class="relative aspect-video overflow-hidden rounded-panel bg-surface-sunken"
+             tabindex="0"
+             @keydown.arrow-right.prevent="next()"
+             @keydown.arrow-left.prevent="prev()"
+             @touchstart.passive="touchX = $event.changedTouches[0].clientX"
+             @touchend.passive="onTouchEnd($event)">
             <div class="flex h-full transition-transform duration-300 ease-out"
                  :style="`transform: translateX(-${current * 100}%)`">
                 @foreach ($photos as $photo)
                     <img src="{{ $photo['web'] }}"
                          alt="{{ $vehicle->name }} — {{ $loop->iteration }}"
-                         class="w-full h-full object-cover shrink-0"
+                         class="h-full w-full shrink-0 object-cover"
                          @if (! $loop->first) loading="lazy" @endif>
                 @endforeach
             </div>
 
             @if (count($photos) > 1)
                 <button type="button"
-                        @click="current = (current - 1 + count) % count"
-                        class="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 hover:bg-white p-2 text-gray-700 shadow"
+                        @click="prev()"
+                        class="absolute start-2 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-surface-raised/80 text-ink shadow hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         aria-label="{{ __('booking.photo_previous') }}">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.75 19.5L8.25 12l7.5-7.5"/>
-                    </svg>
+                    <flux:icon.chevron-left class="size-5" />
                 </button>
                 <button type="button"
-                        @click="current = (current + 1) % count"
-                        class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/80 hover:bg-white p-2 text-gray-700 shadow"
+                        @click="next()"
+                        class="absolute end-2 top-1/2 flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-surface-raised/80 text-ink shadow hover:bg-surface-raised focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                         aria-label="{{ __('booking.photo_next') }}">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.25 4.5l7.5 7.5-7.5 7.5"/>
-                    </svg>
+                    <flux:icon.chevron-right class="size-5" />
                 </button>
 
-                {{-- Dots --}}
-                <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                {{-- Dots: the visual dot stays 8px, the hit area is 44px. --}}
+                <div class="absolute bottom-1 left-1/2 flex -translate-x-1/2">
                     @foreach ($photos as $index => $photo)
                         <button type="button"
                                 @click="current = {{ $index }}"
-                                class="h-2 w-2 rounded-full transition-colors"
-                                :class="current === {{ $index }} ? 'bg-white' : 'bg-white/50'"
-                                aria-label="{{ __('booking.photo_show', ['number' => $index + 1]) }}"></button>
+                                class="flex size-11 items-center justify-center focus-visible:outline-none"
+                                :aria-current="current === {{ $index }} ? 'true' : 'false'"
+                                aria-label="{{ __('booking.photo_show', ['number' => $index + 1]) }}">
+                            <span class="block size-2 rounded-full transition-colors"
+                                  :class="current === {{ $index }} ? 'bg-ink-inverse' : 'bg-ink-inverse/50'"></span>
+                        </button>
                     @endforeach
                 </div>
             @endif
@@ -50,20 +74,17 @@
                 @foreach ($photos as $index => $photo)
                     <button type="button"
                             @click="current = {{ $index }}"
-                            class="shrink-0 rounded-md overflow-hidden border-2 transition-colors"
+                            class="shrink-0 overflow-hidden rounded-control border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             :class="current === {{ $index }} ? 'border-primary' : 'border-transparent opacity-70 hover:opacity-100'"
                             aria-label="{{ __('booking.photo_show', ['number' => $index + 1]) }}">
-                        <img src="{{ $photo['thumb'] }}" alt="" class="h-16 w-24 object-cover">
+                        <img src="{{ $photo['thumb'] }}" alt="" loading="lazy" class="h-14 w-20 object-cover sm:h-16 sm:w-24">
                     </button>
                 @endforeach
             </div>
         @endif
     </div>
 @else
-    <div class="rounded-lg bg-gray-100 aspect-video flex items-center justify-center text-gray-400">
-        <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                  d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/>
-        </svg>
+    <div class="flex aspect-video items-center justify-center rounded-panel bg-surface-sunken text-ink-faint">
+        <flux:icon.truck class="size-16" />
     </div>
 @endif

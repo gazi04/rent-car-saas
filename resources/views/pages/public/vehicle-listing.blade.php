@@ -195,19 +195,52 @@ new #[Layout('layouts.public')] #[Title('Browse Fleet')] class extends Component
             ->all();
     }
 
-    #[Computed]
-    public function pageLayout(): string
-    {
-        /** @var array<int, string> $allowed */
-        $allowed = config('branding.layouts.vehicles', []);
-        $layout = (string) tenant()?->setting('layout_vehicles');
-
-        return in_array($layout, $allowed, true)
-            ? $layout
-            : (string) config('branding.defaults.layout_vehicles');
-    }
 }; ?>
 
-<div>
-    @include('pages.public.partials.vehicles.' . $this->pageLayout)
-</div>
+<x-ui.container class="py-8 sm:py-12">
+    <x-ui.section-heading level="h1">{{ __('booking.browse_fleet') }}</x-ui.section-heading>
+
+    {{-- Below md the filter panel collapses behind a toggle so the fleet itself
+         is what a visitor sees first on a phone. x-show, not x-if: the inputs
+         must stay in the DOM for the flatpickr instances in vehicle-filters.js
+         to bind to #listing-start-picker / #listing-end-picker on load. --}}
+    {{-- One instance only. Rendering the panel twice (a mobile copy and a
+         desktop copy) would duplicate #listing-start-picker, and flatpickr binds
+         by id — the second picker would silently never initialise. --}}
+    <div x-data="{ open: false, desktop: window.matchMedia('(min-width: 768px)').matches }"
+         x-init="window.matchMedia('(min-width: 768px)').addEventListener('change', e => desktop = e.matches)"
+         class="mt-6">
+        <x-ui.button variant="secondary"
+                     class="w-full md:hidden"
+                     x-on:click="open = ! open"
+                     x-bind:aria-expanded="open ? 'true' : 'false'"
+                     aria-controls="fleet-filters">
+            <flux:icon.adjustments-horizontal class="size-5" />
+            {{ __('booking.filters_toggle') }}
+        </x-ui.button>
+
+        <div id="fleet-filters" class="mt-4 md:mt-0" x-show="open || desktop" x-cloak>
+            @include('pages.public.partials.vehicles._filters')
+        </div>
+    </div>
+
+    @if ($this->vehicles->isEmpty())
+        <x-ui.empty-state icon="truck" :title="__('booking.no_vehicles')" class="mt-8" />
+    @else
+        <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach ($this->vehicles as $vehicle)
+                <div wire:key="vehicle-{{ $vehicle->id }}">
+                    @include('pages.public.partials.vehicles._card')
+                </div>
+            @endforeach
+        </div>
+
+        <div class="mt-8">
+            {{ $this->vehicles->links() }}
+        </div>
+    @endif
+</x-ui.container>
+
+@push('scripts')
+    @vite('resources/js/vehicle-filters.js')
+@endpush

@@ -1,20 +1,15 @@
-@php
-    /** Shared hero content. Shells control placement via $align ('center'|'left') and $onDark. */
-    $align = $align ?? 'center';
-    $onDark = $onDark ?? false;
-@endphp
-
-<div class="{{ $align === 'center' ? 'text-center mx-auto' : 'text-left' }} max-w-2xl">
-    <h1 class="text-4xl sm:text-5xl font-bold tracking-tight {{ $onDark ? 'text-white' : 'text-gray-900' }}">
+{{-- Always centred on the brand gradient. The old $align/$onDark props existed
+     only to serve the seven layout variants and went with them. --}}
+<div class="mx-auto max-w-2xl text-center">
+    <h1 class="text-4xl font-bold tracking-tight text-ink-inverse sm:text-5xl">
         {{ $content['hero_heading'] }}
     </h1>
-    <p class="mt-5 text-lg {{ $onDark ? 'text-white/80' : 'text-gray-600' }}">
+    <p class="mt-5 text-lg text-ink-inverse/85">
         {{ $content['hero_subheading'] }}
     </p>
-    <div class="mt-8 flex {{ $align === 'center' ? 'justify-center' : 'justify-start' }}">
-        <a href="{{ route('public.vehicles') }}"
-           class="inline-flex items-center rounded-md px-6 py-3 text-base font-semibold transition-colors {{ $onDark ? 'bg-white text-gray-900 hover:bg-gray-100' : 'bg-primary text-white hover:bg-secondary' }}">
+    <div class="mt-8 flex justify-center">
+        <x-ui.button :href="route('public.vehicles')" variant="on-dark" size="lg" class="w-full sm:w-auto">
             {{ $content['hero_cta'] }}
-        </a>
+        </x-ui.button>
     </div>
 </div>

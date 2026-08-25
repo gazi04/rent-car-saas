@@ -1,36 +1,36 @@
 {{-- Rate table + Book Now CTA. The CTA is swapped for an "unavailable" notice when
      the vehicle is off the road (backlog #3): the page still renders so the stock
      alert below it can be joined, but the booking page would 404 anyway. --}}
-<div class="bg-white rounded-lg border border-gray-200 p-6">
-    <h2 class="text-lg font-semibold text-gray-900 mb-4">{{ __('booking.rates_heading') }}</h2>
+<x-ui.card>
+    <h2 class="mb-4 text-lg font-semibold text-ink">{{ __('booking.rates_heading') }}</h2>
 
     <dl class="space-y-2 text-sm">
         @if ($vehicle->hourly_rate)
-            <div class="flex items-center justify-between">
-                <dt class="text-gray-500">{{ __('booking.per_hour') }}</dt>
-                <dd class="font-semibold text-gray-900">€{{ number_format((float) $vehicle->hourly_rate, 2) }}</dd>
+            <div class="flex items-center justify-between gap-4">
+                <dt class="text-ink-muted">{{ __('booking.per_hour') }}</dt>
+                <dd><x-ui.price :amount="$vehicle->hourly_rate" size="sm" /></dd>
             </div>
         @endif
-        <div class="flex items-center justify-between">
-            <dt class="text-gray-500">{{ __('booking.per_day') }}</dt>
-            <dd class="font-semibold text-gray-900">€{{ number_format((float) $vehicle->daily_rate, 2) }}</dd>
+        <div class="flex items-center justify-between gap-4">
+            <dt class="text-ink-muted">{{ __('booking.per_day') }}</dt>
+            <dd><x-ui.price :amount="$vehicle->daily_rate" size="sm" /></dd>
         </div>
         @if ($vehicle->weekly_rate)
-            <div class="flex items-center justify-between">
-                <dt class="text-gray-500">{{ __('booking.per_week') }}</dt>
-                <dd class="font-semibold text-gray-900">€{{ number_format((float) $vehicle->weekly_rate, 2) }}</dd>
+            <div class="flex items-center justify-between gap-4">
+                <dt class="text-ink-muted">{{ __('booking.per_week') }}</dt>
+                <dd><x-ui.price :amount="$vehicle->weekly_rate" size="sm" /></dd>
             </div>
         @endif
         @if ($vehicle->monthly_rate)
-            <div class="flex items-center justify-between">
-                <dt class="text-gray-500">{{ __('booking.per_month') }}</dt>
-                <dd class="font-semibold text-gray-900">€{{ number_format((float) $vehicle->monthly_rate, 2) }}</dd>
+            <div class="flex items-center justify-between gap-4">
+                <dt class="text-ink-muted">{{ __('booking.per_month') }}</dt>
+                <dd><x-ui.price :amount="$vehicle->monthly_rate" size="sm" /></dd>
             </div>
         @endif
         @if ($vehicle->deposit)
-            <div class="flex items-center justify-between border-t border-gray-100 pt-2 mt-2">
-                <dt class="text-gray-500">{{ __('booking.deposit') }}</dt>
-                <dd class="font-semibold text-gray-900">€{{ number_format((float) $vehicle->deposit, 2) }}</dd>
+            <div class="mt-2 flex items-center justify-between gap-4 border-t border-line pt-2">
+                <dt class="text-ink-muted">{{ __('booking.deposit') }}</dt>
+                <dd><x-ui.price :amount="$vehicle->deposit" size="sm" /></dd>
             </div>
         @endif
     </dl>
@@ -42,13 +42,14 @@
     @endphp
 
     @if ($isBookable ?? true)
-        <a href="{{ route('public.vehicle.book', $vehicle) }}{{ $rateDateParams ? '?' . http_build_query($rateDateParams) : '' }}"
-           class="mt-6 block text-center rounded-md bg-primary px-4 py-3 text-base font-semibold text-white hover:bg-secondary transition-colors">
+        <x-ui.button size="lg"
+                     class="mt-6 w-full"
+                     :href="route('public.vehicle.book', $vehicle) . ($rateDateParams ? '?' . http_build_query($rateDateParams) : '')">
             {{ __('booking.book_now') }}
-        </a>
+        </x-ui.button>
     @else
-        <div class="mt-6 rounded-md bg-gray-100 px-4 py-3 text-center text-sm font-medium text-gray-500">
+        <div class="mt-6 rounded-control bg-surface-sunken px-4 py-3 text-center text-sm font-medium text-ink-muted">
             {{ __('booking.vehicle_unavailable_notice') }}
         </div>
     @endif
-</div>
+</x-ui.card>

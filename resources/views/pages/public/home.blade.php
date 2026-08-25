@@ -83,17 +83,6 @@ new #[Layout('layouts.public')] #[Title('Home')] class extends Component {
         return Review::query()->where('is_approved', true)->count();
     }
 
-    #[Computed]
-    public function pageLayout(): string
-    {
-        /** @var array<int, string> $allowed */
-        $allowed = config('branding.layouts.home', []);
-        $layout = (string) tenant()?->setting('layout_home');
-
-        return in_array($layout, $allowed, true)
-            ? $layout
-            : (string) config('branding.defaults.layout_home');
-    }
 }; ?>
 
 <div>
@@ -102,9 +91,21 @@ new #[Layout('layouts.public')] #[Title('Home')] class extends Component {
         $vehicles = $this->featuredVehicles;
     @endphp
 
-    @include('pages.public.partials.home.' . $this->pageLayout)
+    {{-- Full-bleed hero: a plain section with a background. No w-screen escape
+         is needed because <main> imposes no container. --}}
+    <section class="bg-gradient-to-br from-primary to-secondary">
+        <x-ui.container class="py-16 sm:py-24 lg:py-28">
+            @include('pages.public.partials.home._hero')
+        </x-ui.container>
+    </section>
 
-    @if ($this->showsReviewShowcase)
-        @include('pages.public.partials.home._reviews')
-    @endif
+    <x-ui.container class="space-y-16 py-16 sm:space-y-24 sm:py-24">
+        @include('pages.public.partials.home._services')
+        @include('pages.public.partials.home._featured')
+        @include('pages.public.partials.home._about')
+
+        @if ($this->showsReviewShowcase)
+            @include('pages.public.partials.home._reviews')
+        @endif
+    </x-ui.container>
 </div>

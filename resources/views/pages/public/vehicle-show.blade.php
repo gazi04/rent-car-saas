@@ -87,17 +87,6 @@ new #[Layout('layouts.public')] #[Title('Vehicle Details')] class extends Compon
         return $reviews->isNotEmpty() ? round((float) $reviews->avg('rating'), 1) : null;
     }
 
-    #[Computed]
-    public function pageLayout(): string
-    {
-        /** @var array<int, string> $allowed */
-        $allowed = config('branding.layouts.vehicle_show', []);
-        $layout = (string) tenant()?->setting('layout_vehicle_show');
-
-        return in_array($layout, $allowed, true)
-            ? $layout
-            : (string) config('branding.defaults.layout_vehicle_show');
-    }
 
     // ── Waitlist (backlog #2) ───────────────────────────────────────────────────
 
@@ -223,6 +212,40 @@ new #[Layout('layouts.public')] #[Title('Vehicle Details')] class extends Compon
     }
 
     /**
+     * Describes whichever notify panel applies, so one partial can render both.
+     *
+     * The waitlist and stock-alert panels were ~140 lines of near-identical
+     * Blade. Only the wording, the icon, and whether dates are asked for ever
+     * differed. The wire properties and methods stay separate and unrenamed —
+     * WaitlistTest and StockAlertTest drive them directly by name.
+     *
+     * @return array{prefix: string, action: string, icon: string, withDates: bool, joined: bool, error: string|null}|null
+     */
+    #[Computed]
+    public function notifyPanel(): ?array
+    {
+        return match (true) {
+            $this->showsWaitlist => [
+                'prefix' => 'waitlist',
+                'action' => 'joinWaitlist',
+                'icon' => 'calendar-days',
+                'withDates' => true,
+                'joined' => $this->waitlistJoined,
+                'error' => $this->waitlistError,
+            ],
+            $this->showsStockAlert => [
+                'prefix' => 'stockAlert',
+                'action' => 'joinStockAlert',
+                'icon' => 'bell',
+                'withDates' => false,
+                'joined' => $this->stockAlertJoined,
+                'error' => $this->stockAlertError,
+            ],
+            default => null,
+        };
+    }
+
+    /**
      * No dates asked for: the want here is the vehicle itself, whenever it returns.
      * That is what a null range means in waitlist_entries.
      */
@@ -269,22 +292,39 @@ new #[Layout('layouts.public')] #[Title('Vehicle Details')] class extends Compon
     }
 }; ?>
 
-<div>
+<x-ui.container class="py-8 sm:py-12">
     @php
         $vehicle = $this->vehicle;
         $photos = $this->photos;
         $isBookable = $this->isBookable;
     @endphp
 
-    @include('pages.public.partials.vehicle-show.' . $this->pageLayout)
+    <div class="space-y-8">
+        @include('pages.public.partials.vehicle-show._header')
+
+        {{-- DOM order is mobile order: gallery, then price + Book Now, then the
+             detail. On lg the rates panel moves to a sticky right rail purely by
+             grid placement, so there is no order-* juggling and no duplicated
+             markup. Previously the price sat below the spec table on a phone. --}}
+        <div class="grid gap-8 lg:grid-cols-3 lg:items-start">
+            <div class="lg:col-span-2 lg:row-start-1">
+                @include('pages.public.partials.vehicle-show._gallery')
+            </div>
+
+            <div class="lg:col-start-3 lg:row-start-1 lg:sticky lg:top-20">
+                @include('pages.public.partials.vehicle-show._rates')
+            </div>
+
+            <div class="space-y-8 lg:col-span-2 lg:row-start-2">
+                @include('pages.public.partials.vehicle-show._specs')
+                @include('pages.public.partials.vehicle-show._description')
+            </div>
+        </div>
+    </div>
 
     @include('pages.public.partials.vehicle-show._reviews')
 
-    @if ($this->showsWaitlist)
-        @include('pages.public.partials.vehicle-show._waitlist')
+    @if ($this->notifyPanel)
+        @include('pages.public.partials.vehicle-show._notify')
     @endif
-
-    @if ($this->showsStockAlert)
-        @include('pages.public.partials.vehicle-show._stock-alert')
-    @endif
-</div>
+</x-ui.container>

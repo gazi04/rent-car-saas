@@ -1,64 +1,59 @@
 @php
-    /** Shared vehicle card. $horizontal=true renders image beside content instead of above. */
-    $horizontal = $horizontal ?? false;
-    /** Off-the-road vehicles are listed too (backlog #3) — dimmed, and the CTA
-        goes to the page to join the stock alert rather than promising a booking. */
+    /**
+     * Shared vehicle card. The $horizontal variant went with the two-column
+     * listing layout; there is one card shape now.
+     *
+     * Off-the-road vehicles are still listed (backlog #3) — dimmed, and the CTA
+     * goes to the detail page to join the stock alert rather than promising a
+     * booking it cannot honour.
+     */
     $isBookable = $vehicle->status === \App\Enums\VehicleStatus::Available;
-    /** Carry the listing's date-range filter forward so the visitor doesn't
-        re-pick dates on the vehicle-show page and booking wizard. */
+
+    /** Carry the listing's date filter forward so the visitor re-picks nothing. */
     $cardDateParams = ($startDate ?? '') !== '' && ($endDate ?? '') !== ''
         ? ['start_date' => $startDate, 'end_date' => $endDate]
         : [];
 @endphp
 
-<div class="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-md transition-shadow {{ $horizontal ? 'sm:flex' : '' }} {{ $isBookable ? '' : 'opacity-75' }}">
+<div class="flex h-full flex-col overflow-hidden rounded-panel border border-line bg-surface-raised transition-shadow hover:shadow-md {{ $isBookable ? '' : 'opacity-75' }}">
     {{-- Cover photo --}}
-    <div class="{{ $horizontal ? 'sm:w-64 sm:shrink-0 aspect-video sm:aspect-auto' : 'aspect-video' }} bg-gray-100 overflow-hidden">
+    <div class="aspect-video overflow-hidden bg-surface-sunken">
         @if ($vehicle->getFirstMedia('vehicle_photos'))
             <img src="{{ $vehicle->getFirstMediaUrl('vehicle_photos', 'web') }}"
                  alt="{{ $vehicle->name }}"
-                 class="w-full h-full object-cover">
+                 loading="lazy"
+                 class="h-full w-full object-cover">
         @else
-            <div class="w-full h-full flex items-center justify-center text-gray-400 {{ $horizontal ? 'min-h-40' : '' }}">
-                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                          d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12"/>
-                </svg>
+            <div class="flex h-full w-full items-center justify-center text-ink-faint">
+                <flux:icon.truck class="size-12" />
             </div>
         @endif
     </div>
 
-    <div class="p-4 {{ $horizontal ? 'flex-1 flex flex-col justify-between' : '' }}">
-        <div>
-            <div class="flex items-start justify-between mb-2">
-                <h2 class="font-semibold text-gray-900 text-sm leading-tight">{{ $vehicle->name }}</h2>
-                <span class="ml-2 inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-secondary shrink-0">
-                    {{ $vehicle->category->getLabel() }}
-                </span>
-            </div>
-
-            <div class="flex items-center gap-3 text-xs text-gray-500 mb-3">
-                <span>{{ __('booking.seats', ['count' => $vehicle->seats]) }}</span>
-                <span>{{ $vehicle->fuel_type->getLabel() }}</span>
-                <span>{{ $vehicle->transmission->getLabel() }}</span>
-            </div>
-
-            @unless ($isBookable)
-                <p class="mb-3 inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-                    {{ __('booking.vehicle_unavailable_badge') }}
-                </p>
-            @endunless
+    <div class="flex flex-1 flex-col p-4">
+        <div class="mb-2 flex items-start justify-between gap-2">
+            <h2 class="text-sm font-semibold leading-tight text-ink">{{ $vehicle->name }}</h2>
+            <x-ui.badge class="shrink-0">{{ $vehicle->category->getLabel() }}</x-ui.badge>
         </div>
 
-        <div class="flex items-center justify-between">
-            <div>
-                <span class="text-lg font-bold text-gray-900">€{{ number_format((float) $vehicle->daily_rate, 2) }}</span>
-                <span class="text-xs text-gray-500 ml-1">{{ __('booking.per_day') }}</span>
-            </div>
-            <a href="{{ route('public.vehicle', $vehicle) }}{{ $cardDateParams ? '?' . http_build_query($cardDateParams) : '' }}"
-               class="inline-flex items-center rounded-md px-3 py-1.5 text-sm font-medium transition-colors {{ $isBookable ? 'bg-primary text-white hover:bg-secondary' : 'border border-gray-300 text-gray-700 hover:bg-gray-50' }}">
+        <div class="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
+            <span>{{ __('booking.seats', ['count' => $vehicle->seats]) }}</span>
+            <span>{{ $vehicle->fuel_type->getLabel() }}</span>
+            <span>{{ $vehicle->transmission->getLabel() }}</span>
+        </div>
+
+        @unless ($isBookable)
+            <x-ui.badge tone="neutral" class="mb-3 self-start">{{ __('booking.vehicle_unavailable_badge') }}</x-ui.badge>
+        @endunless
+
+        <div class="mt-auto flex flex-wrap items-center justify-between gap-3">
+            <x-ui.price :amount="$vehicle->daily_rate" :per="__('booking.per_day')" />
+
+            <x-ui.button size="sm"
+                         :variant="$isBookable ? 'primary' : 'secondary'"
+                         :href="route('public.vehicle', $vehicle) . ($cardDateParams ? '?' . http_build_query($cardDateParams) : '')">
                 {{ $isBookable ? __('booking.book_now') : __('booking.stock_alert_submit') }}
-            </a>
+            </x-ui.button>
         </div>
     </div>
 </div>

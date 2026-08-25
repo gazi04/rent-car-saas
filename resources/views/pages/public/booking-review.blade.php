@@ -68,68 +68,62 @@ new #[Layout('layouts.public')] #[Title('Leave a Review')] class extends Compone
     }
 }; ?>
 
-<div class="max-w-lg mx-auto">
-    <div class="bg-white rounded-lg border border-gray-200 p-8">
+<div class="mx-auto w-full max-w-lg px-4 py-8 sm:px-6 sm:py-12">
+    <x-ui.card pad="lg">
         @if ($submitted)
             <div class="text-center">
-                <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                    </svg>
+                <div class="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-positive-surface text-positive">
+                    <flux:icon.check class="size-7" />
                 </div>
-                <h1 class="text-2xl font-bold text-gray-900 mb-2">{{ __('booking.review_thanks') }}</h1>
-                <a href="{{ route('public.home') }}"
-                   class="inline-block mt-4 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-secondary transition-colors">
+                <h1 class="mb-2 text-2xl font-bold text-ink">{{ __('booking.review_thanks') }}</h1>
+                <x-ui.button :href="route('public.home')" class="mt-4">
                     {{ __('booking.back_to_fleet') }}
-                </a>
+                </x-ui.button>
             </div>
         @elseif ($unavailable)
             <div class="text-center">
-                <h1 class="text-xl font-bold text-gray-900 mb-2">{{ __('booking.review_unavailable') }}</h1>
+                <h1 class="mb-2 text-xl font-bold text-ink">{{ __('booking.review_unavailable') }}</h1>
             </div>
         @elseif ($alreadyReviewed)
             <div class="text-center">
-                <h1 class="text-xl font-bold text-gray-900 mb-2">{{ __('booking.review_already') }}</h1>
+                <h1 class="mb-2 text-xl font-bold text-ink">{{ __('booking.review_already') }}</h1>
             </div>
         @else
-            <h1 class="text-2xl font-bold text-gray-900 mb-1">{{ __('booking.review_title') }}</h1>
-            <p class="text-sm text-gray-600 mb-6">{{ $booking->vehicle->name }}</p>
+            <h1 class="mb-1 text-2xl font-bold text-ink">{{ __('booking.review_title') }}</h1>
+            <p class="mb-6 text-sm text-ink-muted">{{ $booking->vehicle->name }}</p>
 
             <form wire:submit="submit" class="space-y-6">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('booking.review_rating') }}</label>
-                    <div class="flex gap-1" role="radiogroup">
+                    <label id="rating-label" class="mb-2 block text-sm font-medium text-ink">{{ __('booking.review_rating') }}</label>
+                    {{-- role=radio + aria-checked to match the radiogroup: without
+                         them a screen reader hears five unlabelled buttons and no
+                         indication of which rating is currently chosen. --}}
+                    <div class="flex gap-1" role="radiogroup" aria-labelledby="rating-label">
                         @for ($star = 1; $star <= 5; $star++)
                             <button type="button"
                                     wire:click="$set('rating', {{ $star }})"
-                                    aria-label="{{ $star }}"
-                                    class="p-1 focus:outline-none">
-                                <svg class="w-9 h-9 {{ $star <= $rating ? 'text-amber-400' : 'text-gray-300' }}"
-                                     fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.957a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.446a1 1 0 00-.364 1.118l1.287 3.957c.3.921-.755 1.688-1.54 1.118l-3.367-2.446a1 1 0 00-1.176 0l-3.367 2.446c-.784.57-1.838-.197-1.539-1.118l1.286-3.957a1 1 0 00-.363-1.118L2.075 9.384c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.957z"/>
-                                </svg>
+                                    role="radio"
+                                    aria-checked="{{ $star === $rating ? 'true' : 'false' }}"
+                                    aria-label="{{ trans_choice('booking.review_star_label', $star, ['count' => $star]) }}"
+                                    class="flex size-11 items-center justify-center rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+                                <flux:icon.star variant="solid"
+                                                class="size-9 {{ $star <= $rating ? 'text-star' : 'text-line-strong' }}" />
                             </button>
                         @endfor
                     </div>
                     @error('rating')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="mt-1 text-sm text-critical">{{ $message }}</p>
                     @enderror
                 </div>
 
-                <div>
-                    <label for="comment" class="block text-sm font-medium text-gray-700 mb-2">{{ __('booking.review_comment') }}</label>
-                    <textarea id="comment" wire:model="comment" rows="4"
-                              class="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary text-sm"></textarea>
-                    @error('comment')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
+                <x-ui.field :label="__('booking.review_comment')" for="comment" name="comment">
+                    <x-ui.textarea id="comment" wire:model="comment" rows="4" />
+                </x-ui.field>
 
-                <button type="submit"
-                        class="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-secondary transition-colors">
+                <x-ui.button type="submit" class="w-full">
                     {{ __('booking.review_submit') }}
-                </button>
+                </x-ui.button>
             </form>
         @endif
-    </div>
+    </x-ui.card>
 </div>

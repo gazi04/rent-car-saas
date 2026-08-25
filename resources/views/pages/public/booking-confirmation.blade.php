@@ -16,45 +16,42 @@ new #[Layout('layouts.public')] #[Title('Booking Received')] class extends Compo
 
 ?>
 
-<div class="max-w-lg mx-auto">
-    <div class="bg-white rounded-lg border border-gray-200 p-8 text-center">
-        <div class="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-            <svg class="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-            </svg>
+<div class="mx-auto w-full max-w-lg px-4 py-8 sm:px-6 sm:py-12">
+    <x-ui.card pad="lg" class="text-center">
+        <div class="mx-auto mb-4 flex size-14 items-center justify-center rounded-full bg-positive-surface text-positive">
+            <flux:icon.check class="size-7" />
         </div>
 
-        <h1 class="text-2xl font-bold text-gray-900 mb-2">{{ __('booking.booking_received') }}</h1>
+        <h1 class="mb-2 text-2xl font-bold text-ink">{{ __('booking.booking_received') }}</h1>
 
-        <div class="inline-block rounded-lg bg-gray-100 px-4 py-2 mb-4">
-            <p class="text-xs text-gray-500 mb-0.5">{{ __('booking.booking_reference') }}</p>
-            <p class="text-xl font-mono font-bold text-gray-900">{{ $booking->reference }}</p>
+        <div class="mb-4 inline-block rounded-panel bg-surface-sunken px-4 py-2">
+            <p class="mb-0.5 text-xs text-ink-muted">{{ __('booking.booking_reference') }}</p>
+            <p class="font-mono text-xl font-bold text-ink">{{ $booking->reference }}</p>
         </div>
 
-        <p class="text-sm text-gray-600 mb-6">{{ __('booking.booking_pending_notice') }}</p>
+        <p class="mb-6 text-sm text-ink-muted">{{ __('booking.booking_pending_notice') }}</p>
 
-        <dl class="text-left divide-y divide-gray-100 text-sm mb-6 bg-gray-50 rounded-lg p-4">
-            <div class="py-2 flex justify-between">
-                <dt class="text-gray-500">{{ __('booking.vehicle') }}</dt>
-                <dd class="font-medium">{{ $booking->vehicle->name }}</dd>
+        <dl class="mb-6 divide-y divide-line rounded-panel bg-surface p-4 text-left text-sm">
+            <div class="flex flex-wrap justify-between gap-x-4 gap-y-1 py-2">
+                <dt class="text-ink-muted">{{ __('booking.vehicle') }}</dt>
+                <dd class="font-medium text-ink">{{ $booking->vehicle->name }}</dd>
             </div>
-            <div class="py-2 flex justify-between">
-                <dt class="text-gray-500">{{ __('booking.dates') }}</dt>
-                <dd class="font-medium">{{ $booking->start_date->format('d M Y') }} → {{ $booking->end_date->format('d M Y') }}</dd>
+            <div class="flex flex-wrap justify-between gap-x-4 gap-y-1 py-2">
+                <dt class="text-ink-muted">{{ __('booking.dates') }}</dt>
+                <dd class="font-medium text-ink">{{ $booking->start_date->format('d M Y') }} → {{ $booking->end_date->format('d M Y') }}</dd>
             </div>
-            <div class="py-2 flex justify-between">
-                <dt class="text-gray-500">{{ __('booking.total') }}</dt>
-                <dd class="font-bold">€{{ number_format((float) $booking->total, 2) }}</dd>
+            <div class="flex flex-wrap justify-between gap-x-4 gap-y-1 py-2">
+                <dt class="text-ink-muted">{{ __('booking.total') }}</dt>
+                <dd><x-ui.price :amount="$booking->total" size="sm" class="font-bold" /></dd>
             </div>
         </dl>
 
         <div class="flex flex-col gap-3">
-            <a href="{{ route('public.home') }}"
-               class="rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-secondary transition-colors text-center">
+            <x-ui.button :href="route('public.home')" class="w-full">
                 {{ __('booking.back_to_fleet') }}
-            </a>
+            </x-ui.button>
 
-            <p class="text-sm text-gray-500 text-center">
+            <p class="text-center text-sm text-ink-muted">
                 @if ($booking->customer_email)
                     {{ __('booking.check_email_to_cancel') }}
                 @else
@@ -62,5 +59,5 @@ new #[Layout('layouts.public')] #[Title('Booking Received')] class extends Compo
                 @endif
             </p>
         </div>
-    </div>
+    </x-ui.card>
 </div>

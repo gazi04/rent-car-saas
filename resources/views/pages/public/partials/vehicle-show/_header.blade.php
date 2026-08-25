@@ -1,15 +1,17 @@
 {{-- Vehicle title bar: name, year, category badge, quick specs. --}}
 <div>
-    <a href="{{ route('public.vehicles') }}" class="text-sm text-primary hover:underline">← {{ __('booking.back_to_fleet') }}</a>
+    <a href="{{ route('public.vehicles') }}"
+       class="inline-flex min-h-11 items-center gap-1 text-sm text-primary hover:underline">
+        <flux:icon.arrow-left class="size-4" />{{ __('booking.back_to_fleet') }}
+    </a>
 
     <div class="mt-2 flex flex-wrap items-center gap-3">
-        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">{{ $vehicle->name }}</h1>
-        <span class="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-secondary">
-            {{ $vehicle->category->getLabel() }}
-        </span>
+        <h1 class="text-2xl font-bold text-ink sm:text-3xl">{{ $vehicle->name }}</h1>
+        <x-ui.badge>{{ $vehicle->category->getLabel() }}</x-ui.badge>
     </div>
 
-    <div class="mt-2 flex items-center gap-4 text-sm text-gray-500">
+    {{-- Wraps: four unbreakable spans in a row overflowed a 320px screen. --}}
+    <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-muted">
         <span>{{ $vehicle->year }}</span>
         <span>{{ __('booking.seats', ['count' => $vehicle->seats]) }}</span>
         <span>{{ $vehicle->fuel_type->getLabel() }}</span>

@@ -236,129 +236,140 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
     }
 }; ?>
 
-<div>
+<x-ui.container size="narrow" class="py-8 sm:py-12">
     {{-- Slot taken flash --}}
     @if ($slotTaken)
-        <div class="mb-6 rounded-lg bg-red-50 border border-red-200 p-4 text-sm text-red-700">
-            {{ __('booking.slot_taken') }}
-        </div>
+        <x-ui.alert tone="critical" class="mb-6">{{ __('booking.slot_taken') }}</x-ui.alert>
     @endif
 
-    {{-- Vehicle summary --}}
-    <div class="bg-white rounded-lg border border-gray-200 p-6 mb-8 flex gap-6">
-        <div class="w-32 h-24 rounded-md bg-gray-100 overflow-hidden shrink-0">
-            @if ($vehicle->getFirstMedia('vehicle_photos'))
+    {{-- Vehicle summary.
+
+         This block was the worst mobile bug on the site: a fixed w-32 image
+         beside an unwrappable four-span spec row inside a bare `flex`, which
+         forced the page to 446px on a 375px screen and clipped the text. It now
+         stacks below sm, and the spec row wraps. --}}
+    <div class="mb-8 flex flex-col gap-4 rounded-panel border border-line bg-surface-raised p-4 sm:flex-row sm:gap-6 sm:p-6">
+        @if ($vehicle->getFirstMedia('vehicle_photos'))
+            <div class="h-40 w-full shrink-0 overflow-hidden rounded-control bg-surface-sunken sm:h-24 sm:w-32">
                 <img src="{{ $vehicle->getFirstMediaUrl('vehicle_photos', 'thumb') }}"
-                     alt="{{ $vehicle->name }}" class="w-full h-full object-cover">
-            @endif
-        </div>
-        <div>
-            <h1 class="text-xl font-bold text-gray-900">{{ $vehicle->name }}</h1>
-            <div class="flex items-center gap-3 text-sm text-gray-500 mt-1">
+                     alt="{{ $vehicle->name }}" class="h-full w-full object-cover">
+            </div>
+        @endif
+
+        <div class="min-w-0">
+            <h1 class="text-xl font-bold text-ink">{{ $vehicle->name }}</h1>
+            <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-muted">
                 <span>{{ $vehicle->category->getLabel() }}</span>
-                <span>{{ $vehicle->seats }} seats</span>
+                <span>{{ __('booking.seats', ['count' => $vehicle->seats]) }}</span>
                 <span>{{ $vehicle->fuel_type->getLabel() }}</span>
                 <span>{{ $vehicle->transmission->getLabel() }}</span>
             </div>
             @php($vehicleDescription = $vehicle->descriptionFor())
             @if ($vehicleDescription !== '')
-                <p class="text-sm text-gray-600 mt-2">{{ $vehicleDescription }}</p>
+                <p class="mt-2 text-sm text-ink-muted">{{ $vehicleDescription }}</p>
             @endif
         </div>
     </div>
 
-    {{-- Step indicators --}}
-    <div class="flex items-center gap-2 mb-8">
+    {{-- Step indicators. Labels are hidden below sm — three of them plus two
+         connectors cannot fit on a 320px screen, and the numbered circles plus
+         the heading below already say where you are. --}}
+    <ol class="mb-8 flex items-center gap-2">
         @foreach ([1 => __('booking.step_dates'), 2 => __('booking.step_details'), 3 => __('booking.step_review')] as $n => $label)
-            <div class="flex items-center gap-2">
-                <div @class([
-                    'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold',
-                    'bg-primary text-white' => $step >= $n,
-                    'bg-gray-200 text-gray-500' => $step < $n,
-                ])>{{ $n }}</div>
-                <span @class(['text-sm', 'font-medium text-gray-900' => $step === $n, 'text-gray-400' => $step !== $n])>{{ $label }}</span>
-            </div>
+            <li class="flex items-center gap-2" @if ($step === $n) aria-current="step" @endif>
+                <span @class([
+                    'flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-bold',
+                    'bg-primary text-on-primary' => $step >= $n,
+                    'bg-surface-sunken text-ink-faint' => $step < $n,
+                ])>{{ $n }}</span>
+                <span @class([
+                    'hidden text-sm sm:inline',
+                    'font-medium text-ink' => $step === $n,
+                    'text-ink-faint' => $step !== $n,
+                ])>{{ $label }}</span>
+            </li>
             @if ($n < 3)
-                <div class="flex-1 h-px bg-gray-200 mx-1"></div>
+                <li class="mx-1 h-px flex-1 bg-line" aria-hidden="true"></li>
             @endif
         @endforeach
-    </div>
+    </ol>
 
     {{-- Step 1 — Dates --}}
     @if ($step === 1)
-        <div class="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">{{ __('booking.pick_dates') }}</h2>
+        <x-ui.card>
+            <h2 class="mb-4 text-lg font-semibold text-ink">{{ __('booking.pick_dates') }}</h2>
 
             <div class="mb-6">
-                <input id="date-range-picker"
-                       type="text"
-                       placeholder="{{ __('booking.date_placeholder') }}"
-                       data-availability-url="{{ route('vehicle.availability', $vehicle) }}"
-                       data-default-start="{{ $startDate }}"
-                       data-default-end="{{ $endDate }}"
-                       class="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary focus:border-primary">
-                @error('startDate') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                @error('endDate') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
+                {{-- id and the three data-* attributes are the contract with
+                     resources/js/booking-form.js and BookingWizardFlowTest. --}}
+                <x-ui.input id="date-range-picker"
+                            type="text"
+                            placeholder="{{ __('booking.date_placeholder') }}"
+                            data-availability-url="{{ route('vehicle.availability', $vehicle) }}"
+                            data-default-start="{{ $startDate }}"
+                            data-default-end="{{ $endDate }}" />
+                @error('startDate') <p class="mt-1 text-xs text-critical">{{ $message }}</p> @enderror
+                @error('endDate') <p class="mt-1 text-xs text-critical">{{ $message }}</p> @enderror
             </div>
 
             {{-- Price preview --}}
             @if ($priceBreakdown)
-                <div class="rounded-lg bg-primary/10 border border-primary/20 p-4 mb-6">
-                    <h3 class="text-sm font-semibold text-primary mb-3">{{ __('booking.price_preview') }}</h3>
+                <div class="mb-6 rounded-panel border border-primary/20 bg-primary/10 p-4">
+                    <h3 class="mb-3 text-sm font-semibold text-primary">{{ __('booking.price_preview') }}</h3>
                     <dl class="space-y-1 text-sm">
-                        <div class="flex justify-between">
-                            <dt class="text-gray-600">{{ __('booking.rate_type') }}</dt>
-                            <dd class="font-medium">{{ $priceBreakdown['rate_type'] }}</dd>
+                        <div class="flex justify-between gap-4">
+                            <dt class="text-ink-muted">{{ __('booking.rate_type') }}</dt>
+                            <dd class="font-medium text-ink">{{ $priceBreakdown['rate_type'] }}</dd>
                         </div>
-                        <div class="flex justify-between">
-                            <dt class="text-gray-600">{{ __('booking.subtotal') }}</dt>
-                            <dd>€{{ number_format($priceBreakdown['subtotal'], 2) }}</dd>
+                        <div class="flex justify-between gap-4">
+                            <dt class="text-ink-muted">{{ __('booking.subtotal') }}</dt>
+                            <dd><x-ui.price :amount="$priceBreakdown['subtotal']" size="sm" /></dd>
                         </div>
                         @if ($priceBreakdown['discount'] > 0)
-                            <div class="flex justify-between text-green-700">
+                            <div class="flex justify-between gap-4 text-positive">
                                 <dt>{{ __('booking.discount') }}</dt>
-                                <dd>-€{{ number_format($priceBreakdown['discount'], 2) }}</dd>
+                                <dd>-{{ __('booking.currency_symbol') }}{{ number_format($priceBreakdown['discount'], 2) }}</dd>
                             </div>
                         @endif
-                        <div class="flex justify-between font-bold text-primary pt-1 border-t border-primary/30">
+                        <div class="flex justify-between gap-4 border-t border-primary/30 pt-1 font-bold text-primary">
                             <dt>{{ __('booking.total') }}</dt>
-                            <dd>€{{ number_format($priceBreakdown['total'], 2) }}</dd>
+                            <dd>{{ __('booking.currency_symbol') }}{{ number_format($priceBreakdown['total'], 2) }}</dd>
                         </div>
                         @if ($priceBreakdown['deposit'] > 0)
-                            <div class="flex justify-between text-gray-500">
+                            <div class="flex justify-between gap-4 text-ink-muted">
                                 <dt>{{ __('booking.deposit') }}</dt>
-                                <dd>€{{ number_format($priceBreakdown['deposit'], 2) }}</dd>
+                                <dd><x-ui.price :amount="$priceBreakdown['deposit']" size="sm" /></dd>
                             </div>
                         @endif
                     </dl>
                 </div>
 
                 @if (tenant()?->allowsFeature(\App\Enums\PlanFeature::PromoCodes) ?? (bool) \App\Enums\PlanFeature::PromoCodes->default())
-                    <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('booking.promo_label') }}</label>
-                        <div class="flex gap-2">
-                            <input type="text" wire:model="promoCode"
-                                   placeholder="{{ __('booking.promo_placeholder') }}"
-                                   class="flex-1 rounded-md border-gray-300 text-sm uppercase focus:border-primary focus:ring-primary">
-                            <button type="button" wire:click="applyPromo"
-                                    class="rounded-md bg-gray-800 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-700 transition-colors">
+                    <x-ui.field :label="__('booking.promo_label')" class="mb-6">
+                        {{-- Stacks below sm: an input and a button side by side
+                             leave the input unusably narrow on a phone. --}}
+                        <div class="flex flex-col gap-2 sm:flex-row">
+                            <x-ui.input type="text"
+                                        wire:model="promoCode"
+                                        placeholder="{{ __('booking.promo_placeholder') }}"
+                                        class="uppercase sm:flex-1" />
+                            <x-ui.button variant="secondary" wire:click="applyPromo">
                                 {{ __('booking.promo_apply') }}
-                            </button>
+                            </x-ui.button>
                         </div>
                         @if ($promoNotice)
-                            <p class="mt-1 text-sm text-green-700">{{ $promoNotice }}</p>
+                            <p class="mt-1 text-sm text-positive">{{ $promoNotice }}</p>
                         @elseif ($promoError)
-                            <p class="mt-1 text-sm text-red-600">{{ $promoError }}</p>
+                            <p class="mt-1 text-sm text-critical">{{ $promoError }}</p>
                         @endif
-                    </div>
+                    </x-ui.field>
                 @endif
             @endif
 
-            <button wire:click="nextStep"
-                    class="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-secondary transition-colors">
+            <x-ui.button wire:click="nextStep" class="w-full">
                 {{ __('booking.next') }}
-            </button>
-        </div>
+            </x-ui.button>
+        </x-ui.card>
 
         @push('scripts')
             @vite('resources/js/booking-form.js')
@@ -367,128 +378,110 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
 
     {{-- Step 2 — Customer details --}}
     @if ($step === 2)
-        <div class="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">{{ __('booking.step_details') }}</h2>
+        <x-ui.card>
+            <h2 class="mb-4 text-lg font-semibold text-ink">{{ __('booking.step_details') }}</h2>
 
             <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('booking.customer_name') }} *</label>
-                    <input wire:model="customerName" type="text" autocomplete="name" data-test="customer-name"
-                           class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary">
-                    @error('customerName') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                </div>
+                {{-- data-test hooks are the contract with BookingWizardFlowTest. --}}
+                <x-ui.field :label="__('booking.customer_name')" name="customerName" required>
+                    <x-ui.input wire:model="customerName" type="text" autocomplete="name" data-test="customer-name" />
+                </x-ui.field>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('booking.customer_phone') }} *</label>
-                    <input wire:model="customerPhone" type="tel" autocomplete="tel" data-test="customer-phone"
-                           class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary">
-                    @error('customerPhone') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                </div>
+                <x-ui.field :label="__('booking.customer_phone')" name="customerPhone" required>
+                    <x-ui.input wire:model="customerPhone" type="tel" autocomplete="tel" data-test="customer-phone" />
+                </x-ui.field>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('booking.customer_email') }} *</label>
-                    <input wire:model="customerEmail" type="email" autocomplete="email" data-test="customer-email"
-                           class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary">
-                    @error('customerEmail') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
-                </div>
+                <x-ui.field :label="__('booking.customer_email')" name="customerEmail" required>
+                    <x-ui.input wire:model="customerEmail" type="email" autocomplete="email" data-test="customer-email" />
+                </x-ui.field>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('booking.pickup_location') }}</label>
-                    <input wire:model="pickupLocation" type="text"
-                           class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary">
-                </div>
+                <x-ui.field :label="__('booking.pickup_location')" name="pickupLocation">
+                    <x-ui.input wire:model="pickupLocation" type="text" />
+                </x-ui.field>
 
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ __('booking.notes') }}</label>
-                    <textarea wire:model="notes" rows="3"
-                              class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary"></textarea>
-                </div>
+                <x-ui.field :label="__('booking.notes')" name="notes">
+                    <x-ui.textarea wire:model="notes" rows="3" />
+                </x-ui.field>
             </div>
 
-            <div class="flex gap-3 mt-6">
-                <button wire:click="prevStep"
-                        class="flex-1 rounded-md border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+            <div class="mt-6 flex gap-3">
+                <x-ui.button variant="secondary" wire:click="prevStep" class="flex-1">
                     {{ __('booking.back') }}
-                </button>
-                <button wire:click="nextStep"
-                        class="flex-1 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-secondary transition-colors">
+                </x-ui.button>
+                <x-ui.button wire:click="nextStep" class="flex-1">
                     {{ __('booking.next') }}
-                </button>
+                </x-ui.button>
             </div>
-        </div>
+        </x-ui.card>
     @endif
 
     {{-- Step 3 — Review & submit --}}
     @if ($step === 3)
-        <div class="bg-white rounded-lg border border-gray-200 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">{{ __('booking.review_heading') }}</h2>
+        <x-ui.card>
+            <h2 class="mb-4 text-lg font-semibold text-ink">{{ __('booking.review_heading') }}</h2>
 
-            <dl class="divide-y divide-gray-100 text-sm mb-6">
-                <div class="py-3 flex justify-between">
-                    <dt class="font-medium text-gray-500">{{ __('booking.vehicle') }}</dt>
-                    <dd class="text-gray-900">{{ $vehicle->name }}</dd>
+            <dl class="mb-6 divide-y divide-line text-sm">
+                <div class="flex flex-wrap justify-between gap-x-4 gap-y-1 py-3">
+                    <dt class="font-medium text-ink-muted">{{ __('booking.vehicle') }}</dt>
+                    <dd class="text-ink">{{ $vehicle->name }}</dd>
                 </div>
-                <div class="py-3 flex justify-between">
-                    <dt class="font-medium text-gray-500">{{ __('booking.dates') }}</dt>
-                    <dd class="text-gray-900">{{ $startDate }} → {{ $endDate }}</dd>
+                <div class="flex flex-wrap justify-between gap-x-4 gap-y-1 py-3">
+                    <dt class="font-medium text-ink-muted">{{ __('booking.dates') }}</dt>
+                    <dd class="text-ink">{{ $startDate }} → {{ $endDate }}</dd>
                 </div>
                 @if ($priceBreakdown)
-                    <div class="py-3 flex justify-between">
-                        <dt class="font-medium text-gray-500">{{ __('booking.total') }}</dt>
-                        <dd class="font-bold text-gray-900">€{{ number_format($priceBreakdown['total'], 2) }}</dd>
+                    <div class="flex flex-wrap justify-between gap-x-4 gap-y-1 py-3">
+                        <dt class="font-medium text-ink-muted">{{ __('booking.total') }}</dt>
+                        <dd><x-ui.price :amount="$priceBreakdown['total']" size="sm" class="font-bold" /></dd>
                     </div>
                     @if ($priceBreakdown['deposit'] > 0)
-                        <div class="py-3 flex justify-between">
-                            <dt class="font-medium text-gray-500">{{ __('booking.deposit') }}</dt>
-                            <dd class="text-gray-900">€{{ number_format($priceBreakdown['deposit'], 2) }}</dd>
+                        <div class="flex flex-wrap justify-between gap-x-4 gap-y-1 py-3">
+                            <dt class="font-medium text-ink-muted">{{ __('booking.deposit') }}</dt>
+                            <dd><x-ui.price :amount="$priceBreakdown['deposit']" size="sm" /></dd>
                         </div>
                     @endif
                 @endif
-                <div class="py-3 flex justify-between">
-                    <dt class="font-medium text-gray-500">{{ __('booking.customer_name') }}</dt>
-                    <dd class="text-gray-900">{{ $customerName }}</dd>
+                <div class="flex flex-wrap justify-between gap-x-4 gap-y-1 py-3">
+                    <dt class="font-medium text-ink-muted">{{ __('booking.customer_name') }}</dt>
+                    <dd class="text-ink">{{ $customerName }}</dd>
                 </div>
-                <div class="py-3 flex justify-between">
-                    <dt class="font-medium text-gray-500">{{ __('booking.customer_phone') }}</dt>
-                    <dd class="text-gray-900">{{ $customerPhone }}</dd>
+                <div class="flex flex-wrap justify-between gap-x-4 gap-y-1 py-3">
+                    <dt class="font-medium text-ink-muted">{{ __('booking.customer_phone') }}</dt>
+                    <dd class="text-ink">{{ $customerPhone }}</dd>
                 </div>
                 @if ($customerEmail)
-                    <div class="py-3 flex justify-between">
-                        <dt class="font-medium text-gray-500">{{ __('booking.customer_email') }}</dt>
-                        <dd class="text-gray-900">{{ $customerEmail }}</dd>
+                    <div class="flex flex-wrap justify-between gap-x-4 gap-y-1 py-3">
+                        <dt class="font-medium text-ink-muted">{{ __('booking.customer_email') }}</dt>
+                        <dd class="text-ink">{{ $customerEmail }}</dd>
                     </div>
                 @endif
                 @if ($pickupLocation)
-                    <div class="py-3 flex justify-between">
-                        <dt class="font-medium text-gray-500">{{ __('booking.pickup_location') }}</dt>
-                        <dd class="text-gray-900">{{ $pickupLocation }}</dd>
+                    <div class="flex flex-wrap justify-between gap-x-4 gap-y-1 py-3">
+                        <dt class="font-medium text-ink-muted">{{ __('booking.pickup_location') }}</dt>
+                        <dd class="text-ink">{{ $pickupLocation }}</dd>
                     </div>
                 @endif
-                <div class="py-3 flex justify-between">
-                    <dt class="font-medium text-gray-500">{{ __('booking.payment_note') }}</dt>
-                    <dd class="text-gray-900 text-right max-w-xs">{{ tenant()?->setting('payment_instructions', __('booking.payment_note_value')) }}</dd>
+                <div class="flex flex-wrap justify-between gap-x-4 gap-y-1 py-3">
+                    <dt class="font-medium text-ink-muted">{{ __('booking.payment_note') }}</dt>
+                    <dd class="max-w-xs text-right text-ink">{{ tenant()?->setting('payment_instructions', __('booking.payment_note_value')) }}</dd>
                 </div>
             </dl>
 
-            <div class="rounded-lg bg-amber-50 border border-amber-200 p-3 mb-6 text-xs text-amber-800">
-                {{ __('booking.pending_notice') }}
-            </div>
+            <x-ui.alert tone="notice" class="mb-6 text-xs">{{ __('booking.pending_notice') }}</x-ui.alert>
 
             @if ($submitError)
-                <p class="mt-1 mb-4 text-sm text-red-600">{{ $submitError }}</p>
+                <x-ui.alert tone="critical" class="mb-4">{{ $submitError }}</x-ui.alert>
             @endif
 
             <div class="flex gap-3">
-                <button wire:click="prevStep"
-                        class="flex-1 rounded-md border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                <x-ui.button variant="secondary" wire:click="prevStep" class="flex-1">
                     {{ __('booking.back') }}
-                </button>
-                <button wire:click="submit" wire:loading.attr="disabled"
-                        class="flex-1 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-secondary transition-colors disabled:opacity-60">
+                </x-ui.button>
+                <x-ui.button wire:click="submit" wire:loading.attr="disabled" class="flex-1">
                     <span wire:loading.remove>{{ __('booking.confirm_booking') }}</span>
                     <span wire:loading>…</span>
-                </button>
+                </x-ui.button>
             </div>
-        </div>
+        </x-ui.card>
     @endif
-</div>
+</x-ui.container>

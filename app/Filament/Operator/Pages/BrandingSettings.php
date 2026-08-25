@@ -78,7 +78,7 @@ class BrandingSettings extends Page
 
     public function form(Schema $schema): Schema
     {
-        /** @var array<string, array{label: string, url: string}> $fonts */
+        /** @var array<string, array{label: string, alias: string}> $fonts */
         $fonts = config('branding.fonts', []);
 
         /** @var array<string, string> $fontOptions */
@@ -145,26 +145,6 @@ class BrandingSettings extends Page
                                             ->components($this->contentFields('sq')),
                                         Tab::make(__('branding.content_lang_en'))
                                             ->components($this->contentFields('en')),
-                                    ]),
-                            ]),
-
-                        Tab::make(__('branding.tab_layout'))
-                            ->components([
-                                Section::make(__('branding.section_layouts'))
-                                    ->description(__('branding.layouts_hint'))
-                                    ->components([
-                                        Select::make('layout_home')
-                                            ->label(__('branding.layout_home'))
-                                            ->options($this->layoutOptions('home'))
-                                            ->native(false),
-                                        Select::make('layout_vehicles')
-                                            ->label(__('branding.layout_vehicles'))
-                                            ->options($this->layoutOptions('vehicles'))
-                                            ->native(false),
-                                        Select::make('layout_vehicle_show')
-                                            ->label(__('branding.layout_vehicle_show'))
-                                            ->options($this->layoutOptions('vehicle_show'))
-                                            ->native(false),
                                     ]),
                             ]),
 
@@ -264,23 +244,6 @@ class BrandingSettings extends Page
         ];
     }
 
-    /**
-     * Curated layout options for one public page, labeled for the current locale.
-     *
-     * @return array<string, string>
-     */
-    protected function layoutOptions(string $page): array
-    {
-        /** @var array<int, string> $slugs */
-        $slugs = config('branding.layouts.'.$page, []);
-
-        return collect($slugs)
-            ->mapWithKeys(fn (string $slug): array => [
-                $slug => __('branding.layout_'.str_replace('-', '_', $slug)),
-            ])
-            ->all();
-    }
-
     public function save(): void
     {
         $data = $this->form->getState();
@@ -288,25 +251,11 @@ class BrandingSettings extends Page
         /** @var array<int, string> $allowedKeys */
         $allowedKeys = config('branding.keys', []);
 
-        $layoutPages = [
-            'layout_home' => 'home',
-            'layout_vehicles' => 'vehicles',
-            'layout_vehicle_show' => 'vehicle_show',
-        ];
-
         foreach ($allowedKeys as $key) {
             if ($key === 'font_family' && isset($data[$key])) {
                 /** @var array<string, mixed> $fonts */
                 $fonts = config('branding.fonts', []);
                 if (! array_key_exists($data[$key], $fonts)) {
-                    continue;
-                }
-            }
-
-            if (isset($layoutPages[$key], $data[$key])) {
-                /** @var array<int, string> $allowedLayouts */
-                $allowedLayouts = config('branding.layouts.'.$layoutPages[$key], []);
-                if (! in_array($data[$key], $allowedLayouts, true)) {
                     continue;
                 }
             }

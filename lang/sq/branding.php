@@ -36,7 +36,6 @@ return [
     'tab_content' => 'Përmbajtja e faqes kryesore',
     'content_lang_sq' => 'Shqip',
     'content_lang_en' => 'Anglisht',
-    'tab_layout' => 'Dizajnet',
     'tab_contact_footer' => 'Kontakti & Footer',
 
     'section_hero' => 'Seksioni kryesor (Hero)',
@@ -54,17 +53,4 @@ return [
     'service_title' => 'Titulli',
     'service_text' => 'Përshkrimi',
 
-    'section_layouts' => 'Dizajnet e faqeve',
-    'layouts_hint' => 'Zgjidhni një dizajn të gatshëm për secilën faqe të uebsajtit tuaj publik.',
-    'layout_home' => 'Dizajni i faqes kryesore',
-    'layout_vehicles' => 'Dizajni i listës së veturave',
-    'layout_vehicle_show' => 'Dizajni i detajeve të veturës',
-
-    'layout_two_column' => 'Dizajn me dy kolona',
-    'layout_split_screen' => 'Dizajn me ekran të ndarë',
-    'layout_f_shape' => 'Dizajn në formë F',
-    'layout_z_shape' => 'Dizajn në formë Z',
-    'layout_card_block' => 'Dizajn me karta / blloqe',
-    'layout_asymmetrical' => 'Dizajn asimetrik',
-    'layout_full_screen' => 'Dizajn me ekran të plotë',
 ];

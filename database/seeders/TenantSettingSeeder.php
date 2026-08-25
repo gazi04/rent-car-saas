@@ -33,7 +33,6 @@ class TenantSettingSeeder extends Seeder
             'contact_address' => 'Rruga Nëna Terezë, Prishtinë',
             'footer_text_sq' => 'Ardi Rent A Car — makina me qira në Prishtinë që nga 2015.',
             'footer_text_en' => 'Ardi Rent A Car — car rentals in Prishtina since 2015.',
-            'layout_home' => 'full-screen',
             'default_locale' => 'sq',
         ];
 

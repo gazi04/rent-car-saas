@@ -2,7 +2,7 @@
 @php($description = $vehicle->descriptionFor())
 @if ($description !== '')
     <div>
-        <h2 class="text-lg font-semibold text-gray-900 mb-3">{{ __('booking.description_heading') }}</h2>
-        <p class="text-gray-600 text-sm leading-relaxed">{!! nl2br(e($description)) !!}</p>
+        <h2 class="mb-3 text-lg font-semibold text-ink">{{ __('booking.description_heading') }}</h2>
+        <p class="text-sm leading-relaxed text-ink-muted">{!! nl2br(e($description)) !!}</p>
     </div>
 @endif
