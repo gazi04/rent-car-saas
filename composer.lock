@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "adf3fe8ca856762331bc4ba61677a34d",
+    "content-hash": "2798a13ad01545913e11d5fb0dc46a1f",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -127,16 +127,16 @@
         },
         {
             "name": "aws/aws-sdk-php",
-            "version": "3.394.0",
+            "version": "3.394.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/aws/aws-sdk-php.git",
-                "reference": "8a85b79ee9e9009bf19fa31659451124855447ad"
+                "reference": "577edcbe852e463a1a52c269917303f850359e4e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/8a85b79ee9e9009bf19fa31659451124855447ad",
-                "reference": "8a85b79ee9e9009bf19fa31659451124855447ad",
+                "url": "https://api.github.com/repos/aws/aws-sdk-php/zipball/577edcbe852e463a1a52c269917303f850359e4e",
+                "reference": "577edcbe852e463a1a52c269917303f850359e4e",
                 "shasum": ""
             },
             "require": {
@@ -218,9 +218,9 @@
             "support": {
                 "forum": "https://github.com/aws/aws-sdk-php/discussions",
                 "issues": "https://github.com/aws/aws-sdk-php/issues",
-                "source": "https://github.com/aws/aws-sdk-php/tree/3.394.0"
+                "source": "https://github.com/aws/aws-sdk-php/tree/3.394.1"
             },
-            "time": "2026-08-25T19:22:47+00:00"
+            "time": "2026-08-26T18:32:55+00:00"
         },
         {
             "name": "bacon/bacon-qr-code",
@@ -2906,20 +2906,20 @@
         },
         {
             "name": "laravel/ai",
-            "version": "v0.9.1",
+            "version": "v0.11.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/ai.git",
-                "reference": "2760a62bff6ab515cdf10222f61b7973356450e1"
+                "reference": "dd08142f0c4dc4d5544521ce3fc4a1b9c2fe748c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/ai/zipball/2760a62bff6ab515cdf10222f61b7973356450e1",
-                "reference": "2760a62bff6ab515cdf10222f61b7973356450e1",
+                "url": "https://api.github.com/repos/laravel/ai/zipball/dd08142f0c4dc4d5544521ce3fc4a1b9c2fe748c",
+                "reference": "dd08142f0c4dc4d5544521ce3fc4a1b9c2fe748c",
                 "shasum": ""
             },
             "require": {
-                "aws/aws-sdk-php": "^3.339",
+                "aws/aws-sdk-php": "^3.369.1",
                 "illuminate/console": "^12.0|^13.0",
                 "illuminate/container": "^12.0|^13.0",
                 "illuminate/contracts": "^12.0|^13.0",
@@ -2932,13 +2932,15 @@
                 "php": "^8.3"
             },
             "require-dev": {
+                "driftingly/rector-laravel": "^2.5",
                 "laravel/mcp": "^0.8",
                 "laravel/pint": "^1.26",
                 "mockery/mockery": "^1.6.12",
                 "orchestra/testbench": "^10.6|^11.0",
                 "pestphp/pest": "^3.0|^4.0",
                 "pestphp/pest-plugin-laravel": "^3.0|^4.0",
-                "phpstan/phpstan": "^2.1"
+                "phpstan/phpstan": "^2.1",
+                "rector/rector": "^2.5"
             },
             "suggest": {
                 "laravel/mcp": "Required to use MCP client tools or MCP server tools with Laravel AI agents."
@@ -2976,7 +2978,7 @@
                 "issues": "https://github.com/laravel/ai/issues",
                 "source": "https://github.com/laravel/ai"
             },
-            "time": "2026-07-14T18:41:31+00:00"
+            "time": "2026-08-19T03:03:13+00:00"
         },
         {
             "name": "laravel/chisel",
