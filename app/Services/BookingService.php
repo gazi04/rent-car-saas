@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Enums\BookingStatus;
 use App\Enums\PlanFeature;
+use App\Enums\VehicleStatus;
 use App\Events\BookingCancelled;
 use App\Events\BookingConfirmed;
 use App\Events\BookingCreated;
@@ -77,9 +78,12 @@ class BookingService
     public function createManual(array $data): Booking
     {
         return DB::transaction(function () use ($data) {
-            // A front-desk operator records the walk-in who drove off at 09:00
-            // and is entered at 11:00. The duration cap still applies.
-            [$vehicle, $start, $end] = $this->lockAndValidate($data, allowPastStart: true);
+            // allowPastStart: a front-desk operator records the walk-in who drove
+            // off at 09:00 and is entered at 11:00. The duration cap still applies.
+            // allowUnlisted: an operator may take a phone booking for a vehicle
+            // deliberately kept off the public site (a VIP car, an off-storefront
+            // arrangement) — that's the point of this path existing at all.
+            [$vehicle, $start, $end] = $this->lockAndValidate($data, allowPastStart: true, allowUnlisted: true);
             $customer = $this->resolveCustomer($data);
             $promo = $this->resolvePromo($data, $customer);
             $price = $this->pricing->calculate($vehicle, $start, $end, $promo);
@@ -192,15 +196,19 @@ class BookingService
      * by the caller (after resolving any promo code).
      *
      * @param  bool  $allowPastStart  Operator-entered bookings may start in the past; customer ones may not.
+     * @param  bool  $allowUnlisted  Operator-entered bookings may target a vehicle kept off the public site; customer ones may not.
      * @param  array<string, mixed>  $data
      * @return array{0: Vehicle, 1: CarbonInterface, 2: CarbonInterface}
      *
      * @throws InvalidBookingWindowException
+     * @throws VehicleNotAvailableException
      */
-    private function lockAndValidate(array $data, bool $allowPastStart = false): array
+    private function lockAndValidate(array $data, bool $allowPastStart = false, bool $allowUnlisted = false): array
     {
         // Lock the vehicle row — concurrent transactions queue behind this.
         $vehicle = Vehicle::query()->whereKey($data['vehicle_id'])->lockForUpdate()->firstOrFail();
+
+        $this->assertBookable($vehicle, $allowUnlisted);
 
         $start = Date::parse($data['start_date']);
         $end = Date::parse($data['end_date']);
@@ -217,6 +225,30 @@ class BookingService
         throw_unless($available, VehicleNotAvailableException::class, 'Sorry, this vehicle was just booked by someone else.');
 
         return [$vehicle, $start, $end];
+    }
+
+    /**
+     * The vehicle itself must be bookable, independently of whether the dates
+     * are free. mount() checks this once when the wizard page loads (deep-audit
+     * finding 05); this is the re-check under the lock that makes it a
+     * guarantee rather than a point-in-time snapshot an operator can
+     * invalidate mid-request by pulling the vehicle for maintenance.
+     *
+     * @throws VehicleNotAvailableException
+     */
+    private function assertBookable(Vehicle $vehicle, bool $allowUnlisted): void
+    {
+        throw_if(
+            $vehicle->status !== VehicleStatus::Available,
+            VehicleNotAvailableException::class,
+            'This vehicle is not available for booking.'
+        );
+
+        throw_if(
+            ! $allowUnlisted && ! $vehicle->is_public,
+            VehicleNotAvailableException::class,
+            'This vehicle is not available for booking.'
+        );
     }
 
     /**
