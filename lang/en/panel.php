@@ -60,6 +60,8 @@ return [
     'hourly_rate' => 'Hourly rate',
     'weekly_rate' => 'Weekly rate',
     'monthly_rate' => 'Monthly rate',
+    'weekly_rate_pricier_warning' => 'This is pricier than the daily rate for the same period — the daily rate will be used instead.',
+    'monthly_rate_pricier_warning' => 'This is pricier than the daily rate for the same period — a cheaper tier will be used instead.',
     'discount_type' => 'Discount type',
     'discount_value' => 'Discount value',
     'discount_percentage' => 'Percentage',

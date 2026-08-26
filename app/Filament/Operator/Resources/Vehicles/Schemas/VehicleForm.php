@@ -82,6 +82,7 @@ class VehicleForm
                             ->required()
                             ->numeric()
                             ->prefix('€')
+                            ->live(onBlur: true)
                             // Pricing suggestion needs booking history, so it is
                             // only offered once the vehicle exists (edit form).
                             ->hintAction(
@@ -121,14 +122,37 @@ class VehicleForm
                             ->label(__('panel.hourly_rate'))
                             ->numeric()
                             ->prefix('€'),
+                        // The warning is informational, not a validation rule: an
+                        // inconsistent rate simply never gets charged
+                        // (PricingService::selectRate() always picks the
+                        // cheapest applicable tier), so this only helps the
+                        // operator notice before it confuses a customer.
                         TextInput::make('weekly_rate')
                             ->label(__('panel.weekly_rate'))
                             ->numeric()
-                            ->prefix('€'),
+                            ->prefix('€')
+                            ->live(onBlur: true)
+                            ->helperText(function (Get $get): ?string {
+                                $daily = self::toFloat($get('daily_rate'));
+                                $weekly = self::toFloat($get('weekly_rate'));
+
+                                return $weekly > 0 && $daily > 0 && $weekly > 7 * $daily
+                                    ? (string) __('panel.weekly_rate_pricier_warning')
+                                    : null;
+                            }),
                         TextInput::make('monthly_rate')
                             ->label(__('panel.monthly_rate'))
                             ->numeric()
-                            ->prefix('€'),
+                            ->prefix('€')
+                            ->live(onBlur: true)
+                            ->helperText(function (Get $get): ?string {
+                                $daily = self::toFloat($get('daily_rate'));
+                                $monthly = self::toFloat($get('monthly_rate'));
+
+                                return $monthly > 0 && $daily > 0 && $monthly > 30 * $daily
+                                    ? (string) __('panel.monthly_rate_pricier_warning')
+                                    : null;
+                            }),
                         Select::make('discount_type')
                             ->label(__('panel.discount_type'))
                             ->options([
@@ -233,5 +257,11 @@ class VehicleForm
                             ->columnSpanFull(),
                     ]),
             ]);
+    }
+
+    /** Get::get() values from other form fields arrive as mixed. */
+    private static function toFloat(mixed $value): float
+    {
+        return is_numeric($value) ? (float) $value : 0.0;
     }
 }

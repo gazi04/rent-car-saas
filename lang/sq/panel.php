@@ -60,6 +60,8 @@ return [
     'hourly_rate' => 'Çmimi për orë',
     'weekly_rate' => 'Çmimi javor',
     'monthly_rate' => 'Çmimi mujor',
+    'weekly_rate_pricier_warning' => 'Është më i shtrenjtë se çmimi ditor për të njëjtën periudhë — do të përdoret çmimi ditor.',
+    'monthly_rate_pricier_warning' => 'Është më i shtrenjtë se çmimi ditor për të njëjtën periudhë — do të përdoret një tarifë më e lirë.',
     'discount_type' => 'Lloji i zbritjes',
     'discount_value' => 'Vlera e zbritjes',
     'discount_percentage' => 'Përqindje',
