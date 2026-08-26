@@ -218,6 +218,7 @@ return [
     'service_overdue' => 'i vonuar',
     'service_due_bell_title' => 'Servisi afër afatit',
     'service_overdue_bell_title' => 'Servisi i vonuar — automjeti u bllokua',
+    'service_overdue_conflict_title' => 'Servisi i vonuar — automjeti ka tashmë një rezervim',
 
     // Vlerësimet
     'nav_reviews' => 'Vlerësimet',

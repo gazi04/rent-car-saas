@@ -3,11 +3,12 @@
 namespace App\Jobs;
 
 use App\Enums\VehicleStatus;
+use App\Exceptions\VehicleNotAvailableException;
 use App\Mail\ServiceDueMail;
-use App\Models\BlockedDate;
 use App\Models\ServiceRecord;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Services\BlockedDateService;
 use Filament\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Database\Eloquent\Collection;
@@ -35,7 +36,7 @@ class ProcessVehicleMaintenanceJob implements ShouldQueue
 
     public function __construct(private readonly Tenant $tenant) {}
 
-    public function handle(): void
+    public function handle(BlockedDateService $blockedDates): void
     {
         tenancy()->initialize($this->tenant);
 
@@ -56,9 +57,9 @@ class ProcessVehicleMaintenanceJob implements ShouldQueue
                 ->whereNotNull('next_due_on')
                 ->whereHas('vehicle')
                 ->with('vehicle')
-                ->each(function (ServiceRecord $record) use ($owners): void {
+                ->each(function (ServiceRecord $record) use ($owners, $blockedDates): void {
                     if ($record->next_due_on->isPast() || $record->next_due_on->isToday()) {
-                        $this->autoBlock($record, $owners);
+                        $this->autoBlock($record, $owners, $blockedDates);
 
                         return;
                     }
@@ -101,7 +102,7 @@ class ProcessVehicleMaintenanceJob implements ShouldQueue
     }
 
     /** @param  Collection<int, User>  $owners */
-    private function autoBlock(ServiceRecord $record, Collection $owners): void
+    private function autoBlock(ServiceRecord $record, Collection $owners, BlockedDateService $blockedDates): void
     {
         if ($record->blocked_date_id !== null) {
             return;
@@ -109,12 +110,28 @@ class ProcessVehicleMaintenanceJob implements ShouldQueue
 
         $blockDays = (int) config('maintenance.block_days');
 
-        $blockedDate = BlockedDate::query()->create([
-            'vehicle_id' => $record->vehicle_id,
-            'start_date' => today(),
-            'end_date' => now()->addDays($blockDays)->startOfDay(),
-            'reason' => 'maintenance',
-        ]);
+        try {
+            $blockedDate = $blockedDates->create([
+                'vehicle_id' => $record->vehicle_id,
+                'start_date' => today(),
+                'end_date' => now()->addDays($blockDays)->startOfDay(),
+                'reason' => 'maintenance',
+            ]);
+        } catch (VehicleNotAvailableException) {
+            // The vehicle already has an occupying booking through the due
+            // window. Leave blocked_date_id null so tomorrow's sweep retries
+            // once the booking clears, rather than blocking over it and
+            // leaving the vehicle silently booked *and* out of service.
+            foreach ($owners as $owner) {
+                Notification::make()
+                    ->title(__('panel.service_overdue_conflict_title'))
+                    ->body($record->vehicle->name)
+                    ->danger()
+                    ->sendToDatabase($owner);
+            }
+
+            return;
+        }
 
         $record->update(['blocked_date_id' => $blockedDate->id]);
         $record->vehicle->update(['status' => VehicleStatus::UnderMaintenance]);

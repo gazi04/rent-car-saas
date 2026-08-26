@@ -3,12 +3,14 @@
 namespace App\Filament\Operator\Widgets;
 
 use App\Enums\BookingStatus;
+use App\Exceptions\VehicleNotAvailableException;
 use App\Filament\Operator\Resources\Bookings\BookingResource;
 use App\Filament\Support\HelpAction;
 use App\Models\BlockedDate;
 use App\Models\Booking;
 use App\Models\Vehicle;
 use App\Services\AvailabilityService;
+use App\Services\BlockedDateService;
 use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
@@ -18,6 +20,7 @@ use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Filament\Support\Exceptions\Halt;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Date;
 use Saade\FilamentFullCalendar\Actions\CreateAction;
@@ -303,12 +306,23 @@ class AvailabilityCalendar extends FullCalendarWidget
                         'vehicle_id' => $this->vehicleFilter,
                     ]);
                 })
-                ->using(fn (array $data, string $model): BlockedDate => $model::create([
-                    'vehicle_id' => $data['vehicle_id'],
-                    'start_date' => $data['start_date'],
-                    'end_date' => $data['end_date'],
-                    'reason' => $data['reason'] ?? null,
-                ]))
+                // The form rule above is fast feedback; this is the guarantee — it
+                // re-locks the vehicle row and re-checks under that lock, so a
+                // booking that slipped in between validation and submission is
+                // caught here instead of silently double-booking the vehicle.
+                ->using(function (array $data): BlockedDate {
+                    try {
+                        return resolve(BlockedDateService::class)->create($data);
+                    } catch (VehicleNotAvailableException) {
+                        Notification::make()
+                            ->title(__('panel.vehicle_not_available_title'))
+                            ->body(__('panel.block_overlaps_booking'))
+                            ->danger()
+                            ->send();
+
+                        throw new Halt;
+                    }
+                })
                 ->after(fn () => $this->refreshRecords()),
         ];
     }

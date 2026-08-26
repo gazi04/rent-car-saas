@@ -218,6 +218,7 @@ return [
     'service_overdue' => 'overdue',
     'service_due_bell_title' => 'Service due soon',
     'service_overdue_bell_title' => 'Service overdue — vehicle blocked',
+    'service_overdue_conflict_title' => 'Service overdue — vehicle already has a booking',
 
     // Reviews
     'nav_reviews' => 'Reviews',
