@@ -2,12 +2,15 @@
 
 use App\Enums\PlanFeature;
 use App\Enums\VehicleStatus;
+use App\Exceptions\InvalidBookingWindowException;
 use App\Exceptions\PromoCodeInvalidException;
 use App\Exceptions\VehicleNotAvailableException;
 use App\Models\PromoCode;
 use App\Models\Vehicle;
+use Carbon\CarbonInterface;
 use App\Services\BookingService;
 use App\Services\PricingService;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Layout;
@@ -76,7 +79,10 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
                 return;
             }
 
-            if ($start->lt($end)) {
+            // A hand-edited ?start_date= is as untrusted as any other input: an
+            // unbookable range is dropped rather than adopted, so the wizard
+            // never opens on dates it would refuse at submit.
+            if ($this->windowIsBookable($start, $end)) {
                 $this->startDate = $this->prefillStartDate;
                 $this->endDate = $this->prefillEndDate;
                 $this->refreshPrice();
@@ -84,12 +90,32 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
         }
     }
 
+    /**
+     * Dispatched by resources/js/booking-form.js. A Livewire event is browser
+     * input, so the pair is re-checked here — flatpickr's minDate/maxDate are
+     * feedback, not a guard, and a forged event must not seed a price preview
+     * for a window the server would refuse.
+     */
     #[On('dates-selected')]
     public function onDatesSelected(string $start, string $end): void
     {
+        $this->slotTaken = false;
+
+        try {
+            $parsedStart = Date::parse($start);
+            $parsedEnd = Date::parse($end);
+        } catch (\Exception) {
+            return;
+        }
+
+        if (! $this->windowIsBookable($parsedStart, $parsedEnd)) {
+            $this->priceBreakdown = null;
+
+            return;
+        }
+
         $this->startDate = $start;
         $this->endDate = $end;
-        $this->slotTaken = false;
         $this->refreshPrice();
     }
 
@@ -98,10 +124,7 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
         $this->slotTaken = false;
 
         if ($this->step === 1) {
-            $this->validate([
-                'startDate' => 'required|date',
-                'endDate' => 'required|date|after:startDate',
-            ]);
+            $this->validate($this->dateRules(), $this->dateMessages());
         } elseif ($this->step === 2) {
             $this->validate([
                 'customerName' => 'required|string|max:255',
@@ -141,14 +164,13 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
         }
 
         $this->validate([
-            'startDate' => 'required|date',
-            'endDate' => 'required|date|after:startDate',
+            ...$this->dateRules(),
             'customerName' => 'required|string|max:255',
             'customerPhone' => 'required|string|max:50',
             'customerEmail' => 'required|email|max:255',
             'pickupLocation' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:1000',
-        ]);
+        ], $this->dateMessages());
 
         $this->slotTaken = false;
         RateLimiter::hit($key, decaySeconds: 3600);
@@ -173,9 +195,71 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
             $this->startDate = '';
             $this->endDate = '';
             $this->priceBreakdown = null;
+        } catch (InvalidBookingWindowException) {
+            // A wizard left open across midnight, or forged dates. Back to step 1
+            // for new dates — the customer's typed details are kept.
+            $this->submitError = __('booking.date_window_invalid');
+            $this->step = 1;
+            $this->priceBreakdown = null;
         } catch (PromoCodeInvalidException) {
             $this->promoError = __('booking.promo_invalid');
         }
+    }
+
+    /**
+     * The one definition of a bookable window, shared by both validate() calls
+     * so they cannot drift. The real guard is BookingService::lockAndValidate();
+     * these rules exist to say so inline on step 1 instead of at the last click.
+     *
+     * @return array<string, array<int, string>>
+     */
+    private function dateRules(): array
+    {
+        $rules = [
+            'startDate' => ['required', 'date', 'after_or_equal:today'],
+            'endDate' => ['required', 'date', 'after:startDate'],
+        ];
+
+        if ($this->startDate !== '') {
+            try {
+                $latestEnd = Date::parse($this->startDate)->startOfDay()->addDays($this->maxRentalDays());
+                $rules['endDate'][] = 'before_or_equal:'.$latestEnd->toDateString();
+            } catch (\Exception) {
+                // Unparseable start — the 'date' rule on startDate reports it.
+            }
+        }
+
+        return $rules;
+    }
+
+    /** @return array<string, string> */
+    private function dateMessages(): array
+    {
+        // The repo ships no lang/*/validation.php, so the framework defaults are
+        // English-only — unacceptable on an Albanian-default storefront.
+        return [
+            'startDate.after_or_equal' => __('booking.date_in_past'),
+            'endDate.before_or_equal' => __('booking.date_range_too_long', ['count' => $this->maxRentalDays()]),
+        ];
+    }
+
+    private function maxRentalDays(): int
+    {
+        return Config::integer('bookings.max_rental_days');
+    }
+
+    /** Whether a parsed pair is one the server would accept — the untrusted-input gate. */
+    private function windowIsBookable(CarbonInterface $start, CarbonInterface $end): bool
+    {
+        if (! $start->lt($end)) {
+            return false;
+        }
+
+        if ($start->copy()->startOfDay()->lt(today())) {
+            return false;
+        }
+
+        return resolve(PricingService::class)->rentalDays($start, $end) <= $this->maxRentalDays();
     }
 
     /**
@@ -307,7 +391,8 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
                             placeholder="{{ __('booking.date_placeholder') }}"
                             data-availability-url="{{ route('vehicle.availability', $vehicle) }}"
                             data-default-start="{{ $startDate }}"
-                            data-default-end="{{ $endDate }}" />
+                            data-default-end="{{ $endDate }}"
+                            data-max-rental-days="{{ config('bookings.max_rental_days') }}" />
                 @error('startDate') <p class="mt-1 text-xs text-critical">{{ $message }}</p> @enderror
                 @error('endDate') <p class="mt-1 text-xs text-critical">{{ $message }}</p> @enderror
             </div>

@@ -11,7 +11,10 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Date;
 
 class BookingForm
 {
@@ -34,11 +37,25 @@ class BookingForm
                             ->label(__('panel.start_date'))
                             ->required()
                             ->seconds(false),
+                        // No minDate: an operator may legitimately record a rental
+                        // that already started. The duration cap still applies, and
+                        // BookingService::createManual() is what enforces it.
                         DateTimePicker::make('end_date')
                             ->label(__('panel.end_date'))
                             ->required()
                             ->seconds(false)
-                            ->after('start_date'),
+                            ->after('start_date')
+                            ->maxDate(function (Get $get): ?string {
+                                $start = $get('start_date');
+
+                                if (! is_string($start) || $start === '') {
+                                    return null;
+                                }
+
+                                return Date::parse($start)
+                                    ->addDays(Config::integer('bookings.max_rental_days'))
+                                    ->toDateTimeString();
+                            }),
                         TextInput::make('pickup_location')
                             ->label(__('panel.pickup_location'))
                             ->maxLength(255),

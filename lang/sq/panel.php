@@ -197,6 +197,7 @@ return [
     'promo_unlimited_hint' => 'Lëreni bosh për të pakufizuar.',
     'promo_invalid_title' => 'Kod promocional i pavlefshëm',
     'vehicle_not_available_title' => 'Automjeti nuk është i disponueshëm',
+    'invalid_booking_window_title' => 'Periudhë qiraje e pavlefshme',
 
     // Gjurmimi i mirëmbajtjes së automjeteve
     'nav_service_records' => 'Të dhënat e servisit',

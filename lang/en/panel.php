@@ -197,6 +197,7 @@ return [
     'promo_unlimited_hint' => 'Leave empty for unlimited.',
     'promo_invalid_title' => 'Invalid promo code',
     'vehicle_not_available_title' => 'Vehicle not available',
+    'invalid_booking_window_title' => 'Invalid rental period',
 
     // Vehicle maintenance tracking
     'nav_service_records' => 'Service records',

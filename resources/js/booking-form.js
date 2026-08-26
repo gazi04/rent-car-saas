@@ -16,6 +16,7 @@ function initBookingPicker() {
 
     const availabilityUrl = el.dataset.availabilityUrl;
     const { defaultStart, defaultEnd } = el.dataset;
+    const maxRentalDays = Number(el.dataset.maxRentalDays) || 0;
 
     fetch(availabilityUrl)
         .then((res) => res.json())
@@ -31,7 +32,21 @@ function initBookingPicker() {
                 dateFormat: 'Y-m-d',
                 disable: disableRanges,
                 defaultDate: defaultStart && defaultEnd ? [defaultStart, defaultEnd] : undefined,
-                onChange(selectedDates) {
+                onChange(selectedDates, _dateStr, instance) {
+                    // flatpickr 4 has no max-range option, so the duration cap is
+                    // expressed by moving maxDate once the first date is picked.
+                    // A static maxDate would instead forbid a 3-day rental six
+                    // months out, which is a different (and wrong) rule.
+                    if (maxRentalDays > 0) {
+                        if (selectedDates.length === 1) {
+                            const latest = new Date(selectedDates[0]);
+                            latest.setDate(latest.getDate() + maxRentalDays);
+                            instance.set('maxDate', latest);
+                        } else if (selectedDates.length === 0) {
+                            instance.set('maxDate', null);
+                        }
+                    }
+
                     if (selectedDates.length === 2) {
                         const fmt = (d) => {
                             const year = d.getFullYear();
@@ -43,6 +58,12 @@ function initBookingPicker() {
                             start: fmt(selectedDates[0]),
                             end: fmt(selectedDates[1]),
                         });
+
+                        // Range complete — lift the bound so the next selection
+                        // starts from a clean calendar.
+                        if (maxRentalDays > 0) {
+                            instance.set('maxDate', null);
+                        }
                     }
                 },
             });

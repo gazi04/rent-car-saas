@@ -90,6 +90,9 @@ return [
     'discount' => 'Zbritje',
     'total' => 'Totali',
     'deposit' => 'Depozitë sigurie',
+    'date_in_past' => 'Ju lutemi zgjidhni një datë fillimi nga sot e tutje.',
+    'date_range_too_long' => 'Qiratë janë të kufizuara në :count ditë. Ju lutemi zgjidhni një periudhë më të shkurtër.',
+    'date_window_invalid' => 'Këto data nuk mund të rezervohen më. Ju lutemi zgjidhni datat përsëri.',
 
     // Step 2 — details
     'customer_name' => 'Emri i plotë',

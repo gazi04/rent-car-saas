@@ -10,6 +10,7 @@ use App\Events\BookingCancelled;
 use App\Events\BookingConfirmed;
 use App\Events\BookingCreated;
 use App\Events\BookingRejected;
+use App\Exceptions\InvalidBookingWindowException;
 use App\Exceptions\PromoCodeInvalidException;
 use App\Exceptions\VehicleNotAvailableException;
 use App\Models\Booking;
@@ -18,6 +19,7 @@ use App\Models\PromoCode;
 use App\Models\Tenant;
 use App\Models\Vehicle;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -75,7 +77,9 @@ class BookingService
     public function createManual(array $data): Booking
     {
         return DB::transaction(function () use ($data) {
-            [$vehicle, $start, $end] = $this->lockAndValidate($data);
+            // A front-desk operator records the walk-in who drove off at 09:00
+            // and is entered at 11:00. The duration cap still applies.
+            [$vehicle, $start, $end] = $this->lockAndValidate($data, allowPastStart: true);
             $customer = $this->resolveCustomer($data);
             $promo = $this->resolvePromo($data, $customer);
             $price = $this->pricing->calculate($vehicle, $start, $end, $promo);
@@ -183,20 +187,25 @@ class BookingService
     }
 
     /**
-     * Lock the vehicle row, parse dates, and re-check availability. Must be
-     * called inside a DB::transaction. Pricing is computed by the caller (after
-     * resolving any promo code).
+     * Lock the vehicle row, parse dates, check the rental window, and re-check
+     * availability. Must be called inside a DB::transaction. Pricing is computed
+     * by the caller (after resolving any promo code).
      *
+     * @param  bool  $allowPastStart  Operator-entered bookings may start in the past; customer ones may not.
      * @param  array<string, mixed>  $data
      * @return array{0: Vehicle, 1: CarbonInterface, 2: CarbonInterface}
+     *
+     * @throws InvalidBookingWindowException
      */
-    private function lockAndValidate(array $data): array
+    private function lockAndValidate(array $data, bool $allowPastStart = false): array
     {
         // Lock the vehicle row — concurrent transactions queue behind this.
         $vehicle = Vehicle::query()->whereKey($data['vehicle_id'])->lockForUpdate()->firstOrFail();
 
         $start = Date::parse($data['start_date']);
         $end = Date::parse($data['end_date']);
+
+        $this->assertBookableWindow($start, $end, $allowPastStart);
 
         try {
             $available = $this->availability->isAvailable($vehicle, $start, $end);
@@ -208,6 +217,37 @@ class BookingService
         throw_unless($available, VehicleNotAvailableException::class, 'Sorry, this vehicle was just booked by someone else.');
 
         return [$vehicle, $start, $end];
+    }
+
+    /**
+     * The window itself must be bookable, independently of who else holds it.
+     * The wizard's rules and flatpickr say the same thing, but both live in the
+     * browser or in one component — this is the choke point every create path
+     * shares, so it is where the invariant belongs.
+     *
+     * The app runs on UTC (config/app.php) while the market is UTC+1/+2, so a
+     * customer's local "today" is never behind today() here: the floor can only
+     * ever be permissive by a day, never reject a legitimate same-day booking.
+     *
+     * @throws InvalidBookingWindowException
+     */
+    private function assertBookableWindow(CarbonInterface $start, CarbonInterface $end, bool $allowPastStart): void
+    {
+        throw_if(
+            ! $allowPastStart && $start->copy()->startOfDay()->lt(today()),
+            InvalidBookingWindowException::class,
+            'A booking cannot start in the past.'
+        );
+
+        $maxDays = Config::integer('bookings.max_rental_days');
+
+        // Measured with the same helper that prices the rental, so the guard and
+        // the invoice can never disagree about how long a booking is.
+        throw_if(
+            $start->lt($end) && $this->pricing->rentalDays($start, $end) > $maxDays,
+            InvalidBookingWindowException::class,
+            "A booking cannot run longer than {$maxDays} days."
+        );
     }
 
     /**

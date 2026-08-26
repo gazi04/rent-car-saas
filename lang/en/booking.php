@@ -90,6 +90,9 @@ return [
     'discount' => 'Discount',
     'total' => 'Total',
     'deposit' => 'Security deposit',
+    'date_in_past' => 'Please choose a start date from today onwards.',
+    'date_range_too_long' => 'Rentals are limited to :count days. Please choose a shorter period.',
+    'date_window_invalid' => 'Those dates are no longer bookable. Please choose your dates again.',
 
     // Step 2 — details
     'customer_name' => 'Full name',
