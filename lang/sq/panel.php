@@ -20,6 +20,7 @@ return [
     'customer_email' => 'Email-i i klientit',
     'notes' => 'Shënime',
     'cancellation_reason' => 'Arsyeja (opsionale)',
+    'booking_expired_bell_title' => 'Rezervimi skadoi — automjeti u lirua',
 
     // Tabela e rezervimeve
     'reference' => 'Referenca',

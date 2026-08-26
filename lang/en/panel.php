@@ -20,6 +20,7 @@ return [
     'customer_email' => 'Customer email',
     'notes' => 'Notes',
     'cancellation_reason' => 'Reason (optional)',
+    'booking_expired_bell_title' => 'Booking expired — vehicle freed',
 
     // Booking table
     'reference' => 'Reference',

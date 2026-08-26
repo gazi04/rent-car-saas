@@ -153,6 +153,36 @@ class BookingService
     }
 
     /**
+     * Cancel a booking that has sat Pending too long, on behalf of the hourly
+     * bookings:expire-pending sweep. Deliberately not cancel(): that one accepts
+     * any non-Completed status, and the sweep must never undo a booking the
+     * operator confirmed a moment ago. The Pending guard rides in the UPDATE, so
+     * a sweep that loses that race simply reports false — unlike transition(),
+     * which throws, and a background sweep has no one to throw at.
+     *
+     * @return bool Whether this call is the one that cancelled the booking.
+     */
+    public function expire(Booking $booking, string $reason): bool
+    {
+        $updated = Booking::query()->whereKey($booking->getKey())
+            ->where('status', BookingStatus::Pending->value)
+            ->update([
+                'status' => BookingStatus::Cancelled->value,
+                'cancellation_reason' => $reason,
+                'updated_at' => now(),
+            ]);
+
+        if ($updated === 0) {
+            return false;
+        }
+
+        $booking->refresh();
+        event(new BookingCancelled($booking, 'system'));
+
+        return true;
+    }
+
+    /**
      * Lock the vehicle row, parse dates, and re-check availability. Must be
      * called inside a DB::transaction. Pricing is computed by the caller (after
      * resolving any promo code).

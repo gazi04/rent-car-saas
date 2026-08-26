@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\ExpireStalePendingBookings;
 use App\Console\Commands\GenerateBusinessSummaries;
 use App\Console\Commands\ProcessTenantSubscriptions;
 use App\Console\Commands\ProcessVehicleMaintenance;
@@ -33,6 +34,11 @@ Schedule::command(SweepWaitlist::class)->dailyAt('08:00')->withoutOverlapping();
 // Daily review-request fan-out: next-day invitation email,
 // one queued job per eligible tenant.
 Schedule::command(RequestPendingReviews::class)->dailyAt('09:00')->withoutOverlapping();
+
+// Hourly pending-booking expiry sweep: cancel bookings left unconfirmed past
+// the window so they stop blocking their vehicle. Hourly, not daily, because
+// the window (bookings.pending_expiry_hours) is measured in hours.
+Schedule::command(ExpireStalePendingBookings::class)->hourly()->withoutOverlapping();
 
 // Age out the email delivery log (mail.log_retention_days). It grows with send
 // volume and is an operational trail, not a business record.

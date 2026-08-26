@@ -65,6 +65,9 @@ return [
         'vehicle_label' => 'Automjeti',
         'dates_label' => 'Datat',
         'reason_label' => 'Arsyeja',
+        // Shkruhet në bookings.cancellation_reason nga fshirja automatike dhe
+        // shfaqet si rreshti i arsyes në këtë email.
+        'expired_reason' => 'Nuk u konfirmua në kohë nga kompania e qirasë',
         'outro' => 'Nëse nuk e keni kërkuar këtë anulim, ju lutemi kontaktoni :operator.',
     ],
 

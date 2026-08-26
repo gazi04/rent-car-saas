@@ -65,6 +65,9 @@ return [
         'vehicle_label' => 'Vehicle',
         'dates_label' => 'Dates',
         'reason_label' => 'Reason',
+        // Written to bookings.cancellation_reason by the expiry sweep, then rendered
+        // as the reason row of this same email.
+        'expired_reason' => 'Not confirmed by the rental company in time',
         'outro' => 'If you did not request this cancellation, please contact :operator.',
     ],
 

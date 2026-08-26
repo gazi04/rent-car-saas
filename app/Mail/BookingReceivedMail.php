@@ -12,6 +12,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\URL;
 
 class BookingReceivedMail extends Mailable implements ShouldQueue
@@ -43,7 +44,10 @@ class BookingReceivedMail extends Mailable implements ShouldQueue
 
             $cancelUrl = URL::temporarySignedRoute(
                 'public.booking.cancel',
-                now()->addDay(),
+                // The link is only honoured while the booking is still Pending
+                // (CancelBookingController), so it lives exactly as long as the
+                // expiry sweep will leave the booking alone.
+                now()->addHours(Config::integer('bookings.pending_expiry_hours')),
                 ['booking' => $booking->id],
             );
 

@@ -22,21 +22,33 @@ class SendBookingCancelledNotifications implements ShouldQueue
                 ->queue(new BookingCancelledMail($booking));
         }
 
-        if ($cancelledBy === 'customer') {
-            $operators = User::query()->where('tenant_id', $booking->tenant_id)->get();
-            $vehicleDisplay = $booking->vehicle->name;
+        // Only two actors owe the operator anything: the customer, who made a
+        // decision the operator must react to, and the expiry sweep, where a car
+        // silently returns to the fleet. An operator cancelling needs no telling.
+        if ($cancelledBy !== 'customer' && $cancelledBy !== 'system') {
+            return;
+        }
 
-            foreach ($operators as $operator) {
+        $operators = User::query()->where('tenant_id', $booking->tenant_id)->get();
+        $vehicleDisplay = $booking->vehicle->name;
+        $bellTitle = $cancelledBy === 'system'
+            ? __('panel.booking_expired_bell_title')
+            : __('emails.booking_cancelled.bell_title');
+
+        foreach ($operators as $operator) {
+            // An expiry is nobody's decision, so there is nothing to confirm to
+            // the operator by email — the bell is enough.
+            if ($cancelledBy === 'customer') {
                 Mail::to($operator->email)
                     ->locale($operator->locale ?? 'sq')
                     ->queue(new BookingCancelledMail($booking));
-
-                Notification::make()
-                    ->title(__('emails.booking_cancelled.bell_title'))
-                    ->body($booking->customer_name.' · '.$vehicleDisplay)
-                    ->warning()
-                    ->sendToDatabase($operator);
             }
+
+            Notification::make()
+                ->title($bellTitle)
+                ->body($booking->customer_name.' · '.$vehicleDisplay)
+                ->warning()
+                ->sendToDatabase($operator);
         }
     }
 }
