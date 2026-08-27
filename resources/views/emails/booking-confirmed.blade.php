@@ -33,5 +33,13 @@
 </x-mail::button>
 @endif
 
+@if(!empty($cancelUrl))
+<x-mail::button :url="$cancelUrl">
+{{ __('emails.booking_confirmed.cancel_action') }}
+</x-mail::button>
+
+{{ __('emails.booking_confirmed.cancel_note') }}
+@endif
+
 {{ $outro }}
 </x-mail::message>

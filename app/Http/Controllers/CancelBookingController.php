@@ -22,7 +22,7 @@ class CancelBookingController extends Controller
             ]);
         }
 
-        if ($booking->status !== BookingStatus::Pending) {
+        if (! $booking->isSelfCancellable()) {
             return view('public.cancel-result', [
                 'alreadyDone' => false,
                 'notCancellable' => true,

@@ -11,7 +11,7 @@ return [
         'dates_label' => 'Dates',
         'total_label' => 'Total',
         'cancel_action' => 'Cancel Booking',
-        'cancel_note' => 'You can cancel this booking within 24 hours using the link above.',
+        'cancel_note' => 'You can cancel this booking any time before your rental starts using the link above.',
         'outro' => 'Thank you for choosing :operator.',
     ],
 
@@ -40,6 +40,8 @@ return [
         'total_label' => 'Total',
         'payment_note' => 'Payment is due on pickup — please arrange this with the operator.',
         'agreement_button' => 'Download Agreement',
+        'cancel_action' => 'Cancel Booking',
+        'cancel_note' => 'Need to change your plans? You can cancel any time before your rental starts using the link above.',
         'outro' => 'Thank you for booking with :operator.',
     ],
 

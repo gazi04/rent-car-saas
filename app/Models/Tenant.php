@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\PlanFeature;
 use App\Enums\TenantStatus;
 use Carbon\CarbonImmutable;
+use Carbon\CarbonInterface;
 use Database\Factories\TenantFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Mail\Mailables\Address;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\URL;
 use RuntimeException;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -385,6 +387,35 @@ class Tenant extends BaseTenant implements HasMedia
         $port = parse_url($appUrl, PHP_URL_PORT);
 
         return (is_string($scheme) ? $scheme : 'http').'://'.$domain.($port !== null && $port !== false ? ':'.$port : '');
+    }
+
+    /**
+     * Signs a route against this tenant's public storefront root, forcing the
+     * scheme/host the URL generator wouldn't otherwise know outside a real
+     * request to that subdomain (forceRootUrl alone still leaks the current
+     * request's scheme). Returns null when the tenant has no public root yet.
+     *
+     * @param  array<string, mixed>  $parameters
+     */
+    public function signedRouteUrl(string $route, CarbonInterface $expiresAt, array $parameters = []): ?string
+    {
+        $rootUrl = $this->publicRootUrl();
+
+        if ($rootUrl === null) {
+            return null;
+        }
+
+        $scheme = parse_url($rootUrl, PHP_URL_SCHEME);
+
+        URL::forceScheme(is_string($scheme) ? $scheme : 'http');
+        URL::forceRootUrl($rootUrl);
+
+        $url = URL::temporarySignedRoute($route, $expiresAt, $parameters);
+
+        URL::forceRootUrl(null);
+        URL::forceScheme(null);
+
+        return $url;
     }
 
     /**

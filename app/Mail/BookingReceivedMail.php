@@ -12,8 +12,6 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\URL;
 
 class BookingReceivedMail extends Mailable implements ShouldQueue
 {
@@ -30,29 +28,16 @@ class BookingReceivedMail extends Mailable implements ShouldQueue
     {
         $cancelUrl = null;
         $tenant = Tenant::query()->find($booking->tenant_id);
-        $rootUrl = $tenant?->publicRootUrl();
 
-        if ($rootUrl !== null && filled($booking->customer_email)) {
-            // parse_url() returns false (not null) on a malformed URL, so ?? would
-            // leak false into forceScheme()'s ?string parameter.
-            $scheme = parse_url($rootUrl, PHP_URL_SCHEME);
-
-            // forceRootUrl alone is not enough: the generator swaps in the current
-            // request's scheme, so an https root would still emit http links.
-            URL::forceScheme(is_string($scheme) ? $scheme : 'http');
-            URL::forceRootUrl($rootUrl);
-
-            $cancelUrl = URL::temporarySignedRoute(
+        if ($tenant !== null && filled($booking->customer_email)) {
+            $cancelUrl = $tenant->signedRouteUrl(
                 'public.booking.cancel',
-                // The link is only honoured while the booking is still Pending
-                // (CancelBookingController), so it lives exactly as long as the
-                // expiry sweep will leave the booking alone.
-                now()->addHours(Config::integer('bookings.pending_expiry_hours')),
+                // Once the rental would start, self-cancel no longer means
+                // anything — same reasoning as Booking::isSelfCancellable(),
+                // expressed as a deadline instead of a status.
+                $booking->start_date,
                 ['booking' => $booking->id],
             );
-
-            URL::forceRootUrl(null);
-            URL::forceScheme(null);
         }
 
         return new self($booking, $cancelUrl);

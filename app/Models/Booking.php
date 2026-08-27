@@ -78,4 +78,17 @@ class Booking extends Model
     {
         return $this->hasOne(Review::class);
     }
+
+    /**
+     * Whether a customer can self-cancel this booking via the signed link —
+     * Pending or Confirmed only. Active means the car is already with them (a
+     * self-service "cancel" means nothing at that point); Completed/Cancelled
+     * are handled by the separate alreadyDone branch in both cancel
+     * controllers. Single source of truth so ShowCancelBookingController and
+     * CancelBookingController can't drift.
+     */
+    public function isSelfCancellable(): bool
+    {
+        return in_array($this->status, [BookingStatus::Pending, BookingStatus::Confirmed], true);
+    }
 }

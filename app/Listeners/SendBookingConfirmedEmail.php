@@ -8,7 +8,6 @@ use App\Models\Tenant;
 use App\Services\RentalAgreementService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\URL;
 
 class SendBookingConfirmedEmail implements ShouldQueue
 {
@@ -22,32 +21,25 @@ class SendBookingConfirmedEmail implements ShouldQueue
 
         resolve(RentalAgreementService::class)->generate($booking);
 
-        $agreementUrl = null;
         $tenant = Tenant::query()->find($booking->tenant_id);
-        $rootUrl = $tenant?->publicRootUrl();
 
-        if ($rootUrl !== null) {
-            // parse_url() returns false (not null) on a malformed URL, so ?? would
-            // leak false into forceScheme()'s ?string parameter.
-            $scheme = parse_url($rootUrl, PHP_URL_SCHEME);
+        $agreementUrl = $tenant?->signedRouteUrl(
+            'agreement.download',
+            now()->addDays(7),
+            ['booking' => $booking->reference],
+        );
 
-            // forceRootUrl alone is not enough: the generator swaps in the current
-            // request's scheme, so an https root would still emit http links.
-            URL::forceScheme(is_string($scheme) ? $scheme : 'http');
-            URL::forceRootUrl($rootUrl);
-
-            $agreementUrl = URL::temporarySignedRoute(
-                'agreement.download',
-                now()->addDays(7),
-                ['booking' => $booking->reference],
-            );
-
-            URL::forceRootUrl(null);
-            URL::forceScheme(null);
-        }
+        // Same deadline as the received email's link (Booking::isSelfCancellable()
+        // covers Confirmed too) — a customer who only kept this later email
+        // still finds a working cancel link, not just the original one.
+        $cancelUrl = $tenant?->signedRouteUrl(
+            'public.booking.cancel',
+            $booking->start_date,
+            ['booking' => $booking->id],
+        );
 
         Mail::to($booking->customer_email)
             ->locale($booking->locale ?? 'sq')
-            ->queue(new BookingConfirmedMail($booking, $agreementUrl));
+            ->queue(new BookingConfirmedMail($booking, $agreementUrl, $cancelUrl));
     }
 }

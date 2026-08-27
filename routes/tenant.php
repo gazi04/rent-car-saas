@@ -51,12 +51,14 @@ Route::middleware([
     Route::livewire('/booking/{booking:reference}/confirmation', 'pages::public.booking-confirmation')
         ->name('public.booking.confirmation');
 
-    // Signed cancellation link, valid for bookings.pending_expiry_hours (the
-    // window in which the booking is still Pending) — no auth required. GET renders a confirm
-    // page (no mutation, safe for email link-prescanners); POST performs the
-    // actual cancellation. Both are protected by the same signature — Laravel's
-    // hasValidSignature() hashes the URL string only, not the HTTP verb, so the
-    // exact GET URL doubles as a valid signed POST target with no re-signing.
+    // Signed cancellation link, valid until the booking's start_date (deep-audit
+    // finding 07) — no auth required. Honoured while the booking is Pending or
+    // Confirmed (Booking::isSelfCancellable()); Active/Completed/Cancelled show
+    // a "not cancellable" page instead. GET renders a confirm page (no mutation,
+    // safe for email link-prescanners); POST performs the actual cancellation.
+    // Both are protected by the same signature — Laravel's hasValidSignature()
+    // hashes the URL string only, not the HTTP verb, so the exact GET URL
+    // doubles as a valid signed POST target with no re-signing.
     Route::get('/booking/{booking}/cancel', ShowCancelBookingController::class)
         ->name('public.booking.cancel')
         ->middleware('signed');

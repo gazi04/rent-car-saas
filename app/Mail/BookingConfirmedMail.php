@@ -22,6 +22,7 @@ class BookingConfirmedMail extends Mailable implements ShouldQueue
     public function __construct(
         public readonly Booking $booking,
         public readonly ?string $agreementUrl = null,
+        public readonly ?string $cancelUrl = null,
     ) {}
 
     public function envelope(): Envelope
@@ -49,6 +50,7 @@ class BookingConfirmedMail extends Mailable implements ShouldQueue
             with: [
                 'booking' => $this->booking,
                 'agreementUrl' => $this->agreementUrl,
+                'cancelUrl' => $this->cancelUrl,
                 'intro' => $renderer->resolve($this->booking, 'tmpl_email_confirmed_intro', 'emails.booking_confirmed.intro'),
                 'outro' => $renderer->resolve($this->booking, 'tmpl_email_confirmed_outro', 'emails.booking_confirmed.outro', ['operator' => $operator]),
             ],

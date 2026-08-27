@@ -11,7 +11,7 @@ return [
         'dates_label' => 'Datat',
         'total_label' => 'Totali',
         'cancel_action' => 'Anulo Rezervimin',
-        'cancel_note' => 'Mund ta anuloni këtë rezervim brenda 24 orëve duke përdorur lidhjen e mësipërme.',
+        'cancel_note' => 'Mund ta anuloni këtë rezervim në çdo kohë para se të fillojë qiraja, duke përdorur lidhjen e mësipërme.',
         'outro' => 'Faleminderit që zgjodhët :operator.',
     ],
 
@@ -40,6 +40,8 @@ return [
         'total_label' => 'Totali',
         'payment_note' => 'Pagesa bëhet gjatë marrjes — ju lutemi rregullojeni me operatorin.',
         'agreement_button' => 'Shkarko Kontratën',
+        'cancel_action' => 'Anulo Rezervimin',
+        'cancel_note' => 'Duhet të ndryshoni planet? Mund ta anuloni në çdo kohë para se të fillojë qiraja, duke përdorur lidhjen e mësipërme.',
         'outro' => 'Faleminderit që rezervuat me :operator.',
     ],
 
