@@ -24,16 +24,20 @@ return [
      * The list of domains hosting your central app.
      *
      * Only relevant if you're using the domain or subdomain identification middleware.
+     *
+     * The local hosts are hard-coded; production hosts come from the same env
+     * keys the rest of tenancy config reads (CENTRAL_DOMAIN / ADMIN_PANEL_DOMAIN),
+     * so a new deployment only needs those set — not a code change here.
      */
-    'central_domains' => [
+    'central_domains' => array_values(array_unique(array_filter([
         '127.0.0.1',
         'lvh.me',
         'admin.lvh.me',
         /* 'localhost', */
         /* 'admin.localhost', */
-        'yourdomain.com',
-        'admin.yourdomain.com',
-    ],
+        env('CENTRAL_DOMAIN', 'localhost'),
+        env('ADMIN_PANEL_DOMAIN', 'admin.localhost'),
+    ], static fn (mixed $host): bool => is_string($host) && $host !== ''))),
 
     /**
      * Base domain that operator subdomains are built on. A tenant created with
