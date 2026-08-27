@@ -139,6 +139,7 @@ return [
     'promo_apply' => 'Apply',
     'promo_applied' => 'Promo code applied.',
     'promo_invalid' => 'This promo code is not valid.',
+    'promo_removed_recalculated' => 'Your promo code could no longer be applied, so it\'s been removed and your total updated. Please review before confirming.',
 
     // Reviews
     'review_title' => 'How was your rental?',

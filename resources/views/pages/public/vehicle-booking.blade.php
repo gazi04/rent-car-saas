@@ -5,6 +5,7 @@ use App\Enums\VehicleStatus;
 use App\Exceptions\InvalidBookingWindowException;
 use App\Exceptions\PromoCodeInvalidException;
 use App\Exceptions\VehicleNotAvailableException;
+use App\Models\Customer;
 use App\Models\PromoCode;
 use App\Models\Vehicle;
 use Carbon\CarbonInterface;
@@ -133,6 +134,19 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
                 'pickupLocation' => 'nullable|string|max:255',
                 'notes' => 'nullable|string|max:1000',
             ]);
+
+            if ($this->promoCode !== '') {
+                // The phone number just became known — previewPromo() can now
+                // check per_customer_limit, which step 1 could never do. Catch
+                // a promo that's stopped qualifying before the review screen,
+                // not after the customer has filled in everything.
+                $this->refreshPrice();
+
+                if ($this->promoError !== null) {
+                    $this->promoCode = '';
+                    $this->promoError = __('booking.promo_removed_recalculated');
+                }
+            }
         }
 
         $this->step++;
@@ -202,7 +216,13 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
             $this->step = 1;
             $this->priceBreakdown = null;
         } catch (PromoCodeInvalidException) {
-            $this->promoError = __('booking.promo_invalid');
+            // The step-2 re-check already catches the common case; this is the
+            // residual race (another booking consumed the last use in between).
+            // Same recovery: drop the code, recompute without the discount, and
+            // say plainly what happened rather than leaving a stale total.
+            $this->promoCode = '';
+            $this->refreshPrice();
+            $this->promoError = __('booking.promo_removed_recalculated');
         }
     }
 
@@ -265,7 +285,11 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
     /**
      * Resolve the entered promo code for the price preview (read-only — no lock,
      * no usage increment; the authoritative check + redemption happen in
-     * BookingService at submit). Sets promoNotice / promoError.
+     * BookingService at submit). Phone-aware once step 2 has set customerPhone,
+     * so isValidForCustomer() can check per_customer_limit — the same rule
+     * submit() enforces, via the same method, so the two can't drift. Before
+     * that (step 1) the lookup finds no phone and the check is permissive,
+     * matching what a preview can actually know. Sets promoNotice / promoError.
      */
     private function previewPromo(): ?PromoCode
     {
@@ -279,8 +303,11 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
         }
 
         $promo = PromoCode::query()->where('code', $code)->first();
+        $customer = $this->customerPhone !== ''
+            ? Customer::query()->where('phone', $this->customerPhone)->first()
+            : null;
 
-        if ($promo === null || ! $promo->isCurrentlyValid()) {
+        if ($promo === null || ! $promo->isValidForCustomer($customer)) {
             $this->promoError = __('booking.promo_invalid');
 
             return null;
@@ -553,6 +580,10 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
             </dl>
 
             <x-ui.alert tone="notice" class="mb-6 text-xs">{{ __('booking.pending_notice') }}</x-ui.alert>
+
+            @if ($promoError)
+                <x-ui.alert tone="critical" class="mb-4">{{ $promoError }}</x-ui.alert>
+            @endif
 
             @if ($submitError)
                 <x-ui.alert tone="critical" class="mb-4">{{ $submitError }}</x-ui.alert>

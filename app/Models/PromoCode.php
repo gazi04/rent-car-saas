@@ -100,4 +100,30 @@ class PromoCode extends Model
     {
         return $this->is_active && $this->withinWindow() && $this->hasUsesLeft();
     }
+
+    /**
+     * Whether this code can be redeemed right now, optionally by a specific
+     * customer. Composes isCurrentlyValid() with the per-customer-limit check —
+     * the one thing that check needs is a resolved Customer, which a preview
+     * may not have yet (no phone number collected before step 2 of the booking
+     * wizard). Passing null skips that half of the check, which is exactly
+     * what "we don't know who this is yet" should mean. The single source of
+     * truth for both the price preview and BookingService's submit-time check,
+     * so the two can no longer validate a promo code differently.
+     */
+    public function isValidForCustomer(?Customer $customer): bool
+    {
+        if (! $this->isCurrentlyValid()) {
+            return false;
+        }
+
+        if ($this->per_customer_limit === null || $customer === null) {
+            return true;
+        }
+
+        return $customer->bookings()
+            ->where('promo_code_id', $this->id)
+            ->whereNot('status', BookingStatus::Cancelled)
+            ->count() < $this->per_customer_limit;
+    }
 }

@@ -302,14 +302,8 @@ class BookingService
 
         $promo = PromoCode::query()->where('code', $code)->lockForUpdate()->first();
 
-        if ($promo === null || ! $promo->isCurrentlyValid()) {
+        if ($promo === null || ! $promo->isValidForCustomer($customer)) {
             throw new PromoCodeInvalidException('This promo code is not valid.');
-        }
-
-        if ($promo->per_customer_limit !== null
-            && $customer->bookings()->where('promo_code_id', $promo->id)
-                ->whereNot('status', BookingStatus::Cancelled)->count() >= $promo->per_customer_limit) {
-            throw new PromoCodeInvalidException('This promo code has already been used.');
         }
 
         return $promo;

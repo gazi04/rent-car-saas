@@ -139,6 +139,7 @@ return [
     'promo_apply' => 'Apliko',
     'promo_applied' => 'Kodi promocional u aplikua.',
     'promo_invalid' => 'Ky kod promocional nuk është i vlefshëm.',
+    'promo_removed_recalculated' => 'Kodi juaj promocional nuk mund të aplikohej më, prandaj u hoq dhe totali u përditësua. Ju lutemi rishikoni para se të konfirmoni.',
 
     // Vlerësimet
     'review_title' => 'Si ishte qiraja juaj?',
