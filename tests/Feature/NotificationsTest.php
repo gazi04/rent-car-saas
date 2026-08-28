@@ -422,6 +422,56 @@ test('signed cancel link follows app.url scheme and port on the tenant domain', 
         ->and($mail->cancelUrl)->toContain('signature=');
 });
 
+// ── Cancel-link lifetime (deep-audit finding 07) ──────────────────────────────
+
+test('received-email cancel link is signed until the rental starts, not a fixed window', function () {
+    tenancy()->end();
+
+    $tenant = Tenant::factory()->withDomain('cancellifetime')->create();
+    tenancy()->initialize($tenant);
+    $vehicle = Vehicle::factory()->create(['daily_rate' => 50]);
+
+    $booking = app(BookingService::class)->create(notifBookingData($vehicle, [
+        'customer_email' => 'ana@example.com',
+        // Well past bookings.pending_expiry_hours (48h default) — a link tied
+        // to that window would already be dead by the time this booking's
+        // rental even starts.
+        'start_date' => now()->addWeeks(3)->toDateString(),
+        'end_date' => now()->addWeeks(3)->addDays(3)->toDateString(),
+    ]));
+
+    $mail = BookingReceivedMail::forTenantDomain($booking);
+
+    expect($mail->cancelUrl)->not->toBeNull();
+
+    parse_str((string) parse_url($mail->cancelUrl, PHP_URL_QUERY), $query);
+
+    expect((int) $query['expires'])->toBe($booking->start_date->getTimestamp());
+});
+
+test('confirmed-email now carries a signed cancel link, not just the agreement download', function () {
+    tenancy()->end();
+
+    $tenant = Tenant::factory()->withDomain('confirmcancellink')->create();
+    tenancy()->initialize($tenant);
+    $vehicle = Vehicle::factory()->create(['daily_rate' => 50]);
+
+    Mail::fake();
+
+    $booking = Booking::factory()->create([
+        'vehicle_id' => $vehicle->id,
+        'customer_email' => 'ana@example.com',
+        'start_date' => now()->addWeeks(2),
+        'locale' => 'en',
+    ]);
+
+    (new SendBookingConfirmedEmail)->handle(new BookingConfirmed($booking));
+
+    Mail::assertQueued(BookingConfirmedMail::class, fn (BookingConfirmedMail $mail): bool => $mail->cancelUrl !== null
+        && str_contains($mail->cancelUrl, 'signature=')
+    );
+});
+
 // ── Envelope robustness: nullable tenant.email, missing tenant row ───────────
 
 test('customer email still sends from the platform address when the tenant has no email', function () {

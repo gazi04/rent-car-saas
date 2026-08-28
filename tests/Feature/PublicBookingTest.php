@@ -719,7 +719,10 @@ it('confirmation page does not expose a self-minted cancel link', function () {
         ->assertDontSee('signature=', escape: false);
 });
 
-it('signed cancel link does not cancel a Confirmed booking on GET or POST', function () {
+it('signed cancel link shows a confirm page but does not cancel a Confirmed booking on GET', function () {
+    // deep-audit finding 07: a Confirmed booking is now self-cancellable — the
+    // wizard's "check your email to cancel" advice is pointless for anyone
+    // past Pending unless this path works too.
     $tenant = publicTenant('ardi');
     tenancy()->initialize($tenant);
     $vehicle = publicVehicle();
@@ -733,11 +736,33 @@ it('signed cancel link does not cancel a Confirmed booking on GET or POST', func
         ['booking' => $booking->id],
     );
 
-    $this->get($url)->assertOk();
-    expect($booking->fresh()->status)->toBe(BookingStatus::Confirmed);
+    $this->get($url)
+        ->assertOk()
+        ->assertSee($booking->reference)
+        ->assertSee(__('booking.confirm_cancel_button'));
 
-    $this->post($url)->assertOk();
     expect($booking->fresh()->status)->toBe(BookingStatus::Confirmed);
+});
+
+it('signed cancel link cancels a Confirmed booking on POST', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+    $vehicle = publicVehicle();
+    $booking = Booking::factory()->forVehicle($vehicle)->confirmed()->create();
+    tenancy()->end();
+
+    URL::forceRootUrl(tenant_url('ardi'));
+    $url = URL::temporarySignedRoute(
+        'public.booking.cancel',
+        now()->addDay(),
+        ['booking' => $booking->id],
+    );
+
+    $this->post($url)
+        ->assertOk()
+        ->assertSee($booking->reference);
+
+    expect($booking->fresh()->status)->toBe(BookingStatus::Cancelled);
 });
 
 it('signed cancel link does not cancel an Active booking on GET or POST', function () {
@@ -759,6 +784,18 @@ it('signed cancel link does not cancel an Active booking on GET or POST', functi
 
     $this->post($url)->assertOk();
     expect($booking->fresh()->status)->toBe(BookingStatus::Active);
+});
+
+it('isSelfCancellable is true for Pending and Confirmed, false for everything else', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+    $vehicle = publicVehicle();
+
+    expect(Booking::factory()->forVehicle($vehicle)->create()->isSelfCancellable())->toBeTrue()
+        ->and(Booking::factory()->forVehicle($vehicle)->confirmed()->create()->isSelfCancellable())->toBeTrue()
+        ->and(Booking::factory()->forVehicle($vehicle)->active()->create()->isSelfCancellable())->toBeFalse()
+        ->and(Booking::factory()->forVehicle($vehicle)->completed()->create()->isSelfCancellable())->toBeFalse()
+        ->and(Booking::factory()->forVehicle($vehicle)->cancelled()->create()->isSelfCancellable())->toBeFalse();
 });
 
 // ── Language toggle ───────────────────────────────────────────────────────────
