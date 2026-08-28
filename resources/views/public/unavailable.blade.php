@@ -17,7 +17,7 @@
     @fonts(['instrument-sans'])
 
     <style>:root { --font-family: 'Instrument Sans', system-ui, sans-serif; } body { font-family: var(--font-family); }</style>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css'])
 </head>
 <body class="min-h-dvh bg-surface text-ink antialiased">
     <main class="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8">

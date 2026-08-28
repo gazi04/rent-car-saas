@@ -10,8 +10,6 @@ export default defineConfig({
         laravel({
             input: [
                 'resources/css/app.css',
-                'resources/js/app.js',
-                'resources/js/passkeys.js',
                 'resources/js/booking-form.js',
                 'resources/js/waitlist-form.js',
                 'resources/js/vehicle-filters.js',

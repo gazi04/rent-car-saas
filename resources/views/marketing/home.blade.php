@@ -10,7 +10,7 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
     @fonts(['instrument-sans'])
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css'])
 </head>
 <body class="min-h-dvh bg-surface-raised text-ink antialiased">
 

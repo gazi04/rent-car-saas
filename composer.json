@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/livewire-starter-kit",
+    "name": "gazi04/rent-car-saas",
     "type": "project",
-    "description": "The official Laravel starter kit for Livewire.",
-    "keywords": ["laravel", "framework"],
+    "description": "RentACar SaaS — multi-tenant, white-label car-rental SaaS for the Kosovo / Western Balkans market.",
+    "keywords": ["laravel", "saas", "multi-tenant", "car-rental"],
     "license": "MIT",
     "require": {
         "php": "^8.5",

@@ -15,5 +15,5 @@
      faces here would be ~15 wasted font fetches on every authenticated page. --}}
 @fonts(['instrument-sans'])
 
-@vite(['resources/css/app.css', 'resources/js/app.js'])
+@vite(['resources/css/app.css'])
 @fluxAppearance
