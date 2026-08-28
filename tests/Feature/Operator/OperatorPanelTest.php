@@ -8,6 +8,7 @@ use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Livewire\Livewire;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 
@@ -156,6 +157,39 @@ it('blocks an operator with an unverified email even on an approved tenant', fun
     $operator->markEmailAsVerified();
 
     actingAs($operator)->get(tenant_url('ardi', '/dashboard'))->assertOk();
+});
+
+it('sends an operator to their subdomain panel after verifying their email on an active tenant', function () {
+    $tenant = Tenant::factory()->withDomain('ardi')->create(); // active
+    $operator = operatorFor($tenant, verified: false);
+
+    $verificationUrl = URL::temporarySignedRoute(
+        'verification.verify',
+        now()->addMinutes(60),
+        ['id' => $operator->id, 'hash' => sha1($operator->email)],
+    );
+
+    actingAs($operator)->get($verificationUrl)
+        ->assertRedirect($tenant->publicRootUrl().'/dashboard');
+
+    expect($operator->fresh()->hasVerifiedEmail())->toBeTrue();
+});
+
+it('sends an operator to the central login with a status message when their tenant is still pending', function () {
+    $tenant = Tenant::factory()->pending()->withDomain('ardi')->create();
+    $operator = operatorFor($tenant, verified: false);
+
+    $verificationUrl = URL::temporarySignedRoute(
+        'verification.verify',
+        now()->addMinutes(60),
+        ['id' => $operator->id, 'hash' => sha1($operator->email)],
+    );
+
+    actingAs($operator)->get($verificationUrl)
+        ->assertRedirect(route('login'))
+        ->assertSessionHas('status');
+
+    expect($operator->fresh()->hasVerifiedEmail())->toBeTrue();
 });
 
 it('hides another tenant\'s dashboard behind a 404', function () {
