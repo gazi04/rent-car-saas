@@ -237,6 +237,35 @@ it('manual booking onto a taken slot fails with a notification and creates no ro
     expect(Booking::count())->toBe($before);
 });
 
+it('manual booking may start in the past — the walk-in entered two hours late', function () {
+    [$tenant, $operator, $vehicle] = bookingOperatorFor('ardi');
+
+    Livewire::test(CreateBooking::class)
+        ->fillForm(manualBookingData($vehicle, [
+            'start_date' => today()->subDay()->setTime(9, 0)->toDateTimeString(),
+            'end_date' => today()->addDays(2)->setTime(9, 0)->toDateTimeString(),
+        ]))
+        ->call('create')
+        ->assertHasNoFormErrors();
+
+    expect(Booking::latest()->first()->status)->toBe(BookingStatus::Confirmed);
+});
+
+it('manual booking longer than the maximum creates no row', function () {
+    [$tenant, $operator, $vehicle] = bookingOperatorFor('ardi');
+    $before = Booking::count();
+    $start = today()->addDay();
+
+    Livewire::test(CreateBooking::class)
+        ->fillForm(manualBookingData($vehicle, [
+            'start_date' => $start->toDateTimeString(),
+            'end_date' => $start->copy()->addDays(config('bookings.max_rental_days') + 1)->toDateTimeString(),
+        ]))
+        ->call('create');
+
+    expect(Booking::count())->toBe($before);
+});
+
 // ─── Blocked dates / calendar ─────────────────────────────────────────────────
 
 it('creating a blocked date makes that window unavailable', function () {
