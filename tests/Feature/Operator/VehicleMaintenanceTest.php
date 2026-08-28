@@ -8,16 +8,20 @@ use App\Filament\Operator\Resources\ServiceRecords\ServiceRecordResource;
 use App\Jobs\ProcessVehicleMaintenanceJob;
 use App\Mail\ServiceDueMail;
 use App\Models\BlockedDate;
+use App\Models\Booking;
 use App\Models\Plan;
 use App\Models\ServiceRecord;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\AvailabilityService;
+use App\Services\BlockedDateService;
 use Carbon\Carbon;
 use Filament\Facades\Filament;
+use Filament\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use Livewire\Livewire;
 
@@ -88,7 +92,7 @@ it('auto-blocks an overdue vehicle when the feature is enabled, making it unavai
     $vehicle = Vehicle::factory()->create();
     $record = ServiceRecord::factory()->overdue()->create(['vehicle_id' => $vehicle->id]);
 
-    (new ProcessVehicleMaintenanceJob($tenant))->handle();
+    (new ProcessVehicleMaintenanceJob($tenant))->handle(app(BlockedDateService::class));
 
     $record->refresh();
     expect($record->blocked_date_id)->not->toBeNull();
@@ -104,6 +108,34 @@ it('auto-blocks an overdue vehicle when the feature is enabled, making it unavai
     expect($isAvailable)->toBeFalse();
 });
 
+it('skips auto-block when an occupying booking already overlaps the due window, and notifies instead', function () {
+    // deep-audit finding 04: the sweep must never silently double-book a
+    // vehicle it's about to take off the road.
+    Notification::fake();
+
+    [$tenant, $owner] = maintenanceTenant('maintconflict', [PlanFeature::MaintenanceReminders->value => true], 'conflictplan');
+    $vehicle = Vehicle::factory()->create();
+    $record = ServiceRecord::factory()->overdue()->create(['vehicle_id' => $vehicle->id]);
+
+    Booking::factory()->forVehicle($vehicle)->confirmed()->create([
+        'start_date' => today(),
+        'end_date' => today()->addDay(),
+    ]);
+
+    (new ProcessVehicleMaintenanceJob($tenant))->handle(app(BlockedDateService::class));
+
+    $record->refresh();
+    expect($record->blocked_date_id)->toBeNull()
+        ->and(BlockedDate::query()->count())->toBe(0)
+        ->and($vehicle->fresh()->status)->not->toBe(VehicleStatus::UnderMaintenance);
+
+    Notification::assertSentTo(
+        $owner,
+        DatabaseNotification::class,
+        fn (DatabaseNotification $notification): bool => $notification->data['title'] === __('panel.service_overdue_conflict_title')
+    );
+});
+
 it('sends a reminder once for a due-soon record and does not resend on the next run', function () {
     Mail::fake();
 
@@ -111,13 +143,13 @@ it('sends a reminder once for a due-soon record and does not resend on the next 
     $vehicle = Vehicle::factory()->create();
     $record = ServiceRecord::factory()->due()->create(['vehicle_id' => $vehicle->id]);
 
-    (new ProcessVehicleMaintenanceJob($tenant))->handle();
+    (new ProcessVehicleMaintenanceJob($tenant))->handle(app(BlockedDateService::class));
 
     Mail::assertQueued(ServiceDueMail::class, fn ($m) => $m->serviceRecord->is($record));
     expect($record->fresh()->reminder_sent_at)->not->toBeNull();
 
     Mail::fake();
-    (new ProcessVehicleMaintenanceJob($tenant))->handle();
+    (new ProcessVehicleMaintenanceJob($tenant))->handle(app(BlockedDateService::class));
     Mail::assertNothingQueued();
 });
 
@@ -143,7 +175,7 @@ it('does not re-check the plan inside the maintenance job — the command is the
     $vehicle = Vehicle::factory()->create();
     $record = ServiceRecord::factory()->overdue()->create(['vehicle_id' => $vehicle->id]);
 
-    (new ProcessVehicleMaintenanceJob($tenant))->handle();
+    (new ProcessVehicleMaintenanceJob($tenant))->handle(app(BlockedDateService::class));
 
     // KNOWN GAP, pinned deliberately: the job has no plan check, so a job already
     // queued when a tenant is downgraded still runs the gated behaviour — here it
@@ -194,7 +226,7 @@ it('skips a service record whose vehicle was soft-deleted, without fataling the 
     $liveVehicle = Vehicle::factory()->create();
     $liveRecord = ServiceRecord::factory()->overdue()->create(['vehicle_id' => $liveVehicle->id]);
 
-    (new ProcessVehicleMaintenanceJob($tenant))->handle();
+    (new ProcessVehicleMaintenanceJob($tenant))->handle(app(BlockedDateService::class));
 
     expect($deletedRecord->fresh()->blocked_date_id)->toBeNull();
 
@@ -224,7 +256,7 @@ it('auto-blocks two overdue records in one sweep without lazy-loading either veh
 
     // No Mail::fake() needed: autoBlock() sends no mail, which keeps this the
     // deterministic reproducer — the reminder path's queued mail is throttled.
-    (new ProcessVehicleMaintenanceJob($tenant))->handle();
+    (new ProcessVehicleMaintenanceJob($tenant))->handle(app(BlockedDateService::class));
 
     expect(BlockedDate::query()->count())->toBe(2);
 
@@ -248,7 +280,7 @@ it('reminds on two due-soon records in one sweep without lazy-loading either veh
 
     // Covers the other violating read — the bell-notification body — which the
     // overdue path above never reaches.
-    (new ProcessVehicleMaintenanceJob($tenant))->handle();
+    (new ProcessVehicleMaintenanceJob($tenant))->handle(app(BlockedDateService::class));
 
     foreach ($records as $record) {
         expect($record->fresh()->reminder_sent_at)->not->toBeNull();
