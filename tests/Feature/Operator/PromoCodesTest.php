@@ -7,6 +7,7 @@ use App\Filament\Operator\Resources\PromoCodes\Pages\CreatePromoCode;
 use App\Filament\Operator\Resources\PromoCodes\Pages\ListPromoCodes;
 use App\Filament\Operator\Resources\PromoCodes\PromoCodeResource;
 use App\Models\Booking;
+use App\Models\Customer;
 use App\Models\Plan;
 use App\Models\PromoCode;
 use App\Models\Tenant;
@@ -76,6 +77,69 @@ it('computes discountFor and validity', function () {
         ->and(PromoCode::factory()->inactive()->make()->isCurrentlyValid())->toBeFalse()
         ->and(PromoCode::factory()->expired()->make()->isCurrentlyValid())->toBeFalse()
         ->and(PromoCode::factory()->make(['max_uses' => 0])->isCurrentlyValid())->toBeFalse();
+});
+
+// ─── isValidForCustomer (deep-audit finding 06) ───────────────────────────────
+// The single source of truth both previewPromo() and resolvePromo() now share.
+
+it('skips the per-customer check when no customer is known yet', function () {
+    promoTenant('promonocust');
+    $promo = PromoCode::factory()->create(['per_customer_limit' => 1]);
+
+    // Mirrors step 1 of the wizard: no phone typed yet, so nothing to check —
+    // this is exactly what let today's step-1 preview stay permissive.
+    expect($promo->isValidForCustomer(null))->toBeTrue();
+});
+
+it('is valid for a customer under the per-customer limit', function () {
+    promoTenant('promounderlimit');
+    $vehicle = Vehicle::factory()->create();
+    $promo = PromoCode::factory()->create(['per_customer_limit' => 2]);
+    $customer = Customer::factory()->create();
+
+    Booking::factory()->forVehicle($vehicle)->confirmed()->create([
+        'customer_id' => $customer->id,
+        'promo_code_id' => $promo->id,
+    ]);
+
+    expect($promo->isValidForCustomer($customer))->toBeTrue();
+});
+
+it('is invalid for a customer at the per-customer limit', function () {
+    promoTenant('promoatlimit');
+    $vehicle = Vehicle::factory()->create();
+    $promo = PromoCode::factory()->create(['per_customer_limit' => 1]);
+    $customer = Customer::factory()->create();
+
+    Booking::factory()->forVehicle($vehicle)->confirmed()->create([
+        'customer_id' => $customer->id,
+        'promo_code_id' => $promo->id,
+    ]);
+
+    expect($promo->isValidForCustomer($customer))->toBeFalse();
+});
+
+it('ignores a cancelled redemption when counting the per-customer limit', function () {
+    promoTenant('promocancelledlimit');
+    $vehicle = Vehicle::factory()->create();
+    $promo = PromoCode::factory()->create(['per_customer_limit' => 1]);
+    $customer = Customer::factory()->create();
+
+    Booking::factory()->forVehicle($vehicle)->cancelled()->create([
+        'customer_id' => $customer->id,
+        'promo_code_id' => $promo->id,
+    ]);
+
+    expect($promo->isValidForCustomer($customer))->toBeTrue();
+});
+
+it('is invalid for any customer when the code itself is not currently valid', function () {
+    promoTenant('promoinactivelimit');
+    $promo = PromoCode::factory()->inactive()->create(['per_customer_limit' => 1]);
+    $customer = Customer::factory()->create();
+
+    expect($promo->isValidForCustomer($customer))->toBeFalse()
+        ->and($promo->isValidForCustomer(null))->toBeFalse();
 });
 
 it('lowers the total in PricingService', function () {
@@ -214,6 +278,77 @@ it('previews the promo discount on the public booking component', function () {
         ->call('applyPromo')
         ->assertSet('priceBreakdown.total', 135.0)
         ->assertSet('promoNotice', __('booking.promo_applied'));
+});
+
+it('drops a promo that no longer qualifies once the phone number is known, before reaching the review screen', function () {
+    // Reproduces the audit's exact scenario: step 1 says "applied" for a
+    // repeat customer, because no phone is known yet to check per_customer_limit.
+    [$tenant] = promoTenant('promostep2drop');
+    $vehicle = Vehicle::factory()->create(['daily_rate' => 50]);
+    $promo = PromoCode::factory()->create(['code' => 'ONCE', 'type' => 'percentage', 'value' => 10, 'per_customer_limit' => 1]);
+    $customer = Customer::factory()->create(['phone' => '+38344999888']);
+
+    Booking::factory()->forVehicle($vehicle)->confirmed()->create([
+        'customer_id' => $customer->id,
+        'promo_code_id' => $promo->id,
+    ]);
+
+    tenancy()->end();
+    tenancy()->initialize($tenant);
+
+    Livewire::test('pages::public.vehicle-booking', ['vehicle' => $vehicle])
+        ->dispatch('dates-selected', start: '2030-06-01 10:00', end: '2030-06-04 10:00')
+        ->set('promoCode', 'ONCE')
+        ->call('applyPromo')
+        ->assertSet('priceBreakdown.total', 135.0) // step 1: no phone known yet, still "applied"
+        ->call('nextStep') // step 1 -> 2
+        ->set('customerName', 'Arben')
+        ->set('customerPhone', '+38344999888')
+        ->set('customerEmail', 'arben@example.com')
+        ->call('nextStep') // step 2 -> 3: phone now known, re-checked
+        ->assertSet('step', 3)
+        ->assertSet('promoCode', '')
+        ->assertSet('priceBreakdown.total', 150.0) // discount dropped
+        ->assertSet('promoError', __('booking.promo_removed_recalculated'));
+});
+
+it('recovers gracefully when a promo fails at the final submit despite passing the step-2 re-check', function () {
+    [$tenant] = promoTenant('promosubmitrace');
+    $vehicle = Vehicle::factory()->create(['daily_rate' => 50]);
+    $promo = PromoCode::factory()->create(['code' => 'RACE', 'type' => 'percentage', 'value' => 10, 'per_customer_limit' => 1]);
+
+    tenancy()->end();
+    tenancy()->initialize($tenant);
+
+    $component = Livewire::test('pages::public.vehicle-booking', ['vehicle' => $vehicle])
+        ->dispatch('dates-selected', start: '2030-06-01 10:00', end: '2030-06-04 10:00')
+        ->set('promoCode', 'RACE')
+        ->call('applyPromo')
+        ->call('nextStep') // step 1 -> 2, no phone yet at re-check time
+        ->set('customerName', 'Arben')
+        ->set('customerPhone', '+38344777666')
+        ->set('customerEmail', 'arben@example.com')
+        ->call('nextStep') // step 2 -> 3: first use of this phone, re-check still passes
+        ->assertSet('step', 3)
+        ->assertSet('priceBreakdown.total', 135.0);
+
+    // The race: another booking consumes the same customer's single use between
+    // the step-2 re-check and the submit click.
+    $customer = Customer::firstOrCreate(['phone' => '+38344777666'], ['name' => 'Arben']);
+    Booking::factory()->forVehicle($vehicle)->confirmed()->create([
+        'customer_id' => $customer->id,
+        'customer_phone' => '+38344777666',
+        'promo_code_id' => $promo->id,
+        'start_date' => '2030-07-01',
+        'end_date' => '2030-07-04',
+    ]);
+
+    $component->call('submit')
+        ->assertSet('promoCode', '')
+        ->assertSet('priceBreakdown.total', 150.0)
+        ->assertSet('promoError', __('booking.promo_removed_recalculated'));
+
+    expect(Booking::query()->where('customer_phone', '+38344777666')->count())->toBe(1); // only the race one, not a second
 });
 
 it('flags an invalid code on the public component', function () {
