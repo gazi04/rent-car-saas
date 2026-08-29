@@ -33,7 +33,7 @@ class PlanSeeder extends Seeder
                 'name' => 'Basic',
                 'slug' => 'basic',
                 'description' => 'For small fleets getting started.',
-                'price' => 15,
+                'price' => 20,
                 'marketing_description' => ['en' => 'For small operators getting started.', 'sq' => 'Për operatorë të vegjël në fillim.'],
                 'marketing_highlights' => ['branding', 'vehicle_limit', 'staff_seat_limit'],
                 'features' => [
@@ -56,7 +56,7 @@ class PlanSeeder extends Seeder
                 'name' => 'Standard',
                 'slug' => 'standard',
                 'description' => 'For growing rental businesses.',
-                'price' => 29,
+                'price' => 40,
                 'marketing_description' => ['en' => 'For growing rental businesses.', 'sq' => 'Për biznese në rritje.'],
                 'marketing_highlights' => ['reports', 'fleet_heatmap', 'templates', 'promo_codes', 'reviews'],
                 'features' => [
@@ -79,7 +79,7 @@ class PlanSeeder extends Seeder
                 'name' => 'Pro',
                 'slug' => 'pro',
                 'description' => 'Unlimited fleet, every feature.',
-                'price' => 49,
+                'price' => 80,
                 'marketing_description' => ['en' => 'Unlimited fleet, every feature.', 'sq' => 'Flotë pa kufi, çdo veçori.'],
                 'marketing_highlights' => ['vehicle_limit', 'ai_listing_writer', 'ai_concierge'],
                 'features' => [
