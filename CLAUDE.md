@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-`rent-car-saas` (product name **RentACar SaaS**) is a **multi-tenant, white-label car-rental SaaS** for the Kosovo / Western Balkans market. Car-rental businesses ("operators") subscribe to get their own branded booking website on a subdomain (`operatorname.yourdomain.com`); their customers book cars there with no account required. The platform owner ("Super Admin") onboards operators, charges a monthly subscription, and never touches the money that flows between operators and their customers.
+`rent-car-saas` (product name **Renti**) is a **multi-tenant, white-label car-rental SaaS** for the Kosovo / Western Balkans market. Car-rental businesses ("operators") subscribe to get their own branded booking website on a subdomain (`operatorname.yourdomain.com`); their customers book cars there with no account required. The platform owner ("Super Admin") onboards operators, charges a monthly subscription, and never touches the money that flows between operators and their customers.
 
 The full spec lives in **`docs/RentACar_Application_Plan.pdf`** (17 pages) — read it before any domain work, for *feature intent* only (see version note below). **`docs/00-roadmap.md`** is the up-to-date build index — check it first for what's implemented vs planned; each step has its own `docs/NN-*.md` plan doc with a `Status:` line kept current. `docs/operator-feature-report.md` tracks the post-MVP operator backlog the same way.
 

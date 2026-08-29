@@ -163,7 +163,7 @@
             </div>
 
             <div class="mt-6 border-t border-line pt-4 text-center text-xs text-ink-faint">
-                &copy; {{ date('Y') }} {{ tenant()?->name ?? config('app.name') }}. Powered by RentACar SaaS.
+                &copy; {{ date('Y') }} {{ tenant()?->name ?? config('app.name') }}. Powered by Renti.
             </div>
         </x-ui.container>
     </footer>

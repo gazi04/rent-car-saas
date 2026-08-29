@@ -12,7 +12,7 @@ return [
 
     // Hero
     'hero_heading' => 'Faqja juaj e brendshme e rezervimeve për makina, gati brenda minutash',
-    'hero_subheading' => 'RentACar SaaS i jep çdo biznesi rent-a-car në Ballkan një faqe rezervimesh me markën tuaj, një panel për flotën dhe rezervimet, dhe email-e automatike për klientët — pa zhvillues.',
+    'hero_subheading' => 'Renti i jep çdo biznesi rent-a-car në Ballkan një faqe rezervimesh me markën tuaj, një panel për flotën dhe rezervimet, dhe email-e automatike për klientët — pa zhvillues.',
     'hero_cta_primary' => 'Fillo provën tënde falas',
     'hero_cta_secondary' => 'Shiko çmimet',
     'hero_note' => 'Nuk kërkohet kartë krediti. Miratim nga administratori, pastaj jeni online.',
@@ -90,7 +90,7 @@ return [
 
     // Hero extras
     'hero_badge' => 'Ndërtuar për bizneset rent-a-car në Ballkan',
-    'hero_mock_url' => 'biznesijuaj.rentacar.com',
+    'hero_mock_url' => 'biznesijuaj.renti.lol',
 
     // Stats strip
     'stat_setup_value' => 'Minuta',

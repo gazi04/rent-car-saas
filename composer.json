@@ -2,7 +2,7 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "gazi04/rent-car-saas",
     "type": "project",
-    "description": "RentACar SaaS — multi-tenant, white-label car-rental SaaS for the Kosovo / Western Balkans market.",
+    "description": "Renti — multi-tenant, white-label car-rental SaaS for the Kosovo / Western Balkans market.",
     "keywords": ["laravel", "saas", "multi-tenant", "car-rental"],
     "license": "MIT",
     "require": {

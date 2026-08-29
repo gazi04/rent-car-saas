@@ -12,7 +12,7 @@ return [
 
     // Hero
     'hero_heading' => 'Your own branded car-rental booking site, live in minutes',
-    'hero_subheading' => 'RentACar SaaS gives every rental business in the Balkans a white-label booking website, a fleet & booking dashboard, and automated customer emails — no developers needed.',
+    'hero_subheading' => 'Renti gives every rental business in the Balkans a white-label booking website, a fleet & booking dashboard, and automated customer emails — no developers needed.',
     'hero_cta_primary' => 'Start your free trial',
     'hero_cta_secondary' => 'See pricing',
     'hero_note' => 'No credit card required. Admin approval, then you\'re live.',
@@ -90,7 +90,7 @@ return [
 
     // Hero extras
     'hero_badge' => 'Built for car-rental businesses in the Balkans',
-    'hero_mock_url' => 'yourbusiness.rentacar.com',
+    'hero_mock_url' => 'yourbusiness.renti.lol',
 
     // Stats strip
     'stat_setup_value' => 'Minutes',
