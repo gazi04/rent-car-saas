@@ -16,7 +16,7 @@ beforeEach(function () {
     actingAs(User::factory()->admin()->create());
 });
 
-it('creates a plan with feature toggles and limits', function () {
+it('creates a plan with feature toggles, limits and public-card copy', function () {
     Livewire::test(CreatePlan::class)
         ->fillForm([
             'name' => 'Starter',
@@ -24,6 +24,10 @@ it('creates a plan with feature toggles and limits', function () {
             'price' => 9,
             'description' => 'Small fleets',
             'is_active' => true,
+            'is_public' => false,
+            'marketing_description.en' => 'For tiny fleets.',
+            'marketing_description.sq' => 'Për flota të vogla.',
+            'marketing_highlights' => [PlanFeature::Branding->value, PlanFeature::FleetHeatmap->value],
             'features' => [
                 PlanFeature::VehicleLimit->value => 3,
                 PlanFeature::PhotosPerVehicle->value => 4,
@@ -41,7 +45,10 @@ it('creates a plan with feature toggles and limits', function () {
         ->and($plan->limit(PlanFeature::PhotosPerVehicle))->toBe(4)
         ->and($plan->allows(PlanFeature::Reports))->toBeFalse()
         ->and($plan->allows(PlanFeature::FleetHeatmap))->toBeTrue()
-        ->and($plan->allows(PlanFeature::Branding))->toBeTrue();
+        ->and($plan->allows(PlanFeature::Branding))->toBeTrue()
+        ->and($plan->is_public)->toBeFalse()
+        ->and($plan->marketing_description)->toBe(['en' => 'For tiny fleets.', 'sq' => 'Për flota të vogla.'])
+        ->and($plan->marketing_highlights)->toBe([PlanFeature::Branding->value, PlanFeature::FleetHeatmap->value]);
 });
 
 it('rejects a duplicate slug', function () {
@@ -79,6 +86,11 @@ it('renders a control in the editor for every plan feature', function () {
 
         $component->assertFormFieldExists("features.{$feature->value}");
     }
+
+    // The public-card highlight picker is options-driven off the same registry,
+    // so every feature must be selectable there too.
+    $component->assertFormFieldExists('marketing_highlights', fn ($field): bool => array_keys($field->getOptions())
+        === array_map(fn (PlanFeature $f): string => $f->value, PlanFeature::marketingOrder()));
 });
 
 it('excludes archived plans from pickers but keeps a tenant\'s current archived plan', function () {

@@ -199,31 +199,27 @@
             <p class="mt-4 text-ink-muted">{{ __('marketing.pricing_subheading') }}</p>
         </div>
 
-        {{-- One card template over the live plans. These were four hand-written
-             blocks with the monthly prices typed straight into the markup,
-             while the real prices live in the `plans` table and are editable
-             from the admin panel — so an admin changing a price left this page
-             advertising the old one. $plans comes from the view composer in
-             AppServiceProvider. --}}
-        <div class="grid items-start gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {{-- One card per publicly-listed plan (Plan::publiclyListed(), via the
+             view composer in AppServiceProvider). The price comes from the
+             `plans` row; the tagline (marketing_description) and the bullet list
+             (marketing_highlights) are curated per plan from the admin panel, on
+             top of three baseline items every plan includes. --}}
+        <div class="grid items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-4">
             @foreach ($plans as $plan)
-                @php
-                    $isFeatured = $plan->slug === 'standard';
-                    $langKey = 'marketing.plan_'.$plan->slug;
-                @endphp
+                @php($isFeatured = $plan->slug === 'standard')
 
                 <div @class([
-                    'relative flex h-full flex-col rounded-panel p-6',
-                    'border-2 border-primary shadow-lg shadow-primary/10' => $isFeatured,
-                    'border border-line' => ! $isFeatured,
+                    'relative flex h-full flex-col rounded-panel',
+                    'border-2 border-primary shadow-lg shadow-primary/10 px-6 pb-6 pt-9' => $isFeatured,
+                    'border border-line p-6' => ! $isFeatured,
                 ]) wire:key="plan-{{ $plan->slug }}">
                     @if ($isFeatured)
-                        <span class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-1 text-xs font-semibold text-on-primary">
+                        <span class="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-primary px-3 py-1 text-xs font-semibold text-on-primary">
                             {{ __('marketing.plan_standard_badge') }}
                         </span>
                     @endif
 
-                    <h3 class="text-base font-semibold text-ink">{{ __($langKey.'_name') }}</h3>
+                    <h3 class="text-base font-semibold text-ink">{{ $plan->name }}</h3>
 
                     <p class="mt-4">
                         @if ((float) $plan->price <= 0)
@@ -231,30 +227,27 @@
                         @else
                             <span class="text-3xl font-bold text-ink">{{ __('booking.currency_symbol') }}{{ number_format((float) $plan->price, 0) }}</span>
                         @endif
-                        <span class="text-sm text-ink-muted">{{ __($langKey.'_period') }}</span>
+                        <span class="text-sm text-ink-muted">{{ (float) $plan->price <= 0 ? __('marketing.plan_period_trial') : __('marketing.plan_period_monthly') }}</span>
                     </p>
 
-                    <p class="mt-3 text-sm text-ink-muted">{{ __($langKey.'_tagline') }}</p>
+                    <p class="mt-3 line-clamp-1 text-sm text-ink-muted">{{ $plan->marketingTagline() }}</p>
 
                     <ul class="mt-6 flex-1 space-y-2 text-sm text-ink-muted">
-                        @foreach (['storefront', 'dashboard', 'agreements', 'bilingual'] as $feature)
+                        {{-- Baseline value, on every card. --}}
+                        @foreach (['dashboard', 'agreements', 'bilingual'] as $feature)
                             <li class="flex items-start gap-2">
                                 <flux:icon.check class="mt-0.5 size-4 shrink-0 text-positive" />
                                 {{ __('marketing.plan_feature_'.$feature) }}
                             </li>
                         @endforeach
 
-                        @if ($plan->slug === 'pro')
+                        {{-- Admin-picked highlights for this plan (marketing_highlights). --}}
+                        @foreach ($plan->marketingHighlightLines() as $line)
                             <li class="flex items-start gap-2">
                                 <flux:icon.check class="mt-0.5 size-4 shrink-0 text-positive" />
-                                {{ __('marketing.plan_feature_support_priority') }}
+                                {{ $line }}
                             </li>
-                        @elseif ((float) $plan->price > 0)
-                            <li class="flex items-start gap-2">
-                                <flux:icon.check class="mt-0.5 size-4 shrink-0 text-positive" />
-                                {{ __('marketing.plan_feature_support_email') }}
-                            </li>
-                        @endif
+                        @endforeach
                     </ul>
 
                     <x-ui.button :href="route('operator.register')"

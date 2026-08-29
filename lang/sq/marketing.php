@@ -37,30 +37,38 @@ return [
     'pricing_heading' => 'Çmime të thjeshta dhe transparente',
     'pricing_subheading' => 'Çdo plan përfshin faqen tuaj të rezervimeve me markën tuaj. Filloni me provë falas, përmirësoni kur të doni.',
 
-    'plan_trial_name' => 'Provë',
+    // Price is per plan row; the plan name + tagline are per plan too (Plan::name,
+    // Plan::marketingTagline()). These are the fixed bits of the card.
     'plan_trial_price' => 'Falas',
-    'plan_trial_period' => 'për 30 ditë',
-    'plan_trial_tagline' => 'Provoni platformën e plotë, pa kartë krediti.',
-
-    'plan_basic_name' => 'Basic',
-    'plan_basic_period' => '/ muaj',
-    'plan_basic_tagline' => 'Për biznese të vogla rent-a-car që sapo fillojnë online.',
-
-    'plan_standard_name' => 'Standard',
-    'plan_standard_period' => '/ muaj',
-    'plan_standard_tagline' => 'Për flota në rritje që kanë nevojë për më shumë hapësirë.',
+    'plan_period_trial' => 'për 30 ditë',
+    'plan_period_monthly' => '/ muaj',
     'plan_standard_badge' => 'Më i popullarizuari',
 
-    'plan_pro_name' => 'Pro',
-    'plan_pro_period' => '/ muaj',
-    'plan_pro_tagline' => 'Për operatorë të konsoliduar me flota më të mëdha.',
-
-    'plan_feature_storefront' => 'Faqe rezervimesh me markën tuaj',
+    // Baseline bullets shown on every plan card.
     'plan_feature_dashboard' => 'Panel operatori & menaxhim rezervimesh',
     'plan_feature_agreements' => 'Email-e dhe kontrata automatike',
     'plan_feature_bilingual' => 'Faqe dygjuhëshe (shqip dhe anglisht)',
-    'plan_feature_support_email' => 'Mbështetje me email',
-    'plan_feature_support_priority' => 'Mbështetje prioritare',
+
+    // Per-plan gates, keyed by PlanFeature value (see PlanFeature::marketingLine()).
+    'plan_feature_branding' => 'Faqe rezervimesh me markën tuaj',
+    'plan_feature_reports' => 'Raporte & eksport CSV',
+    'plan_feature_fleet_heatmap' => 'Hartë e shfrytëzimit të flotës',
+    'plan_feature_templates' => 'Shabllone kontratash & email-esh',
+    'plan_feature_promo_codes' => 'Kode promocionale',
+    'plan_feature_maintenance_reminders' => 'Kujtesa mirëmbajtjeje & bllokim automatik',
+    'plan_feature_reviews' => 'Vlerësime klientësh & shfaqje',
+    'plan_feature_waitlist' => 'Listë pritjeje për datat e zëna',
+    'plan_feature_stock_alert' => 'Njoftime kur makina lirohet',
+    'plan_feature_ai_listing_writer' => 'Shkrues AI i listimeve të automjeteve',
+    'plan_feature_ai_business_summary' => 'Përmbledhje javore AI e biznesit',
+    'plan_feature_ai_pricing_suggestions' => 'Sugjerime çmimesh me AI',
+    'plan_feature_ai_concierge' => 'Koncierge AI në dyqan',
+    'plan_feature_vehicle_limit' => 'Deri në :count automjet|Deri në :count automjete',
+    'plan_feature_vehicle_limit_unlimited' => 'Automjete të pakufizuara',
+    'plan_feature_staff_seat_limit' => ':count llogari stafi|:count llogari stafi',
+    'plan_feature_staff_seat_limit_unlimited' => 'Llogari stafi të pakufizuara',
+    'plan_feature_photos_per_vehicle' => ':count foto për automjet|:count foto për automjet',
+    'plan_feature_photos_per_vehicle_unlimited' => 'Foto të pakufizuara për automjet',
 
     'plan_cta' => 'Fillo provën falas',
 

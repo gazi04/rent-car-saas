@@ -37,30 +37,38 @@ return [
     'pricing_heading' => 'Simple, transparent pricing',
     'pricing_subheading' => 'Every plan includes your own branded booking site. Start with a free trial, upgrade any time.',
 
-    'plan_trial_name' => 'Trial',
+    // Price is per plan row; the plan name + tagline are per plan too (Plan::name,
+    // Plan::marketingTagline()). These are the fixed bits of the card.
     'plan_trial_price' => 'Free',
-    'plan_trial_period' => 'for 30 days',
-    'plan_trial_tagline' => 'Try the full platform, no card required.',
-
-    'plan_basic_name' => 'Basic',
-    'plan_basic_period' => '/ month',
-    'plan_basic_tagline' => 'For small rental businesses getting started online.',
-
-    'plan_standard_name' => 'Standard',
-    'plan_standard_period' => '/ month',
-    'plan_standard_tagline' => 'For growing fleets that need more room to scale.',
+    'plan_period_trial' => 'for 30 days',
+    'plan_period_monthly' => '/ month',
     'plan_standard_badge' => 'Most popular',
 
-    'plan_pro_name' => 'Pro',
-    'plan_pro_period' => '/ month',
-    'plan_pro_tagline' => 'For established operators with larger fleets.',
-
-    'plan_feature_storefront' => 'Branded booking website',
+    // Baseline bullets shown on every plan card.
     'plan_feature_dashboard' => 'Operator dashboard & booking management',
     'plan_feature_agreements' => 'Automated emails & rental agreements',
     'plan_feature_bilingual' => 'Bilingual site (Albanian & English)',
-    'plan_feature_support_email' => 'Email support',
-    'plan_feature_support_priority' => 'Priority support',
+
+    // Per-plan gates, keyed by PlanFeature value (see PlanFeature::marketingLine()).
+    'plan_feature_branding' => 'Branded booking website',
+    'plan_feature_reports' => 'Reports & CSV export',
+    'plan_feature_fleet_heatmap' => 'Fleet utilization heatmap',
+    'plan_feature_templates' => 'Custom contract & email templates',
+    'plan_feature_promo_codes' => 'Promo codes',
+    'plan_feature_maintenance_reminders' => 'Maintenance reminders & auto-block',
+    'plan_feature_reviews' => 'Customer reviews & showcase',
+    'plan_feature_waitlist' => 'Waitlist for booked-out dates',
+    'plan_feature_stock_alert' => 'Back-in-stock alerts',
+    'plan_feature_ai_listing_writer' => 'AI vehicle listing writer',
+    'plan_feature_ai_business_summary' => 'AI weekly business summary',
+    'plan_feature_ai_pricing_suggestions' => 'AI pricing suggestions',
+    'plan_feature_ai_concierge' => 'AI storefront concierge',
+    'plan_feature_vehicle_limit' => 'Up to :count vehicle|Up to :count vehicles',
+    'plan_feature_vehicle_limit_unlimited' => 'Unlimited vehicles',
+    'plan_feature_staff_seat_limit' => ':count staff account|:count staff accounts',
+    'plan_feature_staff_seat_limit_unlimited' => 'Unlimited staff accounts',
+    'plan_feature_photos_per_vehicle' => ':count photo per vehicle|:count photos per vehicle',
+    'plan_feature_photos_per_vehicle_unlimited' => 'Unlimited photos per vehicle',
 
     'plan_cta' => 'Start free trial',
 

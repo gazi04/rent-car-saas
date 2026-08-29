@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Plans\Schemas;
 
 use App\Enums\PlanFeature;
 use App\Enums\PlanFeatureType;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -49,11 +50,18 @@ class PlanForm
                             ->minValue(0)
                             ->default(0),
                         Textarea::make('description')
+                            ->label('Internal note')
+                            ->helperText('Not shown publicly.')
                             ->rows(2)
                             ->maxLength(500)
                             ->columnSpanFull(),
                         Toggle::make('is_active')
                             ->label('Active (selectable for tenants and payments)')
+                            ->default(true)
+                            ->columnSpanFull(),
+                        Toggle::make('is_public')
+                            ->label('Show on public pricing page')
+                            ->helperText('Off = a private/custom plan: still assignable to a tenant and billable, but hidden from the marketing homepage.')
                             ->default(true)
                             ->columnSpanFull(),
                         Toggle::make('is_trial')
@@ -69,6 +77,33 @@ class PlanForm
                     ->description('What this plan unlocks. Leave a limit empty for unlimited.')
                     ->columns(2)
                     ->components(self::featureFields()),
+
+                // Copy for the public pricing card. The tagline is stored per
+                // language; the bullets are a hand-picked subset of the feature
+                // registry so their wording stays localized and typo-free.
+                Section::make('Public pricing card')
+                    ->description('Only used when "Show on public pricing page" is on.')
+                    ->columns(2)
+                    ->components([
+                        TextInput::make('marketing_description.en')
+                            ->label('Tagline (English)')
+                            ->required()
+                            ->maxLength(120),
+                        TextInput::make('marketing_description.sq')
+                            ->label('Tagline (Albanian)')
+                            ->required()
+                            ->maxLength(120),
+                        CheckboxList::make('marketing_highlights')
+                            ->label('Highlighted features')
+                            ->options(collect(PlanFeature::marketingOrder())
+                                ->mapWithKeys(fn (PlanFeature $feature): array => [$feature->value => $feature->getLabel()])
+                                ->all())
+                            ->columns(2)
+                            ->rule('array')
+                            ->rule('max:6')
+                            ->helperText('Pick 3–6. They render as the card bullets, in the order shown here. The three baseline items (dashboard, agreements, bilingual site) always show and are not listed here.')
+                            ->columnSpanFull(),
+                    ]),
             ]);
     }
 

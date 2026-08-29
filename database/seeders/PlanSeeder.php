@@ -26,12 +26,16 @@ class PlanSeeder extends Seeder
                 'features' => [],
                 'is_trial' => true,
                 'sort_order' => 0,
+                'marketing_description' => ['en' => 'Full platform, free for 30 days.', 'sq' => 'Platforma e plotë, falas për 30 ditë.'],
+                'marketing_highlights' => [],
             ],
             [
                 'name' => 'Basic',
                 'slug' => 'basic',
                 'description' => 'For small fleets getting started.',
                 'price' => 15,
+                'marketing_description' => ['en' => 'For small operators getting started.', 'sq' => 'Për operatorë të vegjël në fillim.'],
+                'marketing_highlights' => ['branding', 'vehicle_limit', 'staff_seat_limit'],
                 'features' => [
                     PlanFeature::VehicleLimit->value => 5,
                     PlanFeature::PhotosPerVehicle->value => 5,
@@ -53,6 +57,8 @@ class PlanSeeder extends Seeder
                 'slug' => 'standard',
                 'description' => 'For growing rental businesses.',
                 'price' => 29,
+                'marketing_description' => ['en' => 'For growing rental businesses.', 'sq' => 'Për biznese në rritje.'],
+                'marketing_highlights' => ['reports', 'fleet_heatmap', 'templates', 'promo_codes', 'reviews'],
                 'features' => [
                     PlanFeature::VehicleLimit->value => 10,
                     PlanFeature::PhotosPerVehicle->value => 8,
@@ -74,6 +80,8 @@ class PlanSeeder extends Seeder
                 'slug' => 'pro',
                 'description' => 'Unlimited fleet, every feature.',
                 'price' => 49,
+                'marketing_description' => ['en' => 'Unlimited fleet, every feature.', 'sq' => 'Flotë pa kufi, çdo veçori.'],
+                'marketing_highlights' => ['vehicle_limit', 'ai_listing_writer', 'ai_concierge'],
                 'features' => [
                     PlanFeature::AiListingWriter->value => true,
                     PlanFeature::AiBusinessSummary->value => true,

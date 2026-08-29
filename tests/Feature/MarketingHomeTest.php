@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Enums\PlanFeature;
 use App\Models\Plan;
 
 /*
@@ -22,6 +23,41 @@ it('renders the marketing page on the central domain', function () {
         ->assertOk()
         ->assertSee(__('marketing.hero_heading'))
         ->assertSee(__('marketing.pricing_heading'));
+});
+
+it('renders each plan card from the admin-curated tagline and highlights, localized', function () {
+    Plan::query()->delete();
+
+    Plan::factory()
+        ->withFeatures([
+            PlanFeature::Reports->value => true,
+            PlanFeature::PromoCodes->value => true,
+            PlanFeature::FleetHeatmap->value => false,
+        ])
+        ->withHighlights([PlanFeature::Reports->value, PlanFeature::PromoCodes->value])
+        ->create([
+            'name' => 'Standard', 'slug' => 'standard', 'price' => 29,
+            'is_active' => true, 'is_public' => true, 'sort_order' => 2,
+            'marketing_description' => ['en' => 'For growing fleets.', 'sq' => 'Për flota në rritje.'],
+        ]);
+
+    // Default locale (sq): curated tagline + only the picked highlight bullets.
+    $this->get(marketingUrl())
+        ->assertOk()
+        ->assertSee('Për flota në rritje.')
+        ->assertSee(__('marketing.plan_feature_reports'))
+        ->assertSee(__('marketing.plan_feature_promo_codes'))
+        ->assertDontSee(__('marketing.plan_feature_fleet_heatmap'))
+        // clamp + equal-height grid + non-wrapping "Most popular" badge.
+        ->assertSee('line-clamp-1', escape: false)
+        ->assertSee('items-stretch', escape: false)
+        ->assertSee('whitespace-nowrap', escape: false);
+
+    // The tagline follows the session locale.
+    $this->withSession(['locale' => 'en'])->get(marketingUrl())
+        ->assertOk()
+        ->assertSee('For growing fleets.')
+        ->assertDontSee('Për flota në rritje.');
 });
 
 it('prices the plan cards from the database, not from the markup', function () {
@@ -74,6 +110,41 @@ it('shows the free label rather than a zero price for the trial tier', function 
         ->assertOk()
         ->assertSee(__('marketing.plan_trial_price'))
         ->assertDontSee('€0');
+});
+
+it('hides an unlisted plan from the pricing page but a listed one shows', function () {
+    Plan::query()->delete();
+
+    Plan::factory()->create([
+        'name' => 'Public Co', 'slug' => 'pub', 'price' => 20,
+        'is_active' => true, 'is_public' => true, 'sort_order' => 1,
+    ]);
+    Plan::factory()->unlisted()->create([
+        'name' => 'Client Alpha Custom', 'slug' => 'alpha', 'price' => 250,
+        'is_active' => true, 'sort_order' => 2,
+    ]);
+
+    $this->get(marketingUrl())
+        ->assertOk()
+        ->assertSee('Public Co')
+        ->assertDontSee('Client Alpha Custom');
+});
+
+it('shows at most four plans on the pricing page', function () {
+    Plan::query()->delete();
+
+    foreach (range(1, 6) as $i) {
+        Plan::factory()->create([
+            'name' => "Tier {$i}", 'slug' => "tier-{$i}", 'price' => $i * 10,
+            'is_active' => true, 'is_public' => true, 'sort_order' => $i,
+        ]);
+    }
+
+    $this->get(marketingUrl())
+        ->assertOk()
+        ->assertSee('Tier 4')
+        ->assertDontSee('Tier 5')
+        ->assertDontSee('Tier 6');
 });
 
 it('exposes the nav sections to phones through a no-javascript disclosure', function () {

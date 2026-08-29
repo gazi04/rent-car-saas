@@ -53,7 +53,7 @@ class AppServiceProvider extends ServiceProvider
     private function composeMarketingPricing(): void
     {
         View::composer('marketing.home', function (ViewContract $view): void {
-            $view->with('plans', Plan::activeInDisplayOrder());
+            $view->with('plans', Plan::publiclyListed());
         });
     }
 
