@@ -307,6 +307,44 @@ it('renders the vehicle list for a vehicle that already has photos', function ()
         ->assertCanSeeTableRecords([$vehicle]);
 });
 
+it('stores vehicle photos on the configured media-library disk, not a hardcoded one', function () {
+    // Production (Laravel Cloud) sets MEDIA_DISK=s3 so uploads survive deploys.
+    // The collection must follow config, not the literal 'public' it used to pin.
+    config(['media-library.disk_name' => 's3']);
+
+    [$tenant] = fleetOperator('ardi.localhost');
+    tenancy()->initialize($tenant);
+    Storage::fake('s3');
+
+    $vehicle = Vehicle::factory()->create();
+
+    foreach (['front.jpg', 'rear.jpg'] as $file) {
+        $vehicle->addMedia(UploadedFile::fake()->image($file, 800, 600))
+            ->toMediaCollection('vehicle_photos');
+    }
+
+    foreach ($vehicle->getMedia('vehicle_photos') as $media) {
+        expect($media->disk)->toBe('s3')
+            ->and(Storage::disk('s3')->exists($media->getPathRelativeToRoot()))->toBeTrue()
+            ->and($media->hasGeneratedConversion('web'))->toBeTrue()
+            ->and($media->getFullUrl('web'))->toContain("tenants/{$tenant->id}/vehicle_photos/");
+    }
+});
+
+it('stores the operator logo on the configured media-library disk', function () {
+    config(['media-library.disk_name' => 's3']);
+
+    [$tenant] = fleetOperator('ardi.localhost');
+    tenancy()->initialize($tenant);
+    Storage::fake('s3');
+
+    $media = $tenant->addMedia(UploadedFile::fake()->image('logo.png', 200, 200))
+        ->toMediaCollection('logo');
+
+    expect($media->disk)->toBe('s3')
+        ->and(Storage::disk('s3')->exists($media->getPathRelativeToRoot()))->toBeTrue();
+});
+
 it('keeps vehicle photos from different tenants under separate storage roots', function () {
     [$tenantA] = fleetOperator('a.localhost');
     [$tenantB] = fleetOperator('b.localhost');

@@ -15,10 +15,13 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\Ai\BusinessSummaryGenerator;
+use App\Services\Ai\VehicleListingWriter;
 use Filament\Facades\Filament;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
 use function Pest\Laravel\actingAs;
@@ -93,6 +96,36 @@ it('shows the listing writer action with the plan feature', function () {
 
     Livewire::test(EditVehicle::class, ['record' => $vehicle->getRouteKey()])
         ->assertFormComponentActionVisible('description.en', 'generateDescription');
+});
+
+it('sends vehicle photos as attachments when the media disk is remote', function () {
+    // photoAttachments() used to read a local path (Media::getPath + is_file),
+    // which returns nothing once media lives on S3. It now streams bytes off the
+    // configured disk into temp files the SDK reads by path.
+    config(['media-library.disk_name' => 's3']);
+    aiOperator('s3photos', [PlanFeature::AiListingWriter->value => true]);
+    Storage::fake('s3');
+
+    $vehicle = Vehicle::factory()->create();
+
+    foreach (['a.jpg', 'b.jpg'] as $file) {
+        $vehicle->addMedia(UploadedFile::fake()->image($file, 400, 300))
+            ->toMediaCollection('vehicle_photos');
+    }
+
+    $attachmentCount = null;
+    VehicleListingAgent::fake([
+        function (string $prompt, $attachments) use (&$attachmentCount) {
+            $attachmentCount = $attachments->count();
+
+            return ['en' => 'A tidy hatchback.', 'sq' => 'Një hatchback i rregullt.'];
+        },
+    ]);
+
+    $result = app(VehicleListingWriter::class)->write(['name' => 'Golf'], $vehicle->fresh());
+
+    expect($result)->toBe(['en' => 'A tidy hatchback.', 'sq' => 'Një hatchback i rregullt.'])
+        ->and($attachmentCount)->toBe(2);
 });
 
 it('fills both description languages from the AI response', function () {

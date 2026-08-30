@@ -232,8 +232,8 @@ function actAsVisitor(): void
 }
 
 /**
- * Fake both disks a tenant writes to — 'public' (media library) and 'local'
- * (rental-agreement PDFs).
+ * Fake both disks a tenant writes to — the configured media-library disk
+ * (default 'public') and 'local' (rental-agreement PDFs).
  *
  * MUST be called after tenancy()->initialize(): FilesystemTenancyBootstrapper
  * rewrites disk roots on every initialize and silently undoes an earlier fake,
@@ -244,6 +244,7 @@ function actAsVisitor(): void
 function fakeTenantDisks(): void
 {
     Storage::fake('public');
+    Storage::fake(config('media-library.disk_name'));
     Storage::fake('local');
 }
 
@@ -259,7 +260,7 @@ function fakeTenantDisks(): void
  */
 function attachVehiclePhotos(Vehicle $vehicle, int $count = 2, int $width = 400, int $height = 300): EloquentCollection
 {
-    assertDiskIsFaked('public');
+    assertDiskIsFaked(config('media-library.disk_name'));
 
     /** @var EloquentCollection<int, Media> $media */
     $media = new EloquentCollection;
@@ -281,7 +282,7 @@ function attachVehiclePhotos(Vehicle $vehicle, int $count = 2, int $width = 400,
  */
 function attachTenantLogo(Tenant $tenant, int $width = 200, int $height = 200): Media
 {
-    assertDiskIsFaked('public');
+    assertDiskIsFaked(config('media-library.disk_name'));
 
     return $tenant->addMedia(UploadedFile::fake()->image('logo.png', $width, $height))
         ->toMediaCollection('logo');

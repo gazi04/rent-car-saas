@@ -178,7 +178,7 @@ class VehicleForm
                         SpatieMediaLibraryFileUpload::make('photos')
                             ->label(__('panel.photos'))
                             ->collection('vehicle_photos')
-                            ->disk('public')
+                            ->disk(config()->string('media-library.disk_name'))
                             ->multiple()
                             // Plan cap; 8 stays the app-wide ceiling for unlimited plans.
                             ->maxFiles(fn (): int => min(Tenant::current()?->featureLimit(PlanFeature::PhotosPerVehicle) ?? 8, 8))

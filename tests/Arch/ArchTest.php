@@ -49,6 +49,7 @@ arch('services')
     ->toHaveSuffix('Service')
     ->ignoring([
         'App\Services\Media\TenantAwarePathGenerator',
+        'App\Services\Media\MediaFileResolver',
         'App\Services\TemplateRenderer',
         'App\Services\Ai\AiCostEstimator',
         'App\Services\Ai\BusinessSummaryGenerator',

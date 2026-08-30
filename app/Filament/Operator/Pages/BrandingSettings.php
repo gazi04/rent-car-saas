@@ -97,7 +97,7 @@ class BrandingSettings extends Page
                                         SpatieMediaLibraryFileUpload::make('logo')
                                             ->label(__('branding.logo'))
                                             ->collection('logo')
-                                            ->disk('public')
+                                            ->disk(config()->string('media-library.disk_name'))
                                             ->image()
                                             ->maxSize(2048)
                                             ->helperText(__('branding.logo_hint')),

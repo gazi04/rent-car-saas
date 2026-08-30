@@ -128,7 +128,7 @@ class Vehicle extends Model implements HasMedia
 
     public function registerMediaCollections(): void
     {
-        $this->addMediaCollection('vehicle_photos')->useDisk('public');
+        $this->addMediaCollection('vehicle_photos')->useDisk(config()->string('media-library.disk_name'));
     }
 
     public function registerMediaConversions(?Media $media = null): void

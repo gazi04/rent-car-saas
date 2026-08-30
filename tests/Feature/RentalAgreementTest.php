@@ -7,8 +7,10 @@ use App\Models\Contract;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Services\Media\MediaFileResolver;
 use App\Services\RentalAgreementService;
 use Filament\Facades\Filament;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -101,6 +103,52 @@ it('generates the agreement for a booking whose vehicle was later soft-deleted',
     $contract = app(RentalAgreementService::class)->generate($booking->fresh());
 
     Storage::assertExists($contract->path);
+});
+
+// ── Operator logo ─────────────────────────────────────────────────────────────
+
+it('embeds the operator logo as a data URI when the media disk is remote', function () {
+    // Production runs MEDIA_DISK=s3; the logo used to be pulled via a local
+    // filesystem path (getFirstMediaPath + file_exists), which silently dropped
+    // it. It must now be read through the disk layer and inlined for dompdf,
+    // which has enable_remote => false.
+    config(['media-library.disk_name' => 's3']);
+
+    $tenant = Tenant::factory()->withDomain('logo-pdf')->create();
+    tenancy()->initialize($tenant);
+    Storage::fake();
+    Storage::fake('s3');
+    actingAs(agreementOperatorFor($tenant));
+
+    $tenant->addMedia(UploadedFile::fake()->image('logo.png', 200, 200))->toMediaCollection('logo');
+
+    $vehicle = Vehicle::factory()->create(['daily_rate' => 50]);
+    $booking = Booking::factory()->forVehicle($vehicle)->state(['locale' => 'sq'])->create();
+
+    $contract = app(RentalAgreementService::class)->generate($booking);
+
+    expect(Storage::get($contract->path))->toStartWith('%PDF');
+
+    $rendered = view('pdf.rental-agreement', [
+        'booking' => $booking->load('vehicle'),
+        'logoDataUri' => app(MediaFileResolver::class)
+            ->dataUri($tenant->getFirstMedia('logo'), 'thumb'),
+    ])->render();
+
+    expect($rendered)->toContain('<img src="data:image/')
+        ->and($rendered)->not->toContain('class="operator-name"');
+});
+
+it('falls back to the operator name when there is no logo', function () {
+    [$tenant, , $booking] = agreementSetup();
+
+    $rendered = view('pdf.rental-agreement', [
+        'booking' => $booking->load('vehicle'),
+        'logoDataUri' => null,
+    ])->render();
+
+    expect($rendered)->toContain('class="operator-name"')
+        ->and($rendered)->toContain($tenant->name);
 });
 
 // ── Idempotency ───────────────────────────────────────────────────────────────
