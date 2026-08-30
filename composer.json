@@ -92,6 +92,12 @@
         "types:baseline": [
             "phpstan analyse --generate-baseline"
         ],
+        "refactor": [
+            "rector"
+        ],
+        "refactor:check": [
+            "rector --dry-run"
+        ],
         "test:type-coverage": [
             "pest --type-coverage --min=100"
         ],
