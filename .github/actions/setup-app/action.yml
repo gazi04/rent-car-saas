@@ -1,0 +1,53 @@
+name: Set up PHP app
+description: PHP 8.5, Flux Pro credentials, cached Composer install, and an optional cached Node + Vite build. The caller must run actions/checkout first.
+
+inputs:
+  node:
+    description: Install Node and run `npm ci`.
+    default: "false"
+  build:
+    description: Run `npm run build` (implies node).
+    default: "false"
+  php-extensions:
+    description: Extra PHP extensions to load (comma separated), e.g. `sockets`.
+    default: ""
+  flux-username:
+    description: Flux UI Pro Composer username (pass `secrets.FLUX_USERNAME`).
+    required: true
+  flux-license-key:
+    description: Flux UI Pro Composer license key (pass `secrets.FLUX_LICENSE_KEY`).
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+      with:
+        php-version: "8.5"
+        tools: composer:v2
+        coverage: none
+        extensions: ${{ inputs.php-extensions }}
+
+    - name: Configure Flux Pro credentials
+      shell: bash
+      run: composer config http-basic.composer.fluxui.dev "${{ inputs.flux-username }}" "${{ inputs.flux-license-key }}"
+
+    - name: Install Composer dependencies (cached)
+      uses: ramsey/composer-install@a8d0d959dab41457692a5e2041bd9b757a119e3f # 3.2.1
+
+    - name: Set up Node
+      if: inputs.node == 'true' || inputs.build == 'true'
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      with:
+        node-version: lts/*
+        cache: npm
+
+    - name: Install NPM dependencies
+      if: inputs.node == 'true' || inputs.build == 'true'
+      shell: bash
+      run: npm ci
+
+    - name: Build assets
+      if: inputs.build == 'true'
+      shell: bash
+      run: npm run build
