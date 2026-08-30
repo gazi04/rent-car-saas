@@ -12,7 +12,7 @@
     @fonts(['instrument-sans'])
     @vite(['resources/css/app.css'])
 </head>
-<body class="min-h-dvh bg-surface-raised text-ink antialiased">
+<body class="min-h-dvh overflow-x-clip bg-surface-raised text-ink antialiased">
 
     {{-- Header. The nav links used to be `hidden sm:flex` with no replacement,
          so on a phone Features / How it works / Pricing were unreachable from
@@ -43,9 +43,15 @@
                         </button>
                     </form>
 
-                    <x-ui.button :href="route('operator.register')" size="sm" class="hidden sm:inline-flex">
-                        {{ __('marketing.nav_start_trial') }}
-                    </x-ui.button>
+                    {{-- Wrapper carries the responsive hide: x-ui.button's own
+                         `inline-flex` base class overrides a `hidden` put
+                         directly on it, so the button leaked onto phones and
+                         squeezed the logo. --}}
+                    <span class="hidden sm:inline-flex">
+                        <x-ui.button :href="route('operator.register')" size="sm">
+                            {{ __('marketing.nav_start_trial') }}
+                        </x-ui.button>
+                    </span>
 
                 </div>
             </div>
@@ -76,15 +82,15 @@
     <section class="relative overflow-hidden bg-gradient-to-b from-primary/5 via-surface-raised to-surface-raised">
         <div class="pointer-events-none absolute inset-x-0 -top-40 h-96 bg-[radial-gradient(60%_60%_at_50%_0%,rgba(37,99,235,0.12),transparent)]"></div>
 
-        <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-28 pb-16 text-center">
-            <span class="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium text-secondary">
+        <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 sm:pt-28 pb-12 sm:pb-16 text-center">
+            <span class="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-center text-[11px] sm:text-xs font-medium text-secondary">
                 {{ __('marketing.hero_badge') }}
             </span>
 
-            <h1 class="mt-6 text-4xl sm:text-6xl font-bold tracking-tight text-ink max-w-3xl mx-auto">
+            <h1 class="mt-6 text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-balance break-words text-ink max-w-3xl mx-auto">
                 {{ __('marketing.hero_heading') }}
             </h1>
-            <p class="mt-6 text-lg text-ink-muted max-w-2xl mx-auto">
+            <p class="mt-4 sm:mt-6 text-base sm:text-lg text-ink-muted max-w-2xl mx-auto">
                 {{ __('marketing.hero_subheading') }}
             </p>
 
@@ -100,8 +106,10 @@
             </div>
             <p class="mt-4 text-sm text-ink-muted">{{ __('marketing.hero_note') }}</p>
 
-            {{-- Browser mockup --}}
-            <div class="mt-16 mx-auto max-w-4xl rounded-panel border border-line bg-surface-raised shadow-2xl shadow-ink/10 overflow-hidden text-left">
+            {{-- Browser mockup. Pure decoration — on a phone it collapses to a
+                 cramped grid of grey boxes that adds scroll for no information,
+                 so it only renders from sm up. --}}
+            <div class="mt-10 sm:mt-16 mx-auto hidden max-w-4xl rounded-panel border border-line bg-surface-raised shadow-2xl shadow-ink/10 overflow-hidden text-left sm:block">
                 <div class="flex items-center gap-2 border-b border-line bg-surface px-4 py-3">
                     <span class="size-3 rounded-full bg-critical/40"></span>
                     <span class="size-3 rounded-full bg-notice/40"></span>
@@ -127,7 +135,7 @@
 
     {{-- Stats strip --}}
     <section class="border-y border-line bg-surface">
-        <div class="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10 grid sm:grid-cols-3 gap-8 text-center">
+        <div class="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 sm:py-10 grid sm:grid-cols-3 gap-8 text-center">
             <div>
                 <p class="text-2xl font-bold text-ink">{{ __('marketing.stat_setup_value') }}</p>
                 <p class="mt-1 text-sm text-ink-muted">{{ __('marketing.stat_setup_label') }}</p>
@@ -144,9 +152,9 @@
     </section>
 
     {{-- Features --}}
-    <section id="features" class="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-24">
-        <div class="text-center max-w-2xl mx-auto mb-16">
-            <h2 class="text-3xl font-bold text-ink">{{ __('marketing.features_heading') }}</h2>
+    <section id="features" class="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-24 scroll-mt-20">
+        <div class="text-center max-w-2xl mx-auto mb-10 sm:mb-16">
+            <h2 class="text-2xl sm:text-3xl font-bold text-ink">{{ __('marketing.features_heading') }}</h2>
             <p class="mt-4 text-ink-muted">{{ __('marketing.features_subheading') }}</p>
         </div>
 
@@ -157,7 +165,7 @@
                 ['key' => 'automation', 'icon' => 'M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75'],
                 ['key' => 'dashboard', 'icon' => 'M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z'],
             ] as $feature)
-                <div class="rounded-panel border border-line p-8 hover:border-primary/20 hover:shadow-md transition-all">
+                <div class="rounded-panel border border-line p-6 sm:p-8 hover:border-primary/20 hover:shadow-md transition-all">
                     <span class="flex h-11 w-11 items-center justify-center rounded-control bg-primary/10 text-primary mb-5">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="{{ $feature['icon'] }}"/>
@@ -171,16 +179,16 @@
     </section>
 
     {{-- How it works --}}
-    <section id="how-it-works" class="bg-surface border-y border-line">
-        <div class="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-24">
-            <div class="text-center max-w-2xl mx-auto mb-16">
-                <h2 class="text-3xl font-bold text-ink">{{ __('marketing.how_heading') }}</h2>
+    <section id="how-it-works" class="bg-surface border-y border-line scroll-mt-20">
+        <div class="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+            <div class="text-center max-w-2xl mx-auto mb-10 sm:mb-16">
+                <h2 class="text-2xl sm:text-3xl font-bold text-ink">{{ __('marketing.how_heading') }}</h2>
                 <p class="mt-4 text-ink-muted">{{ __('marketing.how_subheading') }}</p>
             </div>
 
             <div class="grid sm:grid-cols-3 gap-8">
                 @foreach ([1, 2, 3] as $step)
-                    <div class="relative bg-surface-raised rounded-panel border border-line p-8">
+                    <div class="relative bg-surface-raised rounded-panel border border-line p-6 sm:p-8">
                         <span class="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-on-primary font-bold mb-5">
                             {{ $step }}
                         </span>
@@ -193,9 +201,9 @@
     </section>
 
     {{-- Pricing --}}
-    <section id="pricing" class="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-24">
-        <div class="text-center max-w-2xl mx-auto mb-16">
-            <h2 class="text-3xl font-bold text-ink">{{ __('marketing.pricing_heading') }}</h2>
+    <section id="pricing" class="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-16 sm:py-24 scroll-mt-20">
+        <div class="text-center max-w-2xl mx-auto mb-10 sm:mb-16">
+            <h2 class="text-2xl sm:text-3xl font-bold text-ink">{{ __('marketing.pricing_heading') }}</h2>
             <p class="mt-4 text-ink-muted">{{ __('marketing.pricing_subheading') }}</p>
         </div>
 
@@ -263,11 +271,11 @@
     {{-- CTA band --}}
     <section class="relative overflow-hidden bg-gradient-to-r from-secondary to-primary">
         <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(50%_100%_at_50%_0%,rgba(255,255,255,0.12),transparent)]"></div>
-        <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-            <h2 class="text-3xl font-bold text-on-primary">{{ __('marketing.cta_heading') }}</h2>
+        <div class="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 text-center">
+            <h2 class="text-2xl sm:text-3xl font-bold text-on-primary">{{ __('marketing.cta_heading') }}</h2>
             <p class="mt-3 text-on-primary/80">{{ __('marketing.cta_subheading') }}</p>
             <a href="{{ route('operator.register') }}"
-               class="mt-8 inline-block rounded-control bg-surface-raised px-6 py-3 text-base font-semibold text-secondary hover:bg-primary/10 transition-colors">
+               class="mt-8 inline-flex w-full sm:w-auto items-center justify-center rounded-control bg-surface-raised px-6 py-3 text-base font-semibold text-secondary hover:bg-primary/10 transition-colors">
                 {{ __('marketing.cta_button') }}
             </a>
         </div>
@@ -275,8 +283,8 @@
 
     {{-- Footer --}}
     <footer class="border-t border-line bg-surface">
-        <div class="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-14">
-            <div class="grid sm:grid-cols-3 gap-10 text-sm">
+        <div class="max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+            <div class="grid sm:grid-cols-3 gap-8 sm:gap-10 text-sm">
                 <div>
                     <p class="font-semibold text-ink">{{ config('app.name') }}</p>
                     <p class="mt-2 text-ink-muted max-w-xs">{{ __('marketing.footer_tagline') }}</p>

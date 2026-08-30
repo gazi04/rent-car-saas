@@ -22,7 +22,14 @@ it('renders the marketing page on the central domain', function () {
     $this->get(marketingUrl())
         ->assertOk()
         ->assertSee(__('marketing.hero_heading'))
-        ->assertSee(__('marketing.pricing_heading'));
+        ->assertSee(__('marketing.pricing_heading'))
+        // Mobile-UX guards: horizontal-scroll clip on <body>, sticky-header
+        // offset on the anchor-target sections, and the wrapper that actually
+        // hides the header CTA on phones (x-ui.button's own `inline-flex` base
+        // overrides a `hidden` placed directly on it).
+        ->assertSee('overflow-x-clip', escape: false)
+        ->assertSee('scroll-mt-20', escape: false)
+        ->assertSee('<span class="hidden sm:inline-flex">', escape: false);
 });
 
 it('renders each plan card from the admin-curated tagline and highlights, localized', function () {
