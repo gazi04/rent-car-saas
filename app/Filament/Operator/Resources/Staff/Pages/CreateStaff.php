@@ -2,9 +2,8 @@
 
 namespace App\Filament\Operator\Resources\Staff\Pages;
 
-use App\Enums\PlanFeature;
 use App\Filament\Operator\Resources\Staff\StaffResource;
-use App\Models\Tenant;
+use App\Filament\Support\PlanLimit;
 use App\Models\User;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
@@ -15,17 +14,26 @@ class CreateStaff extends CreateRecord
     protected static string $resource = StaffResource::class;
 
     /**
+     * Hide "Create & create another" once the next save would fill the plan's
+     * last seat, so the owner can't chain past the cap onto a blank form with
+     * no feedback — plain "Create" then redirects to the (bannered) list.
+     */
+    public function canCreateAnother(): bool
+    {
+        return PlanLimit::staffCreateAnotherAllowed();
+    }
+
+    /**
      * Seat-cap backstop: block a new staff account once the tenant is at its
-     * plan's cap, even if the disabled button was bypassed.
+     * plan's cap, even if the disabled button was bypassed. The always-visible
+     * banner (OperatorPanelProvider) is the primary signal.
      */
     protected function beforeCreate(): void
     {
-        $limit = Tenant::current()?->featureLimit(PlanFeature::StaffSeatLimit);
-
-        if ($limit !== null && User::query()->where('tenant_id', tenant('id'))->where('role', 'staff')->count() >= $limit) {
+        if (PlanLimit::staffSeatsReached()) {
             Notification::make()
                 ->title(__('panel.staff_seat_limit_reached_title'))
-                ->body(__('panel.staff_seat_limit_reached_body', ['limit' => $limit]))
+                ->body(__('panel.staff_seat_limit_reached_body', ['limit' => PlanLimit::staffSeatLimit()]))
                 ->danger()
                 ->send();
 

@@ -163,34 +163,10 @@ parameters:
 			path: app/Filament/Operator/Resources/ServiceRecords/Tables/ServiceRecordsTable.php
 
 		-
-			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\User\>\:\:count\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: app/Filament/Operator/Resources/Staff/Pages/CreateStaff.php
-
-		-
-			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\User\>\:\:count\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: app/Filament/Operator/Resources/Staff/Pages/ListStaff.php
-
-		-
 			message: '#^Dynamic call to static method Illuminate\\Contracts\\Auth\\Guard\:\:user\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 1
 			path: app/Filament/Operator/Resources/Staff/StaffResource.php
-
-		-
-			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Vehicle\>\:\:count\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: app/Filament/Operator/Resources/Vehicles/Pages/CreateVehicle.php
-
-		-
-			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Vehicle\>\:\:count\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: app/Filament/Operator/Resources/Vehicles/Pages/ListVehicles.php
 
 		-
 			message: '#^Dynamic call to static method Illuminate\\Contracts\\Auth\\Guard\:\:user\(\)\.$#'
@@ -265,6 +241,12 @@ parameters:
 			path: app/Filament/Operator/Widgets/AvailabilityCalendar.php
 
 		-
+			message: '#^Parameter \#1 \$data of method App\\Services\\BlockedDateService\:\:create\(\) expects array\<string, mixed\>, array given\.$#'
+			identifier: argument.type
+			count: 1
+			path: app/Filament/Operator/Widgets/AvailabilityCalendar.php
+
+		-
 			message: '#^Parameter \#1 \$event \(array\<string, mixed\>\) of method App\\Filament\\Operator\\Widgets\\AvailabilityCalendar\:\:onEventClick\(\) should be contravariant with parameter \$event \(array\) of method Saade\\FilamentFullCalendar\\Widgets\\FullCalendarWidget\:\:onEventClick\(\)$#'
 			identifier: method.childParameterType
 			count: 1
@@ -291,16 +273,6 @@ parameters:
 		-
 			message: '#^Parameter \#5 \$resource \(array\<string, mixed\>\|null\) of method App\\Filament\\Operator\\Widgets\\AvailabilityCalendar\:\:onDateSelect\(\) should be contravariant with parameter \$resource \(array\|null\) of method Saade\\FilamentFullCalendar\\Widgets\\FullCalendarWidget\:\:onDateSelect\(\)$#'
 			identifier: method.childParameterType
-			count: 1
-			path: app/Filament/Operator/Widgets/AvailabilityCalendar.php
-
-		-
-			# CreateAction::using()'s closure has no parent signature to inherit an
-			# array<string, mixed> $data refinement from (unlike CreateRecord::
-			# handleRecordCreation(), which does) — same underlying limitation
-			# already accepted for BookingService.php's Date::parse() calls.
-			message: '#^Parameter \#1 \$data of method App\\Services\\BlockedDateService\:\:create\(\) expects array\<string, mixed\>, array given\.$#'
-			identifier: argument.type
 			count: 1
 			path: app/Filament/Operator/Widgets/AvailabilityCalendar.php
 
@@ -525,6 +497,18 @@ parameters:
 			identifier: staticMethod.dynamicCall
 			count: 1
 			path: app/Filament/Resources/Users/UserResource.php
+
+		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\User\>\:\:count\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: app/Filament/Support/PlanLimit.php
+
+		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Vehicle\>\:\:count\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 2
+			path: app/Filament/Support/PlanLimit.php
 
 		-
 			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\AiUsageLog\>\:\:count\(\)\.$#'
@@ -1037,6 +1021,18 @@ parameters:
 			path: app/Services/AvailabilityService.php
 
 		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Vehicle\>\:\:lockForUpdate\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: app/Services/BlockedDateService.php
+
+		-
+			message: '#^Parameter \#1 \$time of static method Illuminate\\Support\\Facades\\Date\:\:parse\(\) expects Carbon\\Month\|Carbon\\WeekDay\|DateTimeInterface\|float\|int\|string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Services/BlockedDateService.php
+
+		-
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
 			count: 1
@@ -1059,18 +1055,6 @@ parameters:
 			identifier: argument.type
 			count: 2
 			path: app/Services/BookingService.php
-
-		-
-			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Vehicle\>\:\:lockForUpdate\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: app/Services/BlockedDateService.php
-
-		-
-			message: '#^Parameter \#1 \$time of static method Illuminate\\Support\\Facades\\Date\:\:parse\(\) expects Carbon\\Month\|Carbon\\WeekDay\|DateTimeInterface\|float\|int\|string\|null, mixed given\.$#'
-			identifier: argument.type
-			count: 2
-			path: app/Services/BlockedDateService.php
 
 		-
 			message: '#^Binary operation "\." between non\-falsy\-string and mixed results in an error\.$#'
