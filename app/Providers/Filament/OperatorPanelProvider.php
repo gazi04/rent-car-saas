@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 namespace App\Providers\Filament;
 
+use App\Filament\Operator\Resources\Staff\Pages\CreateStaff;
+use App\Filament\Operator\Resources\Staff\Pages\ListStaff;
+use App\Filament\Operator\Resources\Vehicles\Pages\CreateVehicle;
+use App\Filament\Operator\Resources\Vehicles\Pages\ListVehicles;
+use App\Filament\Support\PlanLimit;
 use App\Http\Middleware\EnsureTenantIsActive;
 use App\Http\Middleware\SetUserLocale;
 use App\Models\Tenant;
@@ -16,6 +21,7 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -60,6 +66,30 @@ class OperatorPanelProvider extends PanelProvider
             ])
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s')
+            // Always-visible "you've hit your plan's cap" banner at the top of the
+            // vehicle/staff list + create pages. Re-evaluated on every render, so
+            // it shows the instant the cap is reached — including a direct-URL
+            // load of the create page and the post-"create another" form reset.
+            ->renderHook(
+                PanelsRenderHook::CONTENT_START,
+                fn (): string => PlanLimit::vehiclesReached()
+                    ? view('filament.operator.partials.plan-limit-banner', [
+                        'title' => __('panel.vehicle_limit_reached_title'),
+                        'body' => __('panel.vehicle_limit_reached_body', ['limit' => PlanLimit::vehicleLimit()]),
+                    ])->render()
+                    : '',
+                scopes: [ListVehicles::class, CreateVehicle::class],
+            )
+            ->renderHook(
+                PanelsRenderHook::CONTENT_START,
+                fn (): string => PlanLimit::staffSeatsReached()
+                    ? view('filament.operator.partials.plan-limit-banner', [
+                        'title' => __('panel.staff_seat_limit_reached_title'),
+                        'body' => __('panel.staff_seat_limit_reached_body', ['limit' => PlanLimit::staffSeatLimit()]),
+                    ])->render()
+                    : '',
+                scopes: [ListStaff::class, CreateStaff::class],
+            )
             ->discoverResources(in: app_path('Filament/Operator/Resources'), for: 'App\Filament\Operator\Resources')
             ->discoverPages(in: app_path('Filament/Operator/Pages'), for: 'App\Filament\Operator\Pages')
             ->pages([

@@ -37,9 +37,9 @@
         [x-cloak] { display: none !important; }
     </style>
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css'])
 </head>
-<body class="min-h-dvh bg-surface text-ink antialiased">
+<body class="min-h-dvh overflow-x-clip bg-surface text-ink antialiased">
 
     <a href="#main"
        class="sr-only focus:not-sr-only focus:fixed focus:start-4 focus:top-4 focus:z-50 focus:rounded-control focus:bg-surface-raised focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-ink focus:shadow-lg focus:ring-2 focus:ring-primary">
@@ -52,7 +52,7 @@
             <div class="flex h-16 items-center justify-between gap-4">
                 <a href="{{ route('public.home') }}" class="flex min-w-0 items-center gap-3 text-ink transition-opacity hover:opacity-80">
                     @if(tenant()?->logoUrl())
-                        <img src="{{ tenant()->logoUrl() }}" alt="{{ tenant()->name }}" class="h-9 w-auto object-contain">
+                        <img src="{{ tenant()->logoUrl() }}" alt="{{ tenant()->name }}" class="h-9 w-auto max-w-[11rem] object-contain sm:max-w-[14rem]">
                     @else
                         <span class="truncate text-lg font-semibold">{{ tenant()?->name ?? config('app.name') }}</span>
                     @endif
@@ -114,7 +114,7 @@
     </main>
 
     {{-- Footer --}}
-    <footer id="contact" class="border-t border-line">
+    <footer id="contact" class="scroll-mt-20 border-t border-line">
         <x-ui.container class="py-10">
             @php
                 $footerText       = tenant()?->localizedSetting('footer_text');
@@ -163,7 +163,7 @@
             </div>
 
             <div class="mt-6 border-t border-line pt-4 text-center text-xs text-ink-faint">
-                &copy; {{ date('Y') }} {{ tenant()?->name ?? config('app.name') }}. Powered by RentACar SaaS.
+                &copy; {{ date('Y') }} {{ tenant()?->name ?? config('app.name') }}. Powered by Renti.
             </div>
         </x-ui.container>
     </footer>

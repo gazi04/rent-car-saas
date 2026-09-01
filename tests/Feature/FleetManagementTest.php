@@ -136,6 +136,46 @@ it('creates a vehicle with custom fields through the operator panel form', funct
         ->and($vehicle->custom_fields)->toBe([['label' => 'GPS', 'value' => 'Included']]);
 });
 
+// ─── Pricing-tier warning (deep-audit finding 03) ────────────────────────────
+// Informational only — PricingService::selectRate() always charges the
+// cheapest applicable tier, so an inconsistent rate never gets billed. This
+// just helps the operator notice before it confuses a customer.
+
+it('warns when the weekly rate is pricier than the daily rate for the same span', function () {
+    [$tenant, $operator] = fleetOperator('ardi.localhost');
+    tenancy()->initialize($tenant);
+    Filament::setCurrentPanel(Filament::getPanel('operator'));
+    actingAs($operator);
+
+    Livewire::test(CreateVehicle::class)
+        ->fillForm(vehicleFormData(['daily_rate' => 40, 'weekly_rate' => 300])) // > 7 * 40
+        ->assertSee(__('panel.weekly_rate_pricier_warning'));
+});
+
+it('warns when the monthly rate is pricier than the daily rate for the same span', function () {
+    [$tenant, $operator] = fleetOperator('ardi.localhost');
+    tenancy()->initialize($tenant);
+    Filament::setCurrentPanel(Filament::getPanel('operator'));
+    actingAs($operator);
+
+    Livewire::test(CreateVehicle::class)
+        ->fillForm(vehicleFormData(['daily_rate' => 40, 'monthly_rate' => 1300])) // > 30 * 40
+        ->assertSee(__('panel.monthly_rate_pricier_warning'));
+});
+
+it('shows no pricing warning for rates consistent with the daily rate', function () {
+    [$tenant, $operator] = fleetOperator('ardi.localhost');
+    tenancy()->initialize($tenant);
+    Filament::setCurrentPanel(Filament::getPanel('operator'));
+    actingAs($operator);
+
+    Livewire::test(CreateVehicle::class)
+        // Matches VehicleFactory's own convention: weekly = 6x daily, monthly = 24x daily.
+        ->fillForm(vehicleFormData(['daily_rate' => 40, 'weekly_rate' => 240, 'monthly_rate' => 960]))
+        ->assertDontSee(__('panel.weekly_rate_pricier_warning'))
+        ->assertDontSee(__('panel.monthly_rate_pricier_warning'));
+});
+
 it('rejects a duplicate plate within the same tenant', function () {
     [$tenant, $operator] = fleetOperator('ardi.localhost');
     tenancy()->initialize($tenant);
@@ -265,6 +305,44 @@ it('renders the vehicle list for a vehicle that already has photos', function ()
     Livewire::test(ListVehicles::class)
         ->assertSuccessful()
         ->assertCanSeeTableRecords([$vehicle]);
+});
+
+it('stores vehicle photos on the configured media-library disk, not a hardcoded one', function () {
+    // Production (Laravel Cloud) sets MEDIA_DISK=s3 so uploads survive deploys.
+    // The collection must follow config, not the literal 'public' it used to pin.
+    config(['media-library.disk_name' => 's3']);
+
+    [$tenant] = fleetOperator('ardi.localhost');
+    tenancy()->initialize($tenant);
+    Storage::fake('s3');
+
+    $vehicle = Vehicle::factory()->create();
+
+    foreach (['front.jpg', 'rear.jpg'] as $file) {
+        $vehicle->addMedia(UploadedFile::fake()->image($file, 800, 600))
+            ->toMediaCollection('vehicle_photos');
+    }
+
+    foreach ($vehicle->getMedia('vehicle_photos') as $media) {
+        expect($media->disk)->toBe('s3')
+            ->and(Storage::disk('s3')->exists($media->getPathRelativeToRoot()))->toBeTrue()
+            ->and($media->hasGeneratedConversion('web'))->toBeTrue()
+            ->and($media->getFullUrl('web'))->toContain("tenants/{$tenant->id}/vehicle_photos/");
+    }
+});
+
+it('stores the operator logo on the configured media-library disk', function () {
+    config(['media-library.disk_name' => 's3']);
+
+    [$tenant] = fleetOperator('ardi.localhost');
+    tenancy()->initialize($tenant);
+    Storage::fake('s3');
+
+    $media = $tenant->addMedia(UploadedFile::fake()->image('logo.png', 200, 200))
+        ->toMediaCollection('logo');
+
+    expect($media->disk)->toBe('s3')
+        ->and(Storage::disk('s3')->exists($media->getPathRelativeToRoot()))->toBeTrue();
 });
 
 it('keeps vehicle photos from different tenants under separate storage roots', function () {

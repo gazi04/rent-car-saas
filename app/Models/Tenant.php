@@ -277,7 +277,7 @@ class Tenant extends BaseTenant implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('logo')
-            ->useDisk('public')
+            ->useDisk(config()->string('media-library.disk_name'))
             ->singleFile();
     }
 

@@ -5,6 +5,10 @@ includes:
     - phpstan-baseline.neon
 
 parameters:
+    # Keep the analysis result cache in a stable, git-ignored path so CI can
+    # cache it between runs (the default is the ephemeral system temp dir).
+    tmpDir: build/phpstan
+
     paths:
         - app/
         - bootstrap/app.php

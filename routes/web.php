@@ -22,10 +22,6 @@ Route::domain(config('tenancy.central_domain'))->middleware('set-locale')->group
 
         return back();
     })->name('marketing.language');
-
-    Route::middleware(['auth', 'verified'])->group(function (): void {
-        Route::view('dashboard', 'dashboard')->name('dashboard');
-    });
 });
 
 // Resend delivery webhook (email log status updates). Central host, no tenant
@@ -34,5 +30,3 @@ Route::domain(config('tenancy.central_domain'))->middleware('set-locale')->group
 Route::domain(config('tenancy.central_domain'))
     ->post('webhooks/resend', ResendWebhookController::class)
     ->name('webhooks.resend');
-
-require __DIR__.'/settings.php';

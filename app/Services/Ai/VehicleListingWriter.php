@@ -7,6 +7,7 @@ namespace App\Services\Ai;
 use App\Ai\Agents\VehicleListingAgent;
 use App\Exceptions\AiRequestFailedException;
 use App\Models\Vehicle;
+use App\Services\Media\MediaFileResolver;
 use BackedEnum;
 use Laravel\Ai\Files\Image;
 use Laravel\Ai\Responses\StructuredAgentResponse;
@@ -90,8 +91,9 @@ class VehicleListingWriter
 
     /**
      * Existing vehicle photos as image attachments (webp "web" conversion —
-     * smaller than the originals, plenty for describing the car). The SDK
-     * handles reading + encoding each local file.
+     * smaller than the originals, plenty for describing the car). Bytes are
+     * pulled off the media disk (local or S3) and handed to the SDK as base64,
+     * so nothing here assumes a local filesystem path.
      *
      * @return list<Image>
      */
@@ -101,16 +103,18 @@ class VehicleListingWriter
             return [];
         }
 
+        $resolver = resolve(MediaFileResolver::class);
+
         $attachments = $vehicle->getMedia('vehicle_photos')
             ->take((int) config('ai.max_photos'))
-            ->map(function (Media $media): ?Image {
-                $path = $media->hasGeneratedConversion('web') ? $media->getPath('web') : $media->getPath();
+            ->map(function (Media $media) use ($resolver): ?Image {
+                $bytes = $resolver->contents($media, 'web');
 
-                if (! is_file($path)) {
+                if ($bytes === null) {
                     return null;
                 }
 
-                return Image::fromPath($path);
+                return Image::fromBase64(base64_encode($bytes), $resolver->mimeType($media, 'web'));
             })
             ->filter()
             ->all();

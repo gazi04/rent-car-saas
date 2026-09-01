@@ -2,11 +2,9 @@
 
 namespace App\Filament\Operator\Resources\Vehicles\Pages;
 
-use App\Enums\PlanFeature;
 use App\Filament\Operator\Resources\Vehicles\VehicleResource;
 use App\Filament\Support\HelpAction;
-use App\Models\Tenant;
-use App\Models\Vehicle;
+use App\Filament\Support\PlanLimit;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
@@ -19,20 +17,14 @@ class ListVehicles extends ListRecords
         return [
             HelpAction::make('vehicles'),
             // Disabled (not hidden) at the plan's vehicle cap so the operator
-            // sees why they can't add more. CreateVehicle::beforeCreate() is
-            // the enforcing backstop.
+            // sees why they can't add more. The always-visible banner
+            // (OperatorPanelProvider) is the primary notice; this button state
+            // and CreateVehicle::beforeCreate() are the backstops.
             CreateAction::make()
-                ->disabled(fn (): bool => self::atVehicleLimit())
-                ->tooltip(fn (): ?string => self::atVehicleLimit()
-                    ? (string) __('panel.vehicle_limit_reached_body', ['limit' => Tenant::current()?->featureLimit(PlanFeature::VehicleLimit)])
+                ->disabled(fn (): bool => PlanLimit::vehiclesReached())
+                ->tooltip(fn (): ?string => PlanLimit::vehiclesReached()
+                    ? (string) __('panel.vehicle_limit_reached_body', ['limit' => PlanLimit::vehicleLimit()])
                     : null),
         ];
-    }
-
-    protected static function atVehicleLimit(): bool
-    {
-        $limit = Tenant::current()?->featureLimit(PlanFeature::VehicleLimit);
-
-        return $limit !== null && Vehicle::query()->count() >= $limit;
     }
 }

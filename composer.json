@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/livewire-starter-kit",
+    "name": "gazi04/rent-car-saas",
     "type": "project",
-    "description": "The official Laravel starter kit for Livewire.",
-    "keywords": ["laravel", "framework"],
+    "description": "Renti — multi-tenant, white-label car-rental SaaS for the Kosovo / Western Balkans market.",
+    "keywords": ["laravel", "saas", "multi-tenant", "car-rental"],
     "license": "MIT",
     "require": {
         "php": "^8.5",
@@ -16,6 +16,7 @@
         "laravel/framework": "^13.7",
         "laravel/pulse": "^1.7",
         "laravel/tinker": "^3.0",
+        "league/flysystem-aws-s3-v3": "^3.35",
         "livewire/blaze": "^1.0",
         "livewire/flux": "^2.13.1",
         "livewire/livewire": "^4.1",
@@ -91,6 +92,12 @@
         ],
         "types:baseline": [
             "phpstan analyse --generate-baseline"
+        ],
+        "refactor": [
+            "rector"
+        ],
+        "refactor:check": [
+            "rector --dry-run"
         ],
         "test:type-coverage": [
             "pest --type-coverage --min=100"

@@ -414,6 +414,74 @@ it('blocks advancing from step 1 when end is before start', function () {
         ->assertSet('step', 1);
 });
 
+// ── Booking window (deep-audit finding 02) ───────────────────────────────────
+
+it('blocks advancing from step 1 when the start date is in the past', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+    $vehicle = publicVehicle();
+
+    Livewire::test('pages::public.vehicle-booking', ['vehicle' => $vehicle])
+        ->set('startDate', today()->subDay()->toDateString())
+        ->set('endDate', today()->addDays(3)->toDateString())
+        ->call('nextStep')
+        ->assertHasErrors(['startDate'])
+        ->assertSet('step', 1);
+});
+
+it('blocks advancing from step 1 when the range is longer than the maximum', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+    $vehicle = publicVehicle();
+    $start = today()->addDay();
+
+    Livewire::test('pages::public.vehicle-booking', ['vehicle' => $vehicle])
+        ->set('startDate', $start->toDateString())
+        ->set('endDate', $start->copy()->addDays(config('bookings.max_rental_days') + 1)->toDateString())
+        ->call('nextStep')
+        ->assertHasErrors(['endDate'])
+        ->assertSet('step', 1);
+});
+
+it('ignores a forged dates-selected event carrying an unbookable window', function () {
+    // The event comes from booking-form.js, so it is browser input: flatpickr's
+    // minDate/maxDate are feedback, and this is the server saying no.
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+    $vehicle = publicVehicle();
+
+    Livewire::test('pages::public.vehicle-booking', ['vehicle' => $vehicle])
+        ->dispatch('dates-selected', start: '2023-01-01', end: '2033-01-01')
+        ->assertSet('startDate', '')
+        ->assertSet('endDate', '')
+        ->assertSet('priceBreakdown', null);
+});
+
+it('accepts a dates-selected event for a bookable window', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+    $vehicle = publicVehicle();
+    $start = today()->addDays(2)->toDateString();
+    $end = today()->addDays(5)->toDateString();
+
+    Livewire::test('pages::public.vehicle-booking', ['vehicle' => $vehicle])
+        ->dispatch('dates-selected', start: $start, end: $end)
+        ->assertSet('startDate', $start)
+        ->assertSet('endDate', $end)
+        ->assertSet('priceBreakdown', fn (?array $value): bool => $value !== null);
+});
+
+it('drops a past-dated prefill from the query string', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+    $vehicle = publicVehicle();
+
+    Livewire::withQueryParams(['start_date' => '2023-01-01', 'end_date' => '2023-01-05'])
+        ->test('pages::public.vehicle-booking', ['vehicle' => $vehicle])
+        ->assertSet('startDate', '')
+        ->assertSet('endDate', '');
+});
+
 it('blocks advancing from step 2 when required details are missing', function () {
     $tenant = publicTenant('ardi');
     tenancy()->initialize($tenant);
@@ -651,7 +719,10 @@ it('confirmation page does not expose a self-minted cancel link', function () {
         ->assertDontSee('signature=', escape: false);
 });
 
-it('signed cancel link does not cancel a Confirmed booking on GET or POST', function () {
+it('signed cancel link shows a confirm page but does not cancel a Confirmed booking on GET', function () {
+    // deep-audit finding 07: a Confirmed booking is now self-cancellable — the
+    // wizard's "check your email to cancel" advice is pointless for anyone
+    // past Pending unless this path works too.
     $tenant = publicTenant('ardi');
     tenancy()->initialize($tenant);
     $vehicle = publicVehicle();
@@ -665,11 +736,33 @@ it('signed cancel link does not cancel a Confirmed booking on GET or POST', func
         ['booking' => $booking->id],
     );
 
-    $this->get($url)->assertOk();
-    expect($booking->fresh()->status)->toBe(BookingStatus::Confirmed);
+    $this->get($url)
+        ->assertOk()
+        ->assertSee($booking->reference)
+        ->assertSee(__('booking.confirm_cancel_button'));
 
-    $this->post($url)->assertOk();
     expect($booking->fresh()->status)->toBe(BookingStatus::Confirmed);
+});
+
+it('signed cancel link cancels a Confirmed booking on POST', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+    $vehicle = publicVehicle();
+    $booking = Booking::factory()->forVehicle($vehicle)->confirmed()->create();
+    tenancy()->end();
+
+    URL::forceRootUrl(tenant_url('ardi'));
+    $url = URL::temporarySignedRoute(
+        'public.booking.cancel',
+        now()->addDay(),
+        ['booking' => $booking->id],
+    );
+
+    $this->post($url)
+        ->assertOk()
+        ->assertSee($booking->reference);
+
+    expect($booking->fresh()->status)->toBe(BookingStatus::Cancelled);
 });
 
 it('signed cancel link does not cancel an Active booking on GET or POST', function () {
@@ -691,6 +784,18 @@ it('signed cancel link does not cancel an Active booking on GET or POST', functi
 
     $this->post($url)->assertOk();
     expect($booking->fresh()->status)->toBe(BookingStatus::Active);
+});
+
+it('isSelfCancellable is true for Pending and Confirmed, false for everything else', function () {
+    $tenant = publicTenant('ardi');
+    tenancy()->initialize($tenant);
+    $vehicle = publicVehicle();
+
+    expect(Booking::factory()->forVehicle($vehicle)->create()->isSelfCancellable())->toBeTrue()
+        ->and(Booking::factory()->forVehicle($vehicle)->confirmed()->create()->isSelfCancellable())->toBeTrue()
+        ->and(Booking::factory()->forVehicle($vehicle)->active()->create()->isSelfCancellable())->toBeFalse()
+        ->and(Booking::factory()->forVehicle($vehicle)->completed()->create()->isSelfCancellable())->toBeFalse()
+        ->and(Booking::factory()->forVehicle($vehicle)->cancelled()->create()->isSelfCancellable())->toBeFalse();
 });
 
 // ── Language toggle ───────────────────────────────────────────────────────────

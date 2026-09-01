@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
+use App\Models\Plan;
 use Filament\Support\Contracts\HasLabel;
 
 /**
@@ -44,6 +45,56 @@ enum PlanFeature: string implements HasLabel
             self::AiListingWriter, self::AiBusinessSummary, self::AiPricingSuggestions,
             self::AiConcierge => PlanFeatureType::Toggle,
         };
+    }
+
+    /**
+     * Display order for the public pricing cards. A raw cases() order is grouped
+     * by type() rather than by marketing importance; this puts branding first,
+     * then the caps, then the value toggles, then the AI add-ons. Every case
+     * must appear here — PlanFeatureMarketingLineTest pins that.
+     *
+     * @return array<int, self>
+     */
+    public static function marketingOrder(): array
+    {
+        return [
+            self::Branding,
+            self::VehicleLimit,
+            self::StaffSeatLimit,
+            self::PhotosPerVehicle,
+            self::Reports,
+            self::FleetHeatmap,
+            self::Templates,
+            self::PromoCodes,
+            self::MaintenanceReminders,
+            self::Reviews,
+            self::Waitlist,
+            self::StockAlert,
+            self::AiListingWriter,
+            self::AiBusinessSummary,
+            self::AiPricingSuggestions,
+            self::AiConcierge,
+        ];
+    }
+
+    /**
+     * One bullet line for $plan's public pricing card. Returns null when the
+     * feature should not be advertised for the plan: a disabled toggle, or an
+     * AI add-on the plan doesn't include.
+     */
+    public function marketingLine(Plan $plan): ?string
+    {
+        if ($this->type() === PlanFeatureType::Toggle) {
+            return $plan->allows($this)
+                ? (string) __('marketing.plan_feature_'.$this->value)
+                : null;
+        }
+
+        $limit = $plan->limit($this);
+
+        return $limit === null
+            ? (string) __('marketing.plan_feature_'.$this->value.'_unlimited')
+            : trans_choice('marketing.plan_feature_'.$this->value, $limit, ['count' => $limit]);
     }
 
     public function getLabel(): string

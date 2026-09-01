@@ -24,8 +24,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table): void {
+            // No dropIndex here: foreignId()->constrained() creates only the FK
+            // constraint on Postgres, not a separate btree index.
             $table->dropForeign(['tenant_id']);
-            $table->dropIndex(['tenant_id']);
             $table->dropColumn(['tenant_id', 'role']);
         });
     }

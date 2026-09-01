@@ -7,13 +7,7 @@ use App\Console\Commands\ProcessVehicleMaintenance;
 use App\Console\Commands\RequestPendingReviews;
 use App\Console\Commands\SweepWaitlist;
 use App\Models\EmailLog;
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
-
-Artisan::command('inspire', function (): void {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
 
 // Manual B2B billing sweep: renewal reminders + auto-suspend on lapse
 // .
@@ -43,6 +37,16 @@ Schedule::command(ExpireStalePendingBookings::class)->hourly()->withoutOverlappi
 // Age out the email delivery log (mail.log_retention_days). It grows with send
 // volume and is an operational trail, not a business record.
 Schedule::command('model:prune', ['--model' => [EmailLog::class]])->dailyAt('04:00');
+
+// Age out the admin audit trail (activitylog.clean_after_days, 365d). Low write
+// volume — admin actions only — but an append-only table with no ceiling over
+// years. Uses the config window; no --days needed.
+Schedule::command('activitylog:clean')->dailyAt('04:15');
+
+// Age out failed queue jobs older than 30 days. Near-empty in healthy operation,
+// but every scheduled command is a per-tenant fan-out with $tries = 3, so one
+// systemic outage (AI/mail provider down) writes ~one row per tenant per run.
+Schedule::command('queue:prune-failed', ['--hours' => 720])->dailyAt('04:30');
 
 // Age out Pulse's rolling window. Same reasoning as the email log above:
 // diagnostics, not a business record — and the pulse_* tables grow on every

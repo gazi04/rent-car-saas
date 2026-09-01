@@ -237,6 +237,49 @@ it('serves the template settings page when the plan enables it', function () {
     $this->get(tenant_url('plantmplon', '/dashboard/template-settings'))->assertOk();
 });
 
+it('shows the plan-limit banner on the vehicle list once the fleet is at the cap', function () {
+    planOperatorFor('planbannerlist', [PlanFeature::VehicleLimit->value => 2], 'cappedlist');
+    Vehicle::factory()->count(2)->create();
+
+    $this->get(tenant_url('planbannerlist', '/dashboard/vehicles'))
+        ->assertOk()
+        ->assertSee(__('panel.vehicle_limit_reached_title'));
+});
+
+it('shows the plan-limit banner when the create page is opened directly at the cap', function () {
+    // The gap this closes: canCreate() is unconditionally true, so the create
+    // page opens on a direct URL with no signal until submit.
+    planOperatorFor('planbannercreate', [PlanFeature::VehicleLimit->value => 2], 'cappedcreate');
+    Vehicle::factory()->count(2)->create();
+
+    $this->get(tenant_url('planbannercreate', '/dashboard/vehicles/create'))
+        ->assertOk()
+        ->assertSee(__('panel.vehicle_limit_reached_title'));
+});
+
+it('does not show the plan-limit banner while the fleet is under the cap', function () {
+    planOperatorFor('planbannerok', [PlanFeature::VehicleLimit->value => 3], 'roomybanner');
+    Vehicle::factory()->count(2)->create();
+
+    $this->get(tenant_url('planbannerok', '/dashboard/vehicles'))
+        ->assertOk()
+        ->assertDontSee(__('panel.vehicle_limit_reached_title'));
+});
+
+it('stops offering "create another" once the next vehicle fills the plan\'s last slot', function () {
+    planOperatorFor('planlastslot', [PlanFeature::VehicleLimit->value => 3], 'lastslot');
+    Vehicle::factory()->count(2)->create();
+
+    expect(Livewire::test(CreateVehicle::class)->instance()->canCreateAnother())->toBeFalse();
+});
+
+it('keeps offering "create another" while two or more vehicle slots remain', function () {
+    planOperatorFor('planroomslot', [PlanFeature::VehicleLimit->value => 3], 'roomslot');
+    Vehicle::factory()->create();
+
+    expect(Livewire::test(CreateVehicle::class)->instance()->canCreateAnother())->toBeTrue();
+});
+
 it('applies no restrictions when the tenant\'s plan slug has no plans row', function () {
     planOperatorFor('planghost'); // plan = 'ghost-plan', no row seeded
 

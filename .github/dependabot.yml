@@ -4,6 +4,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    assignees:
+      - "gazi04"
     cooldown:
       default-days: 5
     groups:
@@ -15,6 +17,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    assignees:
+      - "gazi04"
     cooldown:
       default-days: 5
     groups:
@@ -26,6 +30,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    assignees:
+      - "gazi04"
     cooldown:
       default-days: 5
     groups:

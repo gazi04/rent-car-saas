@@ -1,12 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Parameter \#1 \$input \(array\<string, string\>\) of method App\\Actions\\Fortify\\CreateNewUser\:\:create\(\) should be contravariant with parameter \$input \(array\) of method Laravel\\Fortify\\Contracts\\CreatesNewUsers\:\:create\(\)$#'
-			identifier: method.childParameterType
-			count: 1
-			path: app/Actions/Fortify/CreateNewUser.php
-
-		-
 			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Tenant\>\:\:whereNotNull\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 1
@@ -169,34 +163,10 @@ parameters:
 			path: app/Filament/Operator/Resources/ServiceRecords/Tables/ServiceRecordsTable.php
 
 		-
-			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\User\>\:\:count\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: app/Filament/Operator/Resources/Staff/Pages/CreateStaff.php
-
-		-
-			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\User\>\:\:count\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: app/Filament/Operator/Resources/Staff/Pages/ListStaff.php
-
-		-
 			message: '#^Dynamic call to static method Illuminate\\Contracts\\Auth\\Guard\:\:user\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 1
 			path: app/Filament/Operator/Resources/Staff/StaffResource.php
-
-		-
-			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Vehicle\>\:\:count\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: app/Filament/Operator/Resources/Vehicles/Pages/CreateVehicle.php
-
-		-
-			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Vehicle\>\:\:count\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: app/Filament/Operator/Resources/Vehicles/Pages/ListVehicles.php
 
 		-
 			message: '#^Dynamic call to static method Illuminate\\Contracts\\Auth\\Guard\:\:user\(\)\.$#'
@@ -221,12 +191,6 @@ parameters:
 			identifier: staticMethod.dynamicCall
 			count: 1
 			path: app/Filament/Operator/Resources/Waitlist/WaitlistEntryResource.php
-
-		-
-			message: '#^Anonymous function should return App\\Models\\BlockedDate but returns mixed\.$#'
-			identifier: return.type
-			count: 1
-			path: app/Filament/Operator/Widgets/AvailabilityCalendar.php
 
 		-
 			message: '#^Cannot access offset ''block_id'' on mixed\.$#'
@@ -273,6 +237,12 @@ parameters:
 		-
 			message: '#^Method App\\Filament\\Operator\\Widgets\\AvailabilityCalendar\:\:vehicleOptions\(\) should return array\<int\|string, string\> but returns array\<mixed\>\.$#'
 			identifier: return.type
+			count: 1
+			path: app/Filament/Operator/Widgets/AvailabilityCalendar.php
+
+		-
+			message: '#^Parameter \#1 \$data of method App\\Services\\BlockedDateService\:\:create\(\) expects array\<string, mixed\>, array given\.$#'
+			identifier: argument.type
 			count: 1
 			path: app/Filament/Operator/Widgets/AvailabilityCalendar.php
 
@@ -529,6 +499,18 @@ parameters:
 			path: app/Filament/Resources/Users/UserResource.php
 
 		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\User\>\:\:count\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: app/Filament/Support/PlanLimit.php
+
+		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Vehicle\>\:\:count\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 2
+			path: app/Filament/Support/PlanLimit.php
+
+		-
 			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\AiUsageLog\>\:\:count\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 1
@@ -621,7 +603,7 @@ parameters:
 		-
 			message: '#^Cannot access property \$name on App\\Models\\Vehicle\|null\.$#'
 			identifier: property.nonObject
-			count: 2
+			count: 3
 			path: app/Jobs/ProcessVehicleMaintenanceJob.php
 
 		-
@@ -783,11 +765,23 @@ parameters:
 		-
 			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Booking\>\:\:count\(\)\.$#'
 			identifier: staticMethod.dynamicCall
+			count: 2
+			path: app/Models/PromoCode.php
+
+		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Booking\>\:\:where\(\)\.$#'
+			identifier: staticMethod.dynamicCall
 			count: 1
 			path: app/Models/PromoCode.php
 
 		-
 			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Booking\>\:\:whereIn\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: app/Models/PromoCode.php
+
+		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Booking\>\:\:whereNot\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 1
 			path: app/Models/PromoCode.php
@@ -1027,26 +1021,20 @@ parameters:
 			path: app/Services/AvailabilityService.php
 
 		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Vehicle\>\:\:lockForUpdate\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: app/Services/BlockedDateService.php
+
+		-
+			message: '#^Parameter \#1 \$time of static method Illuminate\\Support\\Facades\\Date\:\:parse\(\) expects Carbon\\Month\|Carbon\\WeekDay\|DateTimeInterface\|float\|int\|string\|null, mixed given\.$#'
+			identifier: argument.type
+			count: 2
+			path: app/Services/BlockedDateService.php
+
+		-
 			message: '#^Cannot cast mixed to string\.$#'
 			identifier: cast.string
-			count: 1
-			path: app/Services/BookingService.php
-
-		-
-			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Booking\>\:\:count\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: app/Services/BookingService.php
-
-		-
-			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Booking\>\:\:where\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: app/Services/BookingService.php
-
-		-
-			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Booking\>\:\:whereNot\(\)\.$#'
-			identifier: staticMethod.dynamicCall
 			count: 1
 			path: app/Services/BookingService.php
 
@@ -1151,12 +1139,6 @@ parameters:
 			identifier: arrayFilter.strict
 			count: 2
 			path: config/database.php
-
-		-
-			message: '#^Cannot cast mixed to string\.$#'
-			identifier: cast.string
-			count: 1
-			path: config/fortify.php
 
 		-
 			message: '#^Parameter \#1 \$value of method Carbon\\CarbonImmutable\:\:addDays\(\) expects float\|int, int\|null given\.$#'

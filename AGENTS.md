@@ -4,7 +4,7 @@ Guidance for AI coding agents working in this repository. Kept in sync with `CLA
 
 ## Project Overview
 
-`rent-car-saas` (product name **RentACar SaaS**) is a **multi-tenant, white-label car-rental SaaS** for the Kosovo / Western Balkans market. Car-rental businesses ("operators") subscribe to get their own branded booking website on a subdomain (`operatorname.yourdomain.com`); their customers book cars there with no account required. The platform owner ("Super Admin") onboards operators, charges a monthly subscription, and never touches the money that flows between operators and their customers.
+`rent-car-saas` (product name **Renti**) is a **multi-tenant, white-label car-rental SaaS** for the Kosovo / Western Balkans market. Car-rental businesses ("operators") subscribe to get their own branded booking website on a subdomain (`operatorname.yourdomain.com`); their customers book cars there with no account required. The platform owner ("Super Admin") onboards operators, charges a monthly subscription, and never touches the money that flows between operators and their customers.
 
 The full spec lives in **`docs/RentACar_Application_Plan.pdf`** (17 pages) — read it before any domain work. Key facts and stack guidance below.
 

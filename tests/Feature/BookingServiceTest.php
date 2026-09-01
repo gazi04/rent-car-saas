@@ -1,10 +1,12 @@
 <?php
 
 use App\Enums\BookingStatus;
+use App\Enums\VehicleStatus;
 use App\Events\BookingCancelled;
 use App\Events\BookingConfirmed;
 use App\Events\BookingCreated;
 use App\Events\BookingRejected;
+use App\Exceptions\InvalidBookingWindowException;
 use App\Exceptions\VehicleNotAvailableException;
 use App\Models\Booking;
 use App\Models\Customer;
@@ -78,6 +80,131 @@ it('throws VehicleNotAvailableException, not InvalidArgumentException, for inver
         'end_date' => '2030-06-01',
     ]));
 })->throws(VehicleNotAvailableException::class);
+
+// ─── Booking window (deep-audit finding 02) ──────────────────────────────────
+
+it('rejects a customer booking that starts in the past', function () {
+    expect(fn () => $this->service->create(bookingData($this->vehicle, [
+        'start_date' => today()->subDay()->toDateString(),
+        'end_date' => today()->addDays(3)->toDateString(),
+    ])))->toThrow(InvalidBookingWindowException::class);
+
+    expect(Booking::query()->count())->toBe(0);
+});
+
+it('accepts a customer booking starting today', function () {
+    // today() is the earliest bookable start — the boundary of the past-date guard.
+    $booking = $this->service->create(bookingData($this->vehicle, [
+        'start_date' => today()->toDateString(),
+        'end_date' => today()->addDays(3)->toDateString(),
+    ]));
+
+    expect($booking->status)->toBe(BookingStatus::Pending);
+});
+
+it('rejects a rental longer than the configured maximum', function () {
+    $max = config('bookings.max_rental_days');
+
+    expect(fn () => $this->service->create(bookingData($this->vehicle, [
+        'start_date' => today()->addDay()->toDateString(),
+        'end_date' => today()->addDay()->addDays($max + 1)->toDateString(),
+    ])))->toThrow(InvalidBookingWindowException::class);
+
+    expect(Booking::query()->count())->toBe(0);
+});
+
+it('accepts a rental of exactly the configured maximum', function () {
+    $max = config('bookings.max_rental_days');
+
+    $booking = $this->service->create(bookingData($this->vehicle, [
+        'start_date' => today()->addDay()->toDateString(),
+        'end_date' => today()->addDay()->addDays($max)->toDateString(),
+    ]));
+
+    expect($booking->status)->toBe(BookingStatus::Pending);
+});
+
+it('lets an operator record a manual booking that already started', function () {
+    // The walk-in who drove off at 09:00 and is entered at 11:00 — the past-date
+    // floor is deliberately customer-only.
+    $booking = $this->service->createManual(bookingData($this->vehicle, [
+        'start_date' => today()->subDay()->toDateString(),
+        'end_date' => today()->addDays(3)->toDateString(),
+    ]));
+
+    expect($booking->status)->toBe(BookingStatus::Confirmed);
+});
+
+it('still caps the duration on the manual booking path', function () {
+    $max = config('bookings.max_rental_days');
+
+    expect(fn () => $this->service->createManual(bookingData($this->vehicle, [
+        'start_date' => today()->toDateString(),
+        'end_date' => today()->addDays($max + 1)->toDateString(),
+    ])))->toThrow(InvalidBookingWindowException::class);
+
+    expect(Booking::query()->count())->toBe(0);
+});
+
+it('measures the cap the way the price measures it — part-days round up', function () {
+    $max = config('bookings.max_rental_days');
+
+    // Exactly max days plus two hours prices as max+1 days, so it must fail too.
+    expect(fn () => $this->service->create(bookingData($this->vehicle, [
+        'start_date' => today()->addDay()->toDateTimeString(),
+        'end_date' => today()->addDay()->addDays($max)->addHours(2)->toDateTimeString(),
+    ])))->toThrow(InvalidBookingWindowException::class);
+});
+
+// ─── Vehicle bookability (deep-audit finding 05) ──────────────────────────────
+
+it('rejects a customer booking on a vehicle under maintenance', function () {
+    $this->vehicle->update(['status' => VehicleStatus::UnderMaintenance]);
+
+    expect(fn () => $this->service->create(bookingData($this->vehicle)))
+        ->toThrow(VehicleNotAvailableException::class);
+
+    expect(Booking::query()->count())->toBe(0);
+});
+
+it('rejects a customer booking on a vehicle marked Booked', function () {
+    $this->vehicle->update(['status' => VehicleStatus::Booked]);
+
+    expect(fn () => $this->service->create(bookingData($this->vehicle)))
+        ->toThrow(VehicleNotAvailableException::class);
+
+    expect(Booking::query()->count())->toBe(0);
+});
+
+it('rejects a customer booking on an unlisted vehicle', function () {
+    $this->vehicle->update(['is_public' => false]);
+
+    expect(fn () => $this->service->create(bookingData($this->vehicle)))
+        ->toThrow(VehicleNotAvailableException::class);
+
+    expect(Booking::query()->count())->toBe(0);
+});
+
+it('rejects a manual booking on a vehicle under maintenance too', function () {
+    // status is a real-world rentability concern, not a storefront-visibility
+    // one — it blocks both create paths, unlike is_public below.
+    $this->vehicle->update(['status' => VehicleStatus::UnderMaintenance]);
+
+    expect(fn () => $this->service->createManual(bookingData($this->vehicle)))
+        ->toThrow(VehicleNotAvailableException::class);
+
+    expect(Booking::query()->count())->toBe(0);
+});
+
+it('lets an operator record a manual booking on an unlisted vehicle', function () {
+    // The point of the manual path: a VIP car or an off-storefront arrangement
+    // an operator deliberately keeps unlisted must still be phone-bookable.
+    $this->vehicle->update(['is_public' => false]);
+
+    $booking = $this->service->createManual(bookingData($this->vehicle));
+
+    expect($booking->status)->toBe(BookingStatus::Confirmed);
+});
 
 it('fires BookingCreated event on successful create', function () {
     // Only fake BookingCreated — faking all events blocks Eloquent model events

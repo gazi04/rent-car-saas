@@ -20,8 +20,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * creation; removal is archive-only (is_active = false) while referenced.
  *
  * @property array<string, mixed>|null $features
+ * @property array{en?: string, sq?: string}|null $marketing_description
+ * @property list<string>|null $marketing_highlights
+ * @property bool $is_public
  */
-#[Fillable(['name', 'slug', 'description', 'price', 'features', 'is_active', 'is_trial', 'sort_order'])]
+#[Fillable(['name', 'slug', 'description', 'price', 'features', 'is_active', 'is_trial', 'sort_order', 'is_public', 'marketing_description', 'marketing_highlights'])]
 class Plan extends Model
 {
     /** @use HasFactory<PlanFactory> */
@@ -33,6 +36,9 @@ class Plan extends Model
      * don't create a backing Plan row). Source of truth is Plan::trialSlug().
      */
     public const string TRIAL_SLUG = 'trial';
+
+    /** Public pricing cards shown on the marketing homepage; matches the `lg:grid-cols-4` grid. */
+    public const int MARKETING_MAX = 4;
 
     /** Memoized per-request; invalidated whenever a Plan is saved or deleted. */
     private static ?string $trialSlugCache = null;
@@ -83,6 +89,9 @@ class Plan extends Model
             'price' => 'decimal:2',
             'is_active' => 'boolean',
             'is_trial' => 'boolean',
+            'is_public' => 'boolean',
+            'marketing_description' => 'array',
+            'marketing_highlights' => 'array',
         ];
     }
 
@@ -103,6 +112,46 @@ class Plan extends Model
         $value = $this->featureValue($feature);
 
         return $value === null || $value === '' ? null : (int) $value;
+    }
+
+    /**
+     * The admin-curated bullet lines for this plan's public pricing card.
+     *
+     * `marketing_highlights` holds the PlanFeature values the admin ticked in the
+     * panel; each is rendered through PlanFeature::marketingLine() (already
+     * localized) and ordered by PlanFeature::marketingOrder() regardless of the
+     * order they were picked. A pick whose line resolves to null (e.g. a toggle
+     * that is off on this plan) is silently dropped.
+     *
+     * @return list<string>
+     */
+    public function marketingHighlightLines(): array
+    {
+        $chosen = $this->marketing_highlights ?? [];
+
+        $lines = [];
+
+        foreach (PlanFeature::marketingOrder() as $feature) {
+            if (! in_array($feature->value, $chosen, true)) {
+                continue;
+            }
+
+            $line = $feature->marketingLine($this);
+
+            if ($line !== null) {
+                $lines[] = $line;
+            }
+        }
+
+        return $lines;
+    }
+
+    /** The one-line pricing-card tagline for the active locale, falling back to English. */
+    public function marketingTagline(): ?string
+    {
+        $copy = $this->marketing_description ?? [];
+
+        return $copy[app()->getLocale()] ?? $copy['en'] ?? null;
     }
 
     /** @return HasMany<Tenant, $this> */
@@ -126,6 +175,22 @@ class Plan extends Model
             ->where('is_active', true)
             ->orderBy('sort_order')
             ->get();
+    }
+
+    /**
+     * The plans shown on the public marketing homepage: active, flagged public,
+     * cheapest first, capped to the pricing grid. Deliberately narrower than
+     * activeInDisplayOrder() — a private/custom plan (is_public = false) stays
+     * assignable and billable via options() but never appears on the homepage.
+     *
+     * @return Collection<int, self>
+     */
+    public static function publiclyListed(): Collection
+    {
+        return self::activeInDisplayOrder()
+            ->where('is_public', true)
+            ->take(self::MARKETING_MAX)
+            ->values();
     }
 
     /**

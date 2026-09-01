@@ -10,7 +10,7 @@ it('blocks the public home page for a pending tenant', function () {
     $this->get(tenant_url('ardi', '/'))
         ->assertForbidden()
         ->assertSee('not live yet')
-        ->assertDontSee('Powered by RentACar SaaS');
+        ->assertDontSee('Powered by Renti');
 });
 
 it('blocks the public home page for a suspended tenant', function () {
@@ -19,7 +19,7 @@ it('blocks the public home page for a suspended tenant', function () {
     $this->get(tenant_url('ardi', '/'))
         ->assertForbidden()
         ->assertSee('temporarily unavailable')
-        ->assertDontSee('Powered by RentACar SaaS');
+        ->assertDontSee('Powered by Renti');
 });
 
 it('blocks the public home page for a cancelled tenant', function () {
@@ -28,7 +28,7 @@ it('blocks the public home page for a cancelled tenant', function () {
     $this->get(tenant_url('ardi', '/'))
         ->assertForbidden()
         ->assertSee('no longer available')
-        ->assertDontSee('Powered by RentACar SaaS');
+        ->assertDontSee('Powered by Renti');
 });
 
 it('allows the public home page for an active tenant', function () {
@@ -36,5 +36,5 @@ it('allows the public home page for an active tenant', function () {
 
     $this->get(tenant_url('ardi', '/'))
         ->assertOk()
-        ->assertSee('Powered by RentACar SaaS');
+        ->assertSee('Powered by Renti');
 });

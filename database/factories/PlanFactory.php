@@ -28,7 +28,10 @@ class PlanFactory extends Factory
             'features' => [],
             'is_active' => true,
             'is_trial' => false,
+            'is_public' => true,
             'sort_order' => 0,
+            'marketing_description' => ['en' => fake()->sentence(4), 'sq' => fake()->sentence(4)],
+            'marketing_highlights' => [],
         ];
     }
 
@@ -36,6 +39,18 @@ class PlanFactory extends Factory
     public function withFeatures(array $features): static
     {
         return $this->state(fn (): array => ['features' => $features]);
+    }
+
+    /** @param list<string> $values PlanFeature values to spotlight on the public card. */
+    public function withHighlights(array $values): static
+    {
+        return $this->state(fn (): array => ['marketing_highlights' => $values]);
+    }
+
+    /** Hidden from the marketing homepage — a private/custom plan. */
+    public function unlisted(): static
+    {
+        return $this->state(fn (): array => ['is_public' => false]);
     }
 
     public function archived(): static

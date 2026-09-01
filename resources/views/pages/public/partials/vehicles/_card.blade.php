@@ -32,7 +32,7 @@
 
     <div class="flex flex-1 flex-col p-4">
         <div class="mb-2 flex items-start justify-between gap-2">
-            <h2 class="text-sm font-semibold leading-tight text-ink">{{ $vehicle->name }}</h2>
+            <h2 class="min-w-0 break-words text-sm font-semibold leading-tight text-ink">{{ $vehicle->name }}</h2>
             <x-ui.badge class="shrink-0">{{ $vehicle->category->getLabel() }}</x-ui.badge>
         </div>
 

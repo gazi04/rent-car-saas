@@ -6,6 +6,7 @@ use Rector\Caching\ValueObject\Storage\FileCacheStorage;
 use Rector\CodingStyle\Rector\ClassMethod\MakeInheritedMethodVisibilitySameAsParentRector;
 use Rector\Config\RectorConfig;
 use Rector\Php83\Rector\ClassMethod\AddOverrideAttributeToOverriddenMethodsRector;
+use Rector\Php85\Rector\Property\AddOverrideAttributeToOverriddenPropertiesRector;
 use RectorLaravel\Rector\If_\ThrowIfRector;
 use RectorLaravel\Set\LaravelSetList;
 use RectorLaravel\Set\LaravelSetProvider;
@@ -47,6 +48,11 @@ return RectorConfig::configure()
     ])
     ->withSkip([
         AddOverrideAttributeToOverriddenMethodsRector::class,
+        // Same call as the methods rule above: the codebase does not use
+        // #[Override]. The property variant only started firing on PHP 8.5 and
+        // would otherwise churn ~60 Filament `protected static string $resource`
+        // declarations for no behavioural gain.
+        AddOverrideAttributeToOverriddenPropertiesRector::class,
         MakeInheritedMethodVisibilitySameAsParentRector::class,
         // resolvePromo()'s guards are compound conditions; as throw_if() arguments
         // they spill across three lines and read worse than an explicit if. The

@@ -4,7 +4,7 @@
      public chrome would show nav links that immediately fail and a concierge
      widget for a business that is not trading — dishonest, and
      tests/Feature/TenantStatusGateTest.php asserts this page carries no
-     "Powered by RentACar SaaS" footer. It stays a plain standalone document. --}}
+     "Powered by Renti" footer. It stays a plain standalone document. --}}
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -17,7 +17,7 @@
     @fonts(['instrument-sans'])
 
     <style>:root { --font-family: 'Instrument Sans', system-ui, sans-serif; } body { font-family: var(--font-family); }</style>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/app.css'])
 </head>
 <body class="min-h-dvh bg-surface text-ink antialiased">
     <main class="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6 lg:px-8">

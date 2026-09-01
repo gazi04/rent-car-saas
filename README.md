@@ -1,4 +1,4 @@
-# RentACar SaaS
+# Renti
 
 **Multi-tenant, white-label car-rental SaaS for the Kosovo / Western Balkans market.**
 
@@ -279,7 +279,7 @@ Notable keys from `.env.example`:
 
 | Variable | Default | Notes |
 |----------|---------|-------|
-| `APP_NAME` | `RentACar SaaS` | |
+| `APP_NAME` | `Renti` | |
 | `APP_LOCALE` / `APP_FALLBACK_LOCALE` | `en` | UI defaults to English; `sq` (Albanian) is the market locale. |
 | `DB_CONNECTION` | `pgsql` | **PostgreSQL only.** Set host/db/user/pass. |
 | `CENTRAL_DOMAIN` | `localhost` | Marketing host (pin central routes here). |
