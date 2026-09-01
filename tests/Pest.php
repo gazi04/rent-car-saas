@@ -9,6 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Pest\Browser\Playwright\Playwright;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Tests\TestCase;
 
@@ -134,6 +135,36 @@ function tenant_domain(string $subdomain): string
 function tenant_url(string $subdomain, string $path = ''): string
 {
     return 'http://'.tenant_domain($subdomain).$path;
+}
+
+/**
+ * Browser suite only: visit a path on a tenant subdomain and keep that Host for
+ * the WHOLE test, not just the first navigation.
+ *
+ * PendingAwaitablePage::withHost() applies the host through withTemporaryHost(),
+ * which restores the previous value as soon as the initial visit resolves. But
+ * LaravelHttpServer rewrites the Host header of EVERY request it serves from
+ * Playwright::host() — including the browser's later XHRs, i.e. every Livewire
+ * wire:click round trip. Left unpinned those updates arrive on the bare server
+ * origin (127.0.0.1), which is a central domain: tenancy never initializes, and
+ * the tenant guards replayed as Livewire persistent middleware reject them.
+ *
+ * Pinning happens after the visit so the Playwright server itself still binds to
+ * the default host. tenantHostReset() restores it; call it in afterEach.
+ */
+function visitAsTenant(string $subdomain, string $path = '/'): mixed
+{
+    $page = visit($path)->withHost(tenant_domain($subdomain));
+
+    Playwright::setHost(tenant_domain($subdomain));
+
+    return $page;
+}
+
+/** Undo visitAsTenant()'s Host pin so it cannot leak into the next test. */
+function tenantHostReset(): void
+{
+    Playwright::setHost(null);
 }
 
 /**

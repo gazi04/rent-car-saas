@@ -4,7 +4,10 @@ use App\Enums\VehicleStatus;
 use App\Models\Tenant;
 use App\Models\Vehicle;
 
-afterEach(fn () => tenancy()->end());
+afterEach(function (): void {
+    tenantHostReset();
+    tenancy()->end();
+});
 
 /*
  * The storefront homepage is the page most operator customers hit, and mostly on
@@ -24,7 +27,7 @@ it('storefront home has no horizontal overflow on a small phone', function () {
         'daily_rate' => 40,
     ]);
 
-    $page = visit('/')->withHost(tenant_domain('mobilehome'));
+    $page = visitAsTenant('mobilehome');
 
     foreach ([320, 375] as $width) {
         $page->resize($width, 720)->assertNoJavascriptErrors();

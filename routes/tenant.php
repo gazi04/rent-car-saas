@@ -8,6 +8,7 @@ use App\Http\Controllers\CancelBookingController;
 use App\Http\Controllers\DownloadAgreementController;
 use App\Http\Controllers\ShowCancelBookingController;
 use App\Http\Middleware\EnsureTenantIsActive;
+use App\Http\Middleware\SecurityHeaders;
 use App\Models\BlockedDate;
 use App\Models\Booking;
 use App\Models\Vehicle;
@@ -32,6 +33,7 @@ Route::middleware([
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
     EnsureTenantIsActive::class,
+    SecurityHeaders::class,
     'set-locale',
 ])->group(function (): void {
     // ── Public booking site ──────────────────────────────────────────────

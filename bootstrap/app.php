@@ -23,7 +23,17 @@ return Application::configure(basePath: dirname(__DIR__))
         // validated against the wrong scheme and 403. app.url must still match
         // the real public origin (signed URLs are generated from it in queue
         // workers — see Tenant::publicRootUrl()).
-        $middleware->trustProxies(at: '*');
+        //
+        // Laravel Cloud publishes no fixed load-balancer CIDR, so the proxy list
+        // stays '*'. X-Forwarded-Host is deliberately EXCLUDED from the trusted
+        // header set: InitializeTenancyByDomain resolves the tenant from
+        // $request->getHost(), so trusting that header would let anyone able to
+        // reach the origin directly (off-LB port, SSRF) pick which tenant a
+        // request resolves as. Scheme/port/for stay trusted — the scheme is the
+        // whole reason this setting exists.
+        $middleware->trustProxies(at: '*', headers: Request::HEADER_X_FORWARDED_FOR
+            | Request::HEADER_X_FORWARDED_PORT
+            | Request::HEADER_X_FORWARDED_PROTO);
 
         // Marker group for stancl/tenancy "universal" routes — routes that must work
         // on both central and tenant domains (e.g. the shared Livewire update endpoint).

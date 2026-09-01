@@ -5,7 +5,10 @@ use App\Models\Tenant;
 use App\Models\Vehicle;
 use Carbon\CarbonImmutable;
 
-afterEach(fn () => tenancy()->end());
+afterEach(function (): void {
+    tenantHostReset();
+    tenancy()->end();
+});
 
 /**
  * Real, full click-through of the public booking wizard — the one flow
@@ -35,7 +38,7 @@ it('completes a real booking through every wizard step by clicking through the U
     $start = CarbonImmutable::today()->addDays(3);
     $end = $start->addDays(2);
 
-    $page = visit("/vehicles/{$vehicle->id}/book")->withHost(tenant_domain('wizardflow'));
+    $page = visitAsTenant('wizardflow', "/vehicles/{$vehicle->id}/book");
 
     // Step 1 — real flatpickr range selection (mode: 'range', two clicks in the
     // same open calendar), dispatching the 'dates-selected' Livewire event that

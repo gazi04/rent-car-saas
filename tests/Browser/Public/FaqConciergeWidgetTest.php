@@ -5,7 +5,10 @@ use App\Enums\PlanFeature;
 use App\Models\Plan;
 use App\Models\Tenant;
 
-afterEach(fn () => tenancy()->end());
+afterEach(function (): void {
+    tenantHostReset();
+    tenancy()->end();
+});
 
 /**
  * The storefront concierge widget (resources/views/livewire/faq-concierge.blade.php)
@@ -26,7 +29,7 @@ it('opens the concierge widget and completes a real question/answer round trip',
 
     FaqConciergeAgent::fake([['answer' => 'The deposit is 200 EUR.', 'confident' => true]]);
 
-    $page = visit('/')->withHost(tenant_domain('browserconcierge'));
+    $page = visitAsTenant('browserconcierge');
 
     $page->assertNoJavaScriptErrors()
         ->click('[aria-label="'.__('booking.concierge_launcher').'"]')

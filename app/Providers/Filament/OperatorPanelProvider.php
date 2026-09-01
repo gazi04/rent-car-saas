@@ -10,6 +10,7 @@ use App\Filament\Operator\Resources\Vehicles\Pages\CreateVehicle;
 use App\Filament\Operator\Resources\Vehicles\Pages\ListVehicles;
 use App\Filament\Support\PlanLimit;
 use App\Http\Middleware\EnsureTenantIsActive;
+use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetUserLocale;
 use App\Models\Tenant;
 use Filament\Http\Middleware\Authenticate;
@@ -113,6 +114,7 @@ class OperatorPanelProvider extends PanelProvider
                 InitializeTenancyByDomain::class,
                 PreventAccessFromCentralDomains::class,
                 EnsureTenantIsActive::class,
+                SecurityHeaders::class,
             ])
             ->authMiddleware([
                 Authenticate::class,
