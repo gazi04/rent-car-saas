@@ -5,12 +5,11 @@ namespace App\Filament\Resources\Tenants\Schemas;
 use App\Enums\TenantStatus;
 use App\Models\Plan;
 use App\Models\Tenant;
-use Closure;
+use App\Rules\AvailableSubdomain;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
-use Stancl\Tenancy\Database\Models\Domain;
 
 class TenantForm
 {
@@ -30,17 +29,16 @@ class TenantForm
                     ->maxLength(255),
                 // The operator's subdomain. On create this becomes a row in the
                 // tenant's domains() relation so it resolves immediately (Step 1).
+                //
+                // AvailableSubdomain is shared with operator self-signup on purpose:
+                // this form used to carry its own copy of the format and "already
+                // taken" checks and no reserved-name check at all, so an admin could
+                // hand an operator a platform hostname like "admin".
                 TextInput::make('subdomain')
                     ->required()
-                    ->rule('regex:/^[a-z0-9]+(-[a-z0-9]+)*$/')
-                    ->rule(static fn (): Closure => static function (string $attribute, mixed $value, Closure $fail): void {
-                        $domain = $value.'.'.config('tenancy.tenant_base_domain', 'localhost');
-                        if (Domain::query()->where('domain', $domain)->exists()) {
-                            $fail('This subdomain is already taken.');
-                        }
-                    })
+                    ->rule(new AvailableSubdomain)
                     ->helperText("Lowercase letters, numbers and hyphens. Becomes the operator's booking site.")
-                    ->suffix('.'.config('tenancy.tenant_base_domain', 'localhost'))
+                    ->suffix('.'.config()->string('tenancy.tenant_base_domain', 'localhost'))
                     ->visibleOn('create')
                     ->dehydrated(),
                 Select::make('status')
