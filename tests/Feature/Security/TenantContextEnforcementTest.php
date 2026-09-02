@@ -28,7 +28,7 @@ afterEach(fn () => tenancy()->end());
 | request from the snapshot's `path` memo against the CURRENT host and matching
 | it to a live route. Only middleware in Livewire's persistent allowlist runs,
 | which is why the tenancy guards have to be registered there — see
-| TenancyServiceProvider::makePublicComponentsTenantAware().
+| TenancyServiceProvider::makeLivewireUpdatesRespectTenantBoundaries().
 |
 | These tests must issue REAL HTTP requests: Livewire::test() skips the
 | persistent-middleware replay entirely (PersistentMiddleware.php:43), so it

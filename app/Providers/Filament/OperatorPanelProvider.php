@@ -113,7 +113,9 @@ class OperatorPanelProvider extends PanelProvider
                 // domains, then ensure the tenant is active before the panel loads.
                 InitializeTenancyByDomain::class,
                 PreventAccessFromCentralDomains::class,
-                EnsureTenantIsActive::class,
+                // ':panel' selects the operator-facing "account under review" copy
+                // over the customer-facing storefront one.
+                EnsureTenantIsActive::class.':panel',
                 SecurityHeaders::class,
             ])
             ->authMiddleware([
