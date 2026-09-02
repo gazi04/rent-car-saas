@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "redteam",
+  "owner": "neurofoo",
+  "repo": "agent-skills",
+  "path": "redteam",
+  "branch": "main",
+  "sha": "b34afc07b787d6253deb0319a0b72e070577a4d6",
+  "source": "manual"
+}
