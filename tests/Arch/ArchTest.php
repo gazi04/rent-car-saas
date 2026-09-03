@@ -74,3 +74,14 @@ arch('controllers do not query the database')
         'Illuminate\Support\Facades\DB',
         'Illuminate\Support\Facades\Redis',
     ]);
+
+/*
+ * CSV cells reaching a spreadsheet are executable when they start with = + - @,
+ * and bookings.customer_name comes from the public booking wizard. CsvWriter is
+ * the only place allowed to call fputcsv(), so a future export cannot
+ * reintroduce the injection by forgetting to escape.
+ */
+arch('csv is written through the injection guard')
+    ->expect('fputcsv')
+    ->not->toBeUsed()
+    ->ignoring('App\Filament\Support\CsvWriter');
