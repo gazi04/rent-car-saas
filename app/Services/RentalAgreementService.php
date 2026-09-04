@@ -68,10 +68,13 @@ class RentalAgreementService
             App::setLocale($previousLocale);
         }
 
+        // tenant_id is deliberately absent: it is not mass-assignable on a
+        // BelongsToTenant model, and the throw_unless above has already proven
+        // tenancy is initialized to exactly $booking->tenant_id, so the trait's
+        // creating hook writes the same value.
         return $booking->contract()->updateOrCreate(
             ['booking_id' => $booking->id],
             [
-                'tenant_id' => $booking->tenant_id,
                 'path' => $path,
                 'generated_at' => now(),
             ],

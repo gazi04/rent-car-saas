@@ -34,7 +34,7 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
  * @property Carbon|null $notified_at
  * @property Carbon $created_at
  */
-#[Fillable(['tenant_id', 'vehicle_id', 'name', 'email', 'phone', 'start_date', 'end_date', 'locale', 'notified_at'])]
+#[Fillable(['vehicle_id', 'name', 'email', 'phone', 'start_date', 'end_date', 'locale', 'notified_at'])]
 class WaitlistEntry extends Model
 {
     use BelongsToTenant;

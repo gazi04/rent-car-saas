@@ -21,7 +21,7 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
  * @property bool $is_approved
  * @property Carbon $submitted_at
  */
-#[Fillable(['tenant_id', 'booking_id', 'vehicle_id', 'customer_id', 'reviewer_name', 'rating', 'comment', 'is_approved', 'submitted_at'])]
+#[Fillable(['booking_id', 'vehicle_id', 'customer_id', 'reviewer_name', 'rating', 'comment', 'is_approved', 'submitted_at'])]
 class Review extends Model
 {
     use BelongsToTenant;

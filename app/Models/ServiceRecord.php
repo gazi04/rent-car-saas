@@ -26,7 +26,7 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
  * @property Carbon|null $reminder_sent_at
  * @property int|null $blocked_date_id
  */
-#[Fillable(['tenant_id', 'vehicle_id', 'service_type', 'performed_on', 'odometer', 'cost', 'notes', 'next_due_on', 'next_due_odometer', 'reminder_sent_at', 'blocked_date_id'])]
+#[Fillable(['vehicle_id', 'service_type', 'performed_on', 'odometer', 'cost', 'notes', 'next_due_on', 'next_due_odometer', 'reminder_sent_at', 'blocked_date_id'])]
 class ServiceRecord extends Model
 {
     use BelongsToTenant;

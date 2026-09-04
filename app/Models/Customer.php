@@ -20,7 +20,7 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
  *
  * @property bool $is_blacklisted
  */
-#[Fillable(['tenant_id', 'name', 'phone', 'email', 'notes', 'is_blacklisted'])]
+#[Fillable(['name', 'phone', 'email', 'notes', 'is_blacklisted'])]
 class Customer extends Model
 {
     use BelongsToTenant;
