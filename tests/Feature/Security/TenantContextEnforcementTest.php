@@ -6,8 +6,6 @@ use App\Enums\VehicleStatus;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vehicle;
-use Illuminate\Testing\TestResponse;
-use Livewire\Mechanisms\HandleRequests\EndpointResolver;
 
 use function Pest\Laravel\actingAs;
 
@@ -32,46 +30,11 @@ afterEach(fn () => tenancy()->end());
 |
 | These tests must issue REAL HTTP requests: Livewire::test() skips the
 | persistent-middleware replay entirely (PersistentMiddleware.php:43), so it
-| structurally cannot reproduce this.
+| structurally cannot reproduce this. livewireUpdateUrl()/snapshotFrom()/
+| replaySnapshot() live in tests/Pest.php so LivewireModelTamperingTest can
+| share them.
 |
 */
-
-/** The Livewire update endpoint on a given host, e.g. "http://lvh.me/livewire-abc123/update". */
-function livewireUpdateUrl(string $host): string
-{
-    return 'http://'.$host.'/'.ltrim(app(EndpointResolver::class)::updatePath(), '/');
-}
-
-/** Scrape the first component snapshot out of a rendered page. */
-function snapshotFrom(string $html): array
-{
-    expect($html)->toContain('wire:snapshot');
-
-    preg_match('/wire:snapshot="([^"]*)"/', $html, $matches);
-
-    return json_decode(html_entity_decode($matches[1], ENT_QUOTES), true, flags: JSON_THROW_ON_ERROR);
-}
-
-/**
- * Replay a captured snapshot against an arbitrary host's update endpoint.
- *
- * tenancy()->end() first is load-bearing: feature-test requests run in-process,
- * so the tenancy initialized by the preceding GET would still be live and would
- * scope the replay's queries — hiding the very leak under test. A real
- * deployment starts each request with no tenant resolved.
- */
-function replaySnapshot(string $host, array $snapshot, array $updates = []): TestResponse
-{
-    tenancy()->end();
-
-    return test()->withHeaders(['X-Livewire' => '1'])->postJson(livewireUpdateUrl($host), [
-        'components' => [[
-            'snapshot' => json_encode($snapshot, JSON_THROW_ON_ERROR),
-            'updates' => $updates,
-            'calls' => [],
-        ]],
-    ]);
-}
 
 function publicVehicleFor(Tenant $tenant, string $name): Vehicle
 {
