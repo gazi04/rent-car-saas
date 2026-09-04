@@ -2,10 +2,17 @@
 
 use App\Models\Booking;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Layout('layouts.public')] #[Title('Booking Received')] class extends Component {
+    /**
+     * Locked: the route's {booking:reference} is the only thing standing between a
+     * visitor and someone else's booking details, and it guards the GET alone.
+     * Full rationale on vehicle-show.blade.php's $vehicle.
+     */
+    #[Locked]
     public Booking $booking;
 
     public function mount(Booking $booking): void

@@ -15,12 +15,19 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
 new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Component {
+    /**
+     * Locked: mount()'s is_public + Available check runs once, and submit() books
+     * whatever this property holds. Full rationale on vehicle-show.blade.php's
+     * $vehicle.
+     */
+    #[Locked]
     public Vehicle $vehicle;
 
     public int $step = 1;

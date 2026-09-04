@@ -10,12 +10,34 @@ use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
 new #[Layout('layouts.public')] #[Title('Vehicle Details')] class extends Component {
+    /**
+     * The vehicle this page is about, resolved by route binding in mount().
+     *
+     * Locked because mount()'s abort_unless($vehicle->is_public, 404) runs once,
+     * and every /livewire/update after it carries this model as a key the browser
+     * holds. Livewire already refuses to re-point it: the snapshot is
+     * HMAC-checksummed, and hydrateForUpdate() takes a model's meta only from that
+     * verified snapshot — so an `updates` entry naming another id is discarded in
+     * silence. #[Locked] adds nothing to the guarantee; it states it here, where
+     * the guard is, and turns the silent discard into
+     * CannotUpdateLockedPropertyException so a regression is loud instead of
+     * invisible.
+     *
+     * Do not reason about this as "the tenant scope would catch it anyway".
+     * ModelSynth restores through Model::newQueryForRestoration(), which is
+     * newQueryWithoutScopes() — BelongsToTenant is NOT applied to that query. The
+     * checksum is the whole of the containment, and if it ever stopped covering
+     * the key the reach would be every tenant, not just this one.
+     * tests/Feature/Security/LivewireModelTamperingTest.php pins both mechanisms.
+     */
+    #[Locked]
     public Vehicle $vehicle;
 
     /**
