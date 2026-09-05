@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\ThrottlePasswordResetRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -43,6 +44,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'set-locale' => SetLocale::class,
         ]);
+
+        // Rate-limits Fortify's password-reset POSTs, which the package ships
+        // unthrottled and offers no config lever for. It lives in the web group
+        // rather than on the routes themselves because Fortify's routes cannot
+        // be reliably mutated after registration — see the middleware's docblock.
+        $middleware->appendToGroup('web', ThrottlePasswordResetRequests::class);
 
         // The Resend delivery webhook is a signed server-to-server POST — it has
         // no session/CSRF token; its Svix signature is verified in the controller.

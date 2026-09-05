@@ -68,5 +68,22 @@ class FortifyServiceProvider extends ServiceProvider
 
             return Limit::perMinute(5)->by($throttleKey);
         });
+
+        // Two limits, because either one alone leaves the other attack open: a
+        // per-IP cap does nothing against a distributed flood aimed at one known
+        // operator address, and a per-address cap does nothing against a script
+        // walking a list of addresses. The password broker's own throttle is
+        // 60s per *user* and bounds neither.
+        //
+        // Each accepted request is a queued Resend send, so the cost of leaving
+        // this open is the operator's inbox and the platform's mail spend.
+        // Applied by App\Http\Middleware\ThrottlePasswordResetRequests, not
+        // here: Fortify exposes no config lever for these two routes, and its
+        // routes cannot be reliably mutated from a booted() callback (see that
+        // middleware's docblock).
+        RateLimiter::for('password-reset', fn (Request $request) => [
+            Limit::perHour(5)->by('pw-reset-email:'.Str::transliterate($request->string('email')->lower()->value())),
+            Limit::perHour(15)->by('pw-reset-ip:'.$request->ip()),
+        ]);
     }
 }
