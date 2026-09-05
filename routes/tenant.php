@@ -50,8 +50,13 @@ Route::middleware([
         ->whereNumber('vehicle')
         ->name('public.vehicle.book');
 
+    // throttle: the only public GETs that hand back another party's booking on a
+    // correct guess. The reference space (62^6) is what really protects them; the
+    // throttle is what makes guessing cost something. 30/min per IP, so a customer
+    // refreshing their confirmation page never notices it.
     Route::livewire('/booking/{booking:reference}/confirmation', 'pages::public.booking-confirmation')
-        ->name('public.booking.confirmation');
+        ->name('public.booking.confirmation')
+        ->middleware('throttle:booking-links');
 
     // Signed cancellation link, valid until the booking's start_date (deep-audit
     // finding 07) — no auth required. Honoured while the booking is Pending or
@@ -72,7 +77,7 @@ Route::middleware([
     // Signed ~30-day review-submission link — tokenless, no account required.
     Route::livewire('/booking/{booking}/review', 'pages::public.booking-review')
         ->name('public.booking.review')
-        ->middleware('signed');
+        ->middleware(['signed', 'throttle:booking-links']);
 
     // Signed 7-day rental-agreement download link — no auth required.
     Route::get('/booking/{booking:reference}/agreement', DownloadAgreementController::class)
