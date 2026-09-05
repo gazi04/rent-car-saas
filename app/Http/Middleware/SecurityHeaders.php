@@ -72,6 +72,17 @@ class SecurityHeaders
             "frame-ancestors 'none'",
         ];
 
+        // report-uri, not the newer report-to: it is the directive with universal
+        // support today, and this is telemetry for a policy whose failure mode is
+        // admin takeover — breadth beats elegance. Configurable so it can be
+        // repointed at an external collector (Sentry's security endpoint, say)
+        // with no code change; null sends no reporting directive at all.
+        $reportUri = config('security.csp_report_uri');
+
+        if (is_string($reportUri) && $reportUri !== '') {
+            $directives[] = 'report-uri '.$reportUri;
+        }
+
         return implode('; ', $directives);
     }
 

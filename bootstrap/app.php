@@ -51,9 +51,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // be reliably mutated after registration — see the middleware's docblock.
         $middleware->appendToGroup('web', ThrottlePasswordResetRequests::class);
 
-        // The Resend delivery webhook is a signed server-to-server POST — it has
-        // no session/CSRF token; its Svix signature is verified in the controller.
-        $middleware->validateCsrfTokens(except: ['webhooks/resend']);
+        // The Resend delivery webhook is a signed server-to-server POST; the CSP
+        // report endpoint is posted by the browser's own reporting engine. Neither
+        // carries a session or a token, and both are guarded at the endpoint
+        // instead — Svix signature verification / size and shape caps.
+        $middleware->validateCsrfTokens(except: ['webhooks/resend', 'csp-report']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

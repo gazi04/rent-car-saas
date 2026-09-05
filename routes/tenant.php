@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Enums\BookingStatus;
 use App\Enums\VehicleStatus;
 use App\Http\Controllers\CancelBookingController;
+use App\Http\Controllers\CspReportController;
 use App\Http\Controllers\DownloadAgreementController;
 use App\Http\Controllers\ShowCancelBookingController;
 use App\Http\Middleware\EnsureTenantIsActive;
@@ -83,6 +84,19 @@ Route::middleware([
     Route::get('/booking/{booking:reference}/agreement', DownloadAgreementController::class)
         ->name('agreement.download')
         ->middleware('signed');
+
+    // CSP violation sink. Only the tenant group and the operator panel apply
+    // SecurityHeaders, so a tenant host is the only place a CSP — and therefore a
+    // report — is ever emitted; there is deliberately no central twin. A second
+    // POST /csp-report without a domain constraint would in any case not coexist
+    // with this one: RouteCollection keys on method + domain + URI, so the later
+    // registration silently replaces the earlier.
+    //
+    // CSRF-exempt (bootstrap/app.php) — the browser's reporting engine sends no
+    // session and no token.
+    Route::post('/csp-report', CspReportController::class)
+        ->name('public.csp-report')
+        ->middleware('throttle:csp-report');
 
     // Session locale toggle — POST, redirect back.
     Route::post('/language', function (Request $request): RedirectResponse {

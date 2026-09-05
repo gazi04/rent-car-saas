@@ -99,6 +99,10 @@ class AppServiceProvider extends ServiceProvider
         // refreshing their confirmation page must never see a 429.
         RateLimiter::for('booking-links', fn (Request $request) => Limit::perMinute(30)->by((string) $request->ip()));
 
+        // CSP violation reports: an unauthenticated POST whose only job is to
+        // write log lines, so it needs a ceiling of its own.
+        RateLimiter::for('csp-report', fn (Request $request) => Limit::perMinute(30)->by((string) $request->ip()));
+
         // Pulse dashboard access. Platform diagnostics span every tenant, so this is
         // Super-Admin-only — reusing User::isAdmin() rather than restating the
         // predicate, so "is a platform admin" has exactly one definition.
