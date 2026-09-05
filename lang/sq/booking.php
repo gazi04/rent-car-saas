@@ -177,6 +177,9 @@ return [
     'stock_alert_joined_body' => 'Ju dërgojmë email sapo ky automjet të jetë sërish i disponueshëm.',
     'stock_alert_throttled' => 'Shumë kërkesa. Ju lutemi provoni më vonë.',
     'submit_throttled' => 'Shumë kërkesa. Ju lutemi provoni më vonë.',
+    // Qëllimisht e përgjithshme: mbulon edhe një klient në listën e zezë, dhe
+    // përmendja e saj do t'ia konfirmonte shenjën kujtdo që provon numra telefoni.
+    'submit_failed' => 'Ky rezervim nuk mund të përfundohej. Ju lutemi na kontaktoni për të rezervuar.',
 
     // AI storefront FAQ concierge (#4)
     'concierge_launcher' => 'Bëni një pyetje',

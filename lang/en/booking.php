@@ -177,6 +177,9 @@ return [
     'stock_alert_joined_body' => 'We will email you as soon as this vehicle is available again.',
     'stock_alert_throttled' => 'Too many requests. Please try again later.',
     'submit_throttled' => 'Too many requests. Please try again later.',
+    // Deliberately generic: it also covers a blacklisted customer, and naming
+    // that would confirm the flag to anyone probing phone numbers.
+    'submit_failed' => 'This booking could not be completed. Please contact us to book.',
 
     // AI storefront FAQ concierge (#4)
     'concierge_launcher' => 'Ask a question',

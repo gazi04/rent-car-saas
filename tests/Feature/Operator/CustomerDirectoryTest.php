@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\BookingStatus;
+use App\Exceptions\CustomerNotEligibleException;
 use App\Filament\Operator\Resources\Customers\Pages\CreateCustomer;
 use App\Filament\Operator\Resources\Customers\Pages\ListCustomers;
 use App\Models\Booking;
@@ -70,11 +71,13 @@ it('auto-creates and links a customer by phone on a public booking', function ()
         ->and($booking->customer_id)->toBe($customer->id);
 });
 
-it('reuses the same customer for a repeat phone and updates name/email', function () {
+it('reuses the same customer for a repeat phone without rewriting their details', function () {
     customerDirectoryOperator('dirrepeat');
     $vehicle = Vehicle::factory()->create(['daily_rate' => 50]);
 
-    app(BookingService::class)->create(directoryBookingData($vehicle));
+    $first = directoryBookingData($vehicle);
+
+    app(BookingService::class)->create($first);
     app(BookingService::class)->create(directoryBookingData($vehicle, [
         'customer_name' => 'Arben K. Krasniqi',
         'customer_email' => 'new@example.com',
@@ -84,9 +87,15 @@ it('reuses the same customer for a repeat phone and updates name/email', functio
 
     expect(Customer::query()->count())->toBe(1);
 
+    // The repeat booking links to the same record and does NOT rewrite it: the
+    // phone is unverified public input, so a visitor who types someone else's
+    // number must not be able to replace that person's stored contact details
+    // (redteam-app-security-2026-09-03, resolveCustomer CRM poisoning). The
+    // second booking's own details are kept on the bookings row instead — see
+    // tests/Feature/Security/CustomerDirectoryIntegrityTest.php.
     $customer = Customer::query()->first();
-    expect($customer->name)->toBe('Arben K. Krasniqi')
-        ->and($customer->email)->toBe('new@example.com')
+    expect($customer->name)->toBe($first['customer_name'])
+        ->and($customer->email)->toBe($first['customer_email'] ?? null)
         ->and($customer->bookings()->count())->toBe(2);
 });
 
@@ -113,15 +122,22 @@ it('totals spend from active and completed bookings only', function () {
     expect($customer->totalSpend())->toBe(140.0);
 });
 
-it('lets a blacklisted customer still book (informational only)', function () {
+it('blocks a blacklisted customer from the public site but not from the front desk', function () {
     customerDirectoryOperator('dirblack');
     $vehicle = Vehicle::factory()->create(['daily_rate' => 50]);
     Customer::factory()->blacklisted()->create(['phone' => '+38344111222']);
 
-    $booking = app(BookingService::class)->create(directoryBookingData($vehicle));
+    // The flag used to be documented as "purely informational". It now blocks the
+    // public wizard, so a repeat abuser stops consuming vehicle-date slots and
+    // operator triage time — while the operator keeps the final say and can book
+    // them in by hand.
+    expect(fn () => app(BookingService::class)->create(directoryBookingData($vehicle)))
+        ->toThrow(CustomerNotEligibleException::class);
+
+    $booking = app(BookingService::class)->createManual(directoryBookingData($vehicle));
 
     expect($booking->customer->is_blacklisted)->toBeTrue()
-        ->and($booking->status)->toBe(BookingStatus::Pending);
+        ->and($booking->status)->toBe(BookingStatus::Confirmed);
 });
 
 it('scopes the directory list to the current tenant', function () {

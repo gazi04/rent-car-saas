@@ -138,7 +138,7 @@ return [
     'customer_notes' => 'Notes',
     'is_blacklisted' => 'Blacklisted',
     'blacklisted' => 'Blacklisted',
-    'blacklist_hint' => 'Informational only — this never blocks a booking.',
+    'blacklist_hint' => 'Blocks this customer from booking on your public website. You can still book them in manually.',
     'total_spend' => 'Total spend',
     'bookings_count' => 'Bookings',
 
