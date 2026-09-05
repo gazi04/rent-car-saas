@@ -34,6 +34,22 @@ it('hides the admin panel from a non-admin operator behind a 404', function () {
     actingAs($operator)->get($adminUrl)->assertNotFound();
 });
 
+it('blocks a Super Admin whose email is not verified', function () {
+    // Parity with the operator branch of User::canAccessPanel() (see
+    // tests/Feature/Operator/OperatorPanelTest.php). Latent today — every path
+    // that creates an admin pre-verifies — but an admin-invite flow would
+    // otherwise inherit a panel that lets an unconfirmed address straight in.
+    // 404 rather than 403: bootstrap/app.php rewrites 403 responses.
+    $admin = User::factory()->unverified()->admin()->create();
+    $adminUrl = 'http://'.config('tenancy.admin_domain').'/';
+
+    actingAs($admin)->get($adminUrl)->assertNotFound();
+
+    $admin->markEmailAsVerified();
+
+    actingAs($admin)->get($adminUrl)->assertOk();
+})->group('security');
+
 it('redirects guests to the admin login', function () {
     $adminUrl = 'http://'.config('tenancy.admin_domain').'/';
 
