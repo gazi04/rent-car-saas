@@ -55,6 +55,48 @@ return [
     'abandoned_after_days' => (int) env('TENANT_ABANDONED_AFTER_DAYS', 30),
 
     /**
+     * Subdomains an operator may never claim. Read by App\Rules\AvailableSubdomain,
+     * which is the single validator behind BOTH entry points (operator self-signup
+     * and the admin TenantForm) — keeping the list here is what stops those two
+     * from drifting apart, as they had.
+     *
+     * Three reasons a name is on this list:
+     *   - it already resolves to platform infrastructure ("admin", "www", "api");
+     *   - it would make a convincing phishing host for an operator to own
+     *     ("login", "secure", "billing", "pay", "verify") — remember the session
+     *     cookie is scoped to the parent domain, so a subdomain looks first-party;
+     *   - it is a name the platform is likely to want later ("pulse", "status",
+     *     "cdn", "horizon"). Reserving early is free; reclaiming a live operator's
+     *     subdomain is not.
+     *
+     * Note "pulse" is currently served at <admin_domain>/pulse (a path, see
+     * config/pulse.php), so it is not a live collision today — it is reserved
+     * against the day the dashboard moves to its own host.
+     */
+    'reserved_subdomains' => [
+        'account', 'admin', 'api', 'app', 'assets', 'auth',
+        'billing', 'blog', 'cdn', 'dashboard', 'dev', 'docs',
+        'ftp', 'help', 'horizon', 'login', 'mail', 'mx',
+        'ns1', 'ns2', 'pay', 'payment', 'payments', 'pulse',
+        'register', 'secure', 'signup', 'smtp', 'staff', 'static',
+        'status', 'support', 'telescope', 'test', 'verify', 'webhooks',
+        'webmail', 'www',
+    ],
+
+    /**
+     * Platform-wide ceiling on operator self-signups per hour.
+     *
+     * The per-IP and per-email limiters on the signup page stop the ordinary
+     * abuser; neither stops someone with a pool of proxies and fresh addresses
+     * from mass-creating pending tenants, each squatting a subdomain until an
+     * admin purges it. This is the floor under both.
+     *
+     * Env-tunable on purpose: a launch or a press mention is exactly when a fixed
+     * cap would bite, and raising it should not need a deploy.
+     */
+    'signup_hourly_cap' => (int) env('TENANT_SIGNUP_HOURLY_CAP', 20),
+
+    /**
      * Host the Super Admin (Filament) panel is served from. A central domain.
      * Locally "admin.localhost"; production overrides via env (e.g. admin.yourdomain.com).
      */

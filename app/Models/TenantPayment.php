@@ -14,7 +14,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * A manually recorded B2B payment (operator → platform, cash/bank transfer — no gateway).
  * Administered cross-tenant from the admin panel, so deliberately NOT tenant-scoped
- * (no BelongsToTenant), same as the Tenant model itself.
+ * (no BelongsToTenant), same as the Tenant model itself. That is also why
+ * `tenant_id` stays mass-assignable here while every BelongsToTenant model
+ * excludes it: no trait supplies the value, so the writer must pass it.
  *
  * @property PaymentMethod $method
  */

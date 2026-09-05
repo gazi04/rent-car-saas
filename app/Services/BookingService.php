@@ -11,6 +11,7 @@ use App\Events\BookingCancelled;
 use App\Events\BookingConfirmed;
 use App\Events\BookingCreated;
 use App\Events\BookingRejected;
+use App\Exceptions\CustomerNotEligibleException;
 use App\Exceptions\InvalidBookingWindowException;
 use App\Exceptions\PromoCodeInvalidException;
 use App\Exceptions\VehicleNotAvailableException;
@@ -19,6 +20,7 @@ use App\Models\Customer;
 use App\Models\PromoCode;
 use App\Models\Tenant;
 use App\Models\Vehicle;
+use App\Support\PhoneNumber;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Date;
@@ -38,7 +40,18 @@ class BookingService
     {
         return DB::transaction(function () use ($data) {
             [$vehicle, $start, $end] = $this->lockAndValidate($data);
-            $customer = $this->resolveCustomer($data);
+
+            // trustContactDetails: false — every field here is unverified input
+            // from the public wizard, so a visitor who types someone else's phone
+            // number must not be able to rewrite that person's directory record.
+            $customer = $this->resolveCustomer($data, trustContactDetails: false);
+
+            // The blacklist is enforced on the public path only. An operator can
+            // still book a flagged customer knowingly via createManual().
+            if ($customer->is_blacklisted) {
+                throw new CustomerNotEligibleException('This booking cannot be completed online.');
+            }
+
             $promo = $this->resolvePromo($data, $customer);
             $price = $this->pricing->calculate($vehicle, $start, $end, $promo);
 
@@ -84,7 +97,11 @@ class BookingService
             // deliberately kept off the public site (a VIP car, an off-storefront
             // arrangement) — that's the point of this path existing at all.
             [$vehicle, $start, $end] = $this->lockAndValidate($data, allowPastStart: true, allowUnlisted: true);
-            $customer = $this->resolveCustomer($data);
+
+            // trustContactDetails: true — an authenticated operator typing at the
+            // front desk IS the authority on their own directory, so a corrected
+            // name or a newly given email should land on the existing record.
+            $customer = $this->resolveCustomer($data, trustContactDetails: true);
             $promo = $this->resolvePromo($data, $customer);
             $price = $this->pricing->calculate($vehicle, $start, $end, $promo);
 
@@ -341,18 +358,39 @@ class BookingService
 
     /**
      * Find-or-create the customer directory record for this booking, matched by
-     * phone within the current tenant (the customers.[tenant_id, phone] unique
-     * key). Runs inside the booking transaction, under the vehicle row lock, so
-     * every create path links a customer exactly once. Keeps the stored name /
-     * email in sync with the latest booking.
+     * normalized phone within the current tenant (the customers.[tenant_id,
+     * phone] unique key). Runs inside the booking transaction, under the vehicle
+     * row lock, so every create path links a customer exactly once.
+     *
+     * $trustContactDetails decides whether an ALREADY EXISTING record may be
+     * rewritten from this booking's data. It is false for public bookings: the
+     * phone is unverified, so anyone could otherwise submit a booking under a
+     * victim's number and replace that customer's stored name and email —
+     * corrupting the directory the operator uses to recognise repeat and
+     * blacklisted customers, and silently redirecting every "contact this
+     * customer" action to an attacker's address.
+     *
+     * Nothing is lost by refusing: bookings.customer_name / customer_phone /
+     * customer_email already carry what this visitor typed, so the operator can
+     * still see the submitted details on the booking. The directory record stays
+     * authoritative.
+     *
+     * A NULL email on an existing record is deliberately NOT backfilled from a
+     * public booking either — a blank contact address is precisely the case
+     * where an attacker supplying one takes ownership of it.
      *
      * @param  array<string, mixed>  $data
      */
-    private function resolveCustomer(array $data): Customer
+    private function resolveCustomer(array $data, bool $trustContactDetails): Customer
     {
-        $customer = Customer::query()->firstOrCreate(['phone' => $data['customer_phone']], ['name' => $data['customer_name'], 'email' => $data['customer_email'] ?? null]);
+        $phone = PhoneNumber::normalize($data['customer_phone']);
 
-        if (! $customer->wasRecentlyCreated) {
+        $customer = Customer::query()->firstOrCreate(
+            ['phone' => $phone],
+            ['name' => $data['customer_name'], 'email' => $data['customer_email'] ?? null],
+        );
+
+        if ($trustContactDetails && ! $customer->wasRecentlyCreated) {
             $customer->fill([
                 'name' => $data['customer_name'],
                 'email' => $data['customer_email'] ?? null,

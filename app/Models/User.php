@@ -32,7 +32,10 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail, Pas
 
     /**
      * Panel access boundaries:
-     * - admin:    central Super Admins only (role = admin, no tenant).
+     * - admin:    central Super Admins only (role = admin, no tenant), with a
+     *             verified email — same requirement as the operator branch, so
+     *             a future admin-invite flow cannot hand out panel access
+     *             before the address is confirmed.
      * - operator: the current tenant's owner (role = operator) OR staff
      *             (role = staff), whose tenant_id matches the resolved
      *             subdomain. Blocks cross-tenant login. Per-page/resource
@@ -48,7 +51,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail, Pas
         }
 
         if ($panel->getId() === 'admin') {
-            return $this->role === 'admin' && $this->tenant_id === null;
+            return $this->isAdmin() && $this->hasVerifiedEmail();
         }
 
         return false;

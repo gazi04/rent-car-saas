@@ -4,6 +4,7 @@ namespace App\Filament\Operator\Pages;
 
 use App\Enums\BookingStatus;
 use App\Enums\PlanFeature;
+use App\Filament\Support\CsvWriter;
 use App\Filament\Support\HelpAction;
 use App\Models\Booking;
 use App\Models\Tenant;
@@ -436,10 +437,10 @@ class Reports extends Page
                 return;
             }
 
-            fputcsv($out, ['reference', 'customer', 'vehicle', 'start', 'end', 'status', 'total']);
+            CsvWriter::putRow($out, ['reference', 'customer', 'vehicle', 'start', 'end', 'status', 'total']);
 
             foreach ($bookings as $booking) {
-                fputcsv($out, [
+                CsvWriter::putRow($out, [
                     $booking->reference,
                     $booking->customer_name,
                     $booking->vehicle?->name,

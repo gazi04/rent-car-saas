@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Http\Middleware\EnsureTenantIsActive;
 use App\Http\Middleware\ResolveFilamentPanelForSharedRoutes;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Support\Facades\Event;
@@ -130,6 +131,7 @@ class TenancyServiceProvider extends ServiceProvider
 
         $this->makeTenancyMiddlewareHighestPriority();
         $this->makeLivewireUpdateRouteTenancyAware();
+        $this->makeLivewireUpdatesRespectTenantBoundaries();
     }
 
     /**
@@ -155,6 +157,35 @@ class TenancyServiceProvider extends ServiceProvider
                 InitializeTenancyByDomain::class,
                 ResolveFilamentPanelForSharedRoutes::class,
             ]));
+    }
+
+    /**
+     * Livewire's update endpoint is one global route with no domain constraint, and
+     * UniversalRoutes makes tenant identification *skip* rather than 404 on central
+     * domains. TenantScope::apply() no-ops when tenancy is uninitialized, so a
+     * component re-rendered on a central host queries with no tenant filter at all —
+     * a captured storefront snapshot POSTed to the marketing host re-renders with
+     * every tenant's rows, no authentication required.
+     *
+     * On update, Livewire re-applies "persistent middleware": it rebuilds a request
+     * from the snapshot's `path` memo against the *current* host, matches it to a live
+     * route, and runs that route's middleware that appear in this allowlist. The
+     * tenant routes already carry the right guards — they were simply never replayed.
+     *
+     * Registering them here is precise because the middleware is applied per matched
+     * route: public and operator routes carry PreventAccessFromCentralDomains, so a
+     * replay on a central host 404s; the admin panel's routes do not carry it, so the
+     * admin panel — which shares this very endpoint — is unaffected.
+     *
+     * InitializeTenancyByDomain is deliberately NOT listed: it already runs as route
+     * middleware on the update route, and listing it would initialize tenancy twice.
+     */
+    protected function makeLivewireUpdatesRespectTenantBoundaries(): void
+    {
+        Livewire::addPersistentMiddleware([
+            PreventAccessFromCentralDomains::class,
+            EnsureTenantIsActive::class,
+        ]);
     }
 
     protected function bootEvents(): void

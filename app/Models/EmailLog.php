@@ -19,7 +19,8 @@ use Illuminate\Support\Facades\Config;
  * Written as Sent by the LogSentEmail listener on MessageSent, then advanced
  * (delivered/bounced/complained) by the Resend webhook. Administered
  * cross-tenant from the admin panel, so deliberately NOT tenant-scoped (no
- * BelongsToTenant), same as AiUsageLog / TenantPayment / the Tenant model.
+ * BelongsToTenant), same as AiUsageLog / TenantPayment / the Tenant model —
+ * which is why `tenant_id` stays mass-assignable here: no trait supplies it.
  * Unlike AiUsageLog these rows are mutable (the webhook updates status), so
  * they keep full timestamps.
  *

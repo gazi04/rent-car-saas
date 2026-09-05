@@ -10,6 +10,7 @@ use App\Filament\Operator\Resources\Vehicles\Pages\CreateVehicle;
 use App\Filament\Operator\Resources\Vehicles\Pages\ListVehicles;
 use App\Filament\Support\PlanLimit;
 use App\Http\Middleware\EnsureTenantIsActive;
+use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetUserLocale;
 use App\Models\Tenant;
 use Filament\Http\Middleware\Authenticate;
@@ -112,7 +113,10 @@ class OperatorPanelProvider extends PanelProvider
                 // domains, then ensure the tenant is active before the panel loads.
                 InitializeTenancyByDomain::class,
                 PreventAccessFromCentralDomains::class,
-                EnsureTenantIsActive::class,
+                // ':panel' selects the operator-facing "account under review" copy
+                // over the customer-facing storefront one.
+                EnsureTenantIsActive::class.':panel',
+                SecurityHeaders::class,
             ])
             ->authMiddleware([
                 Authenticate::class,

@@ -5,9 +5,11 @@ declare(strict_types=1);
 use App\Enums\BookingStatus;
 use App\Enums\VehicleStatus;
 use App\Http\Controllers\CancelBookingController;
+use App\Http\Controllers\CspReportController;
 use App\Http\Controllers\DownloadAgreementController;
 use App\Http\Controllers\ShowCancelBookingController;
 use App\Http\Middleware\EnsureTenantIsActive;
+use App\Http\Middleware\SecurityHeaders;
 use App\Models\BlockedDate;
 use App\Models\Booking;
 use App\Models\Vehicle;
@@ -32,6 +34,7 @@ Route::middleware([
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
     EnsureTenantIsActive::class,
+    SecurityHeaders::class,
     'set-locale',
 ])->group(function (): void {
     // ── Public booking site ──────────────────────────────────────────────
@@ -48,8 +51,13 @@ Route::middleware([
         ->whereNumber('vehicle')
         ->name('public.vehicle.book');
 
+    // throttle: the only public GETs that hand back another party's booking on a
+    // correct guess. The reference space (62^6) is what really protects them; the
+    // throttle is what makes guessing cost something. 30/min per IP, so a customer
+    // refreshing their confirmation page never notices it.
     Route::livewire('/booking/{booking:reference}/confirmation', 'pages::public.booking-confirmation')
-        ->name('public.booking.confirmation');
+        ->name('public.booking.confirmation')
+        ->middleware('throttle:booking-links');
 
     // Signed cancellation link, valid until the booking's start_date (deep-audit
     // finding 07) — no auth required. Honoured while the booking is Pending or
@@ -70,12 +78,25 @@ Route::middleware([
     // Signed ~30-day review-submission link — tokenless, no account required.
     Route::livewire('/booking/{booking}/review', 'pages::public.booking-review')
         ->name('public.booking.review')
-        ->middleware('signed');
+        ->middleware(['signed', 'throttle:booking-links']);
 
     // Signed 7-day rental-agreement download link — no auth required.
     Route::get('/booking/{booking:reference}/agreement', DownloadAgreementController::class)
         ->name('agreement.download')
         ->middleware('signed');
+
+    // CSP violation sink. Only the tenant group and the operator panel apply
+    // SecurityHeaders, so a tenant host is the only place a CSP — and therefore a
+    // report — is ever emitted; there is deliberately no central twin. A second
+    // POST /csp-report without a domain constraint would in any case not coexist
+    // with this one: RouteCollection keys on method + domain + URI, so the later
+    // registration silently replaces the earlier.
+    //
+    // CSRF-exempt (bootstrap/app.php) — the browser's reporting engine sends no
+    // session and no token.
+    Route::post('/csp-report', CspReportController::class)
+        ->name('public.csp-report')
+        ->middleware('throttle:csp-report');
 
     // Session locale toggle — POST, redirect back.
     Route::post('/language', function (Request $request): RedirectResponse {

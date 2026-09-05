@@ -2,12 +2,14 @@
 
 use App\Enums\PlanFeature;
 use App\Enums\VehicleStatus;
+use App\Exceptions\CustomerNotEligibleException;
 use App\Exceptions\InvalidBookingWindowException;
 use App\Exceptions\PromoCodeInvalidException;
 use App\Exceptions\VehicleNotAvailableException;
 use App\Models\Customer;
 use App\Models\PromoCode;
 use App\Models\Vehicle;
+use App\Support\PhoneNumber;
 use Carbon\CarbonInterface;
 use App\Services\BookingService;
 use App\Services\PricingService;
@@ -15,12 +17,19 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
 new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Component {
+    /**
+     * Locked: mount()'s is_public + Available check runs once, and submit() books
+     * whatever this property holds. Full rationale on vehicle-show.blade.php's
+     * $vehicle.
+     */
+    #[Locked]
     public Vehicle $vehicle;
 
     public int $step = 1;
@@ -215,6 +224,12 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
             $this->submitError = __('booking.date_window_invalid');
             $this->step = 1;
             $this->priceBreakdown = null;
+        } catch (CustomerNotEligibleException) {
+            // The operator has blacklisted this phone number. Deliberately a
+            // generic failure: saying so would both confirm the flag to anyone
+            // probing phone numbers and be gratuitously hostile to a customer
+            // flagged by mistake. The operator can still book them by hand.
+            $this->submitError = __('booking.submit_failed');
         } catch (PromoCodeInvalidException) {
             // The step-2 re-check already catches the common case; this is the
             // residual race (another booking consumed the last use in between).
@@ -283,6 +298,35 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
     }
 
     /**
+     * Whether this visitor may still spend a preview lookup on "has THIS phone
+     * number already redeemed this code?".
+     *
+     * That question is an oracle: the phone is whatever the visitor typed, so
+     * repeated previews enumerate which numbers exist in the operator's customer
+     * directory and which have used a given code. Budget it per tenant + IP, the
+     * same house pattern submit() and the waitlist/stock-alert forms use.
+     *
+     * On exhaustion the caller degrades to isValidForCustomer(null) — exactly
+     * what step 1 does before a phone is known — rather than erroring. The
+     * authoritative per-customer check still runs under the row lock in
+     * BookingService::resolvePromo(), so no discount is actually granted; the
+     * visitor just sees the same optimistic preview a step-1 visitor sees, and
+     * the existing promo_removed_recalculated recovery covers the rest.
+     */
+    private function mayProbeCustomerPromoHistory(): bool
+    {
+        $key = 'promo-preview:'.(tenant('id') ?? 'central').':'.request()->ip();
+
+        if (RateLimiter::tooManyAttempts($key, maxAttempts: 20)) {
+            return false;
+        }
+
+        RateLimiter::hit($key, decaySeconds: 3600);
+
+        return true;
+    }
+
+    /**
      * Resolve the entered promo code for the price preview (read-only — no lock,
      * no usage increment; the authoritative check + redemption happen in
      * BookingService at submit). Phone-aware once step 2 has set customerPhone,
@@ -303,8 +347,8 @@ new #[Layout('layouts.public')] #[Title('Book a Vehicle')] class extends Compone
         }
 
         $promo = PromoCode::query()->where('code', $code)->first();
-        $customer = $this->customerPhone !== ''
-            ? Customer::query()->where('phone', $this->customerPhone)->first()
+        $customer = $this->customerPhone !== '' && $this->mayProbeCustomerPromoHistory()
+            ? Customer::query()->where('phone', PhoneNumber::normalize($this->customerPhone))->first()
             : null;
 
         if ($promo === null || ! $promo->isValidForCustomer($customer)) {

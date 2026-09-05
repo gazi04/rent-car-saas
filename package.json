@@ -7,22 +7,22 @@
         "dev": "vite"
     },
     "dependencies": {
-        "@laravel/passkeys": "^0.2.0",
-        "concurrently": "^9.0.1",
+        "@laravel/passkeys": "^0.4.0",
+        "concurrently": "^10.0.5",
         "flatpickr": "^4.6.13",
-        "laravel-vite-plugin": "^3.1",
-        "vite": "^8.0.0"
+        "laravel-vite-plugin": "^3.2",
+        "vite": "^8.2.2"
     },
     "optionalDependencies": {
-        "@rollup/rollup-linux-x64-gnu": "4.9.5",
+        "@rollup/rollup-linux-x64-gnu": "4.63.0",
         "@tailwindcss/oxide-linux-x64-gnu": "^4.0.1",
         "lightningcss-linux-x64-gnu": "^1.29.1"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.3.2",
-        "playwright": "^1.62.0",
+        "playwright": "^1.62.1",
         "prettier": "^3.9.6",
-        "prettier-plugin-blade": "^3.2.2",
+        "prettier-plugin-blade": "^3.3.0",
         "prettier-plugin-tailwindcss": "^0.8.1",
         "tailwindcss": "^4.3.2"
     }

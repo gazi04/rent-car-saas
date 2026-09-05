@@ -138,7 +138,7 @@ return [
     'customer_notes' => 'Shënime',
     'is_blacklisted' => 'Në listën e zezë',
     'blacklisted' => 'Në listën e zezë',
-    'blacklist_hint' => 'Vetëm informacion — nuk e bllokon asnjë rezervim.',
+    'blacklist_hint' => 'E bllokon këtë klient nga rezervimi në faqen tuaj publike. Ju mund ta rezervoni ende manualisht.',
     'total_spend' => 'Shpenzimi total',
     'bookings_count' => 'Rezervime',
 

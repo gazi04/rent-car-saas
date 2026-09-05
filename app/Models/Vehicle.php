@@ -35,7 +35,7 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
  * @property string|null $weekly_rate
  * @property array<string, string|null>|null $description Bilingual {en, sq}; either side may be null when the operator left that box empty.
  */
-#[Fillable(['tenant_id', 'name', 'plate', 'category', 'year', 'fuel_type', 'transmission', 'seats', 'daily_rate', 'hourly_rate', 'weekly_rate', 'monthly_rate', 'discount_type', 'discount_value', 'mileage_limit', 'deposit', 'description', 'custom_fields', 'status', 'is_public'])]
+#[Fillable(['name', 'plate', 'category', 'year', 'fuel_type', 'transmission', 'seats', 'daily_rate', 'hourly_rate', 'weekly_rate', 'monthly_rate', 'discount_type', 'discount_value', 'mileage_limit', 'deposit', 'description', 'custom_fields', 'status', 'is_public'])]
 class Vehicle extends Model implements HasMedia
 {
     use BelongsToTenant;

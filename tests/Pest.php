@@ -9,6 +9,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Testing\TestResponse;
+use Livewire\Mechanisms\HandleRequests\EndpointResolver;
+use Pest\Browser\Playwright\Playwright;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Tests\TestCase;
 
@@ -134,6 +137,95 @@ function tenant_domain(string $subdomain): string
 function tenant_url(string $subdomain, string $path = ''): string
 {
     return 'http://'.tenant_domain($subdomain).$path;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Livewire update-endpoint replay
+|--------------------------------------------------------------------------
+|
+| Livewire's update endpoint is ONE global route with no domain constraint, and
+| the browser drives it with a snapshot it holds itself. Anything that has to be
+| proven about that round trip — tenant context, snapshot integrity, what an
+| `updates` payload is allowed to change — has to be sent as a REAL HTTP request:
+| Livewire::test() skips the persistent-middleware replay entirely
+| (PersistentMiddleware.php:43) and never serialises the snapshot, so it
+| structurally cannot reproduce either.
+|
+| These live here rather than in one of the suites that uses them because a
+| helper declared inside a test file only resolves cross-file by Pest's load
+| order, which breaks under --filter. Used by tests/Feature/Security/*.
+|
+*/
+
+/** The Livewire update endpoint on a given host, e.g. "http://lvh.me/livewire-abc123/update". */
+function livewireUpdateUrl(string $host): string
+{
+    return 'http://'.$host.'/'.ltrim(app(EndpointResolver::class)::updatePath(), '/');
+}
+
+/** Scrape the first component snapshot out of a rendered page. */
+function snapshotFrom(string $html): array
+{
+    expect($html)->toContain('wire:snapshot');
+
+    preg_match('/wire:snapshot="([^"]*)"/', $html, $matches);
+
+    return json_decode(html_entity_decode($matches[1], ENT_QUOTES), true, flags: JSON_THROW_ON_ERROR);
+}
+
+/**
+ * Replay a captured snapshot against an arbitrary host's update endpoint.
+ *
+ * tenancy()->end() first is load-bearing: feature-test requests run in-process,
+ * so the tenancy initialized by the preceding GET would still be live and would
+ * scope the replay's queries — hiding the very leak under test. A real
+ * deployment starts each request with no tenant resolved.
+ *
+ * @param  array<string, mixed>  $snapshot
+ * @param  array<string, mixed>  $updates
+ */
+function replaySnapshot(string $host, array $snapshot, array $updates = []): TestResponse
+{
+    tenancy()->end();
+
+    return test()->withHeaders(['X-Livewire' => '1'])->postJson(livewireUpdateUrl($host), [
+        'components' => [[
+            'snapshot' => json_encode($snapshot, JSON_THROW_ON_ERROR),
+            'updates' => $updates,
+            'calls' => [],
+        ]],
+    ]);
+}
+
+/**
+ * Browser suite only: visit a path on a tenant subdomain and keep that Host for
+ * the WHOLE test, not just the first navigation.
+ *
+ * PendingAwaitablePage::withHost() applies the host through withTemporaryHost(),
+ * which restores the previous value as soon as the initial visit resolves. But
+ * LaravelHttpServer rewrites the Host header of EVERY request it serves from
+ * Playwright::host() — including the browser's later XHRs, i.e. every Livewire
+ * wire:click round trip. Left unpinned those updates arrive on the bare server
+ * origin (127.0.0.1), which is a central domain: tenancy never initializes, and
+ * the tenant guards replayed as Livewire persistent middleware reject them.
+ *
+ * Pinning happens after the visit so the Playwright server itself still binds to
+ * the default host. tenantHostReset() restores it; call it in afterEach.
+ */
+function visitAsTenant(string $subdomain, string $path = '/'): mixed
+{
+    $page = visit($path)->withHost(tenant_domain($subdomain));
+
+    Playwright::setHost(tenant_domain($subdomain));
+
+    return $page;
+}
+
+/** Undo visitAsTenant()'s Host pin so it cannot leak into the next test. */
+function tenantHostReset(): void
+{
+    Playwright::setHost(null);
 }
 
 /**

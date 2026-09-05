@@ -4,11 +4,20 @@ use App\Enums\BookingStatus;
 use App\Models\Booking;
 use App\Models\Review;
 use Livewire\Attributes\Layout;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 
 new #[Layout('layouts.public')] #[Title('Leave a Review')] class extends Component {
+    /**
+     * Locked, and the sharpest of the four: the `signed` middleware on this route
+     * validates the initial GET only, never the /livewire/update that submit()
+     * arrives on. submit() writes reviewer_name straight off this model, so a
+     * re-pointed booking would publish a review under another customer's name.
+     * Full rationale on vehicle-show.blade.php's $vehicle.
+     */
+    #[Locked]
     public Booking $booking;
 
     /** True once the booking is not eligible (wrong status) or already reviewed. */

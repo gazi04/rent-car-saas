@@ -5,7 +5,10 @@ use App\Models\Tenant;
 use App\Models\Vehicle;
 use Carbon\CarbonImmutable;
 
-afterEach(fn () => tenancy()->end());
+afterEach(function (): void {
+    tenantHostReset();
+    tenancy()->end();
+});
 
 /**
  * The listing page's availability filter runs its own flatpickr instance
@@ -29,7 +32,7 @@ it('renders the listing date-range picker and reflects a real click selection', 
     $start = CarbonImmutable::today()->addDays(2);
     $startLabel = $start->format('F j, Y');
 
-    $page = visit('/vehicles')->withHost(tenant_domain('filterpicker'));
+    $page = visitAsTenant('filterpicker', '/vehicles');
 
     $page->assertNoJavaScriptErrors()
         ->click('#listing-start-picker')

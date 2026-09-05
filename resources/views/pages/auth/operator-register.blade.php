@@ -4,18 +4,22 @@ use App\Concerns\PasswordValidationRules;
 use App\Models\Plan;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Rules\AvailableSubdomain;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
-use Stancl\Tenancy\Database\Models\Domain;
+use Stancl\Tenancy\Exceptions\DomainOccupiedByOtherTenantException;
 
-new #[Layout('layouts.auth')] #[Title('Start your rental business')] class extends Component {
+new #[Layout('layouts.auth')] #[Title('Start your rental business')] class extends Component
+{
     use PasswordValidationRules;
 
     public string $name = '';
@@ -33,72 +37,135 @@ new #[Layout('layouts.auth')] #[Title('Start your rental business')] class exten
     public bool $registered = false;
 
     /**
-     * Subdomains that may not be claimed by an operator (reserved for the platform).
-     *
-     * @var list<string>
-     */
-    protected array $reservedSubdomains = ['admin', 'www', 'api', 'app', 'mail', 'ftp', 'dashboard', 'support'];
-
-    /**
      * Register a new operator: create a pending tenant, its domain, and the
      * operator user. No panel access until a Super Admin approves it (Step 2).
      */
     public function register(): void
     {
-        $key = 'operator-register:'.request()->ip();
-
-        if (RateLimiter::tooManyAttempts($key, maxAttempts: 3)) {
-            throw ValidationException::withMessages([
-                'email' => [__('Too many registration attempts. Please try again later.')],
-            ]);
-        }
-
-        $base = config('tenancy.tenant_base_domain', 'localhost');
+        $this->throttleRegistration();
 
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
             'phone' => ['nullable', 'string', 'max:255'],
-            'subdomain' => [
-                'required', 'string', 'lowercase', 'max:63',
-                'regex:/^[a-z0-9]+(-[a-z0-9]+)*$/',
-                Rule::notIn($this->reservedSubdomains),
-                function (string $attribute, mixed $value, Closure $fail) use ($base): void {
-                    if (Domain::query()->where('domain', $value.'.'.$base)->exists()) {
-                        $fail(__('This subdomain is already taken.'));
-                    }
-                },
-            ],
+            'subdomain' => ['required', 'string', new AvailableSubdomain],
             'password' => $this->passwordRules(),
         ]);
 
-        RateLimiter::hit($key, decaySeconds: 3600);
+        $user = $this->createOperator($validated);
 
-        $tenant = Tenant::query()->create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'phone' => $validated['phone'] ?: null,
-            'status' => 'pending',
-            'plan' => Plan::trialSlug(),
-        ]);
-
-        $tenant->domains()->create([
-            'domain' => $validated['subdomain'].'.'.$base,
-        ]);
-
-        $user = new User;
-        $user->forceFill([
-            'tenant_id' => $tenant->id,
-            'role' => 'operator',
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-        ])->save();
-
+        // Both of these stay outside createOperator()'s transaction: logging in
+        // writes the session, and Registered dispatches the verification email —
+        // neither can be rolled back if an insert loses a race.
         Auth::login($user);
         event(new Registered($user));
 
         $this->registered = true;
+    }
+
+    /**
+     * Three limiters, all checked and incremented *before* validation.
+     *
+     * Counting attempts rather than successes is the point: this used to hit the
+     * limiter only after validation passed, so a failed attempt was free and the
+     * cap only ever bounded successful signups.
+     *
+     * - per IP: the ordinary abuser.
+     * - per email: one address spraying subdomains through a proxy pool.
+     * - global: neither of the above stops rotating IPs with fresh addresses from
+     *   mass-creating pending tenants, each squatting a subdomain until an admin
+     *   purges it. This is the floor. See config/tenancy.php signup_hourly_cap.
+     */
+    protected function throttleRegistration(): void
+    {
+        $ipKey = 'operator-register:'.request()->ip();
+        $emailKey = 'operator-register:email:'.sha1(Str::lower(trim($this->email)));
+        $globalKey = 'operator-register:global';
+        $globalCap = config()->integer('tenancy.signup_hourly_cap', 20);
+
+        if (RateLimiter::tooManyAttempts($globalKey, maxAttempts: $globalCap)) {
+            throw ValidationException::withMessages([
+                'email' => [__('New registrations are temporarily paused. Please try again later.')],
+            ]);
+        }
+
+        if (
+            RateLimiter::tooManyAttempts($ipKey, maxAttempts: 3)
+            || RateLimiter::tooManyAttempts($emailKey, maxAttempts: 3)
+        ) {
+            throw ValidationException::withMessages([
+                'email' => [__('Too many registration attempts. Please try again later.')],
+            ]);
+        }
+
+        RateLimiter::hit($ipKey, decaySeconds: 3600);
+        RateLimiter::hit($emailKey, decaySeconds: 86400);
+        RateLimiter::hit($globalKey, decaySeconds: 3600);
+    }
+
+    /**
+     * Create the tenant, its domain and the owner in one transaction.
+     *
+     * Both AvailableSubdomain's "already taken" check and the `unique:users,email`
+     * rule are reads followed by an insert, so two concurrent signups can pass them
+     * and still collide. The `domains.domain` and `users.email` unique indexes are
+     * the real arbiters; this turns their violations back into field errors instead
+     * of a 500, and the transaction stops a lost race from leaving an orphan tenant.
+     *
+     * Each insert is caught at its own call site rather than catching once around
+     * the whole transaction: by the time an outer catch runs, the rollback has
+     * already erased the evidence of which index fired, and asking the database
+     * again would answer about a row that no longer exists.
+     *
+     * @param  array<string, mixed>  $validated
+     */
+    protected function createOperator(array $validated): User
+    {
+        /** @var string $subdomain */
+        $subdomain = $validated['subdomain'];
+
+        return DB::transaction(function () use ($validated, $subdomain): User {
+            $tenant = Tenant::query()->create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'phone' => $validated['phone'] ?: null,
+                'status' => 'pending',
+                'plan' => Plan::trialSlug(),
+            ]);
+
+            try {
+                $tenant->domains()->create([
+                    'domain' => AvailableSubdomain::fullDomain($subdomain),
+                ]);
+            } catch (DomainOccupiedByOtherTenantException|UniqueConstraintViolationException) {
+                // Two distinct arbiters, and both have to be caught. stancl's Domain
+                // model re-checks occupancy on `saving` and throws first — but that
+                // check is itself a read before an insert, so under real concurrency
+                // the `domains.domain` unique index is what finally decides.
+                throw ValidationException::withMessages([
+                    'subdomain' => [__('This subdomain is already taken.')],
+                ]);
+            }
+
+            $user = new User;
+            $user->forceFill([
+                'tenant_id' => $tenant->id,
+                'role' => 'operator',
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'password' => Hash::make($validated['password']),
+            ]);
+
+            try {
+                $user->save();
+            } catch (UniqueConstraintViolationException) {
+                throw ValidationException::withMessages([
+                    'email' => [__('An account with this email address already exists.')],
+                ]);
+            }
+
+            return $user;
+        });
     }
 }; ?>
 

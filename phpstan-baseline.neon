@@ -325,18 +325,6 @@ parameters:
 			path: app/Filament/Resources/Plans/Tables/PlansTable.php
 
 		-
-			message: '#^Binary operation "\." between mixed and ''\.'' results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: app/Filament/Resources/Tenants/Pages/CreateTenant.php
-
-		-
-			message: '#^Binary operation "\." between non\-falsy\-string and mixed results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: app/Filament/Resources/Tenants/Pages/CreateTenant.php
-
-		-
 			message: '#^Cannot call method create\(\) on mixed\.$#'
 			identifier: method.nonObject
 			count: 1
@@ -361,28 +349,10 @@ parameters:
 			path: app/Filament/Resources/Tenants/RelationManagers/UsersRelationManager.php
 
 		-
-			message: '#^Binary operation "\." between ''\.'' and mixed results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: app/Filament/Resources/Tenants/Schemas/TenantForm.php
-
-		-
-			message: '#^Binary operation "\." between mixed and ''\.'' results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: app/Filament/Resources/Tenants/Schemas/TenantForm.php
-
-		-
-			message: '#^Binary operation "\." between non\-falsy\-string and mixed results in an error\.$#'
-			identifier: binaryOp.invalid
-			count: 1
-			path: app/Filament/Resources/Tenants/Schemas/TenantForm.php
-
-		-
 			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<Stancl\\Tenancy\\Database\\Models\\Domain\>\:\:exists\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 1
-			path: app/Filament/Resources/Tenants/Schemas/TenantForm.php
+			path: app/Rules/AvailableSubdomain.php
 
 		-
 			message: '#^Cannot cast mixed to int\.$#'

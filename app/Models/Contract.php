@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
-#[Fillable(['tenant_id', 'booking_id', 'path', 'generated_at'])]
+#[Fillable(['booking_id', 'path', 'generated_at'])]
 class Contract extends Model
 {
     use BelongsToTenant;

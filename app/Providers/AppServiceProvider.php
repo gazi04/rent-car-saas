@@ -11,6 +11,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\View\View as ViewContract;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -89,6 +90,18 @@ class AppServiceProvider extends ServiceProvider
         // event queues at once — avoids tripping the SMTP provider's
         // per-second cap (see ThrottlesMailQueue).
         RateLimiter::for('mail', fn () => Limit::perSecond(1));
+
+        // The booking confirmation and review pages return another party's
+        // booking on a correct guess of an unguessable reference / signature.
+        // Guessing is not the realistic threat (the reference space is 62^6),
+        // but these are the only public GETs where a guess pays out, so the
+        // guessing has to cost something. Generous on purpose: a customer
+        // refreshing their confirmation page must never see a 429.
+        RateLimiter::for('booking-links', fn (Request $request) => Limit::perMinute(30)->by((string) $request->ip()));
+
+        // CSP violation reports: an unauthenticated POST whose only job is to
+        // write log lines, so it needs a ceiling of its own.
+        RateLimiter::for('csp-report', fn (Request $request) => Limit::perMinute(30)->by((string) $request->ip()));
 
         // Pulse dashboard access. Platform diagnostics span every tenant, so this is
         // Super-Admin-only — reusing User::isAdmin() rather than restating the

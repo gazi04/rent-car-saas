@@ -16,7 +16,7 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
  * every read/write happens inside the operator's tenant context and only ever
  * sees that tenant's rows.
  */
-#[Fillable(['tenant_id', 'content', 'period_start', 'period_end'])]
+#[Fillable(['content', 'period_start', 'period_end'])]
 class AiBusinessSummary extends Model
 {
     use BelongsToTenant;

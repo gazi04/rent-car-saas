@@ -15,7 +15,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * One recorded AI call: token usage + estimated € cost, attributed to a tenant
  * and feature. Written from the RecordAiUsage listener. Administered cross-tenant
  * from the admin panel, so deliberately NOT tenant-scoped (no BelongsToTenant),
- * same as TenantPayment and the Tenant model itself. Rows are immutable —
+ * same as TenantPayment and the Tenant model itself — which is why `tenant_id`
+ * stays mass-assignable here: no trait supplies it. Rows are immutable —
  * created_at only, no updated_at.
  */
 #[Fillable([

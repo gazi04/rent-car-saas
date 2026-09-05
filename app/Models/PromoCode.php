@@ -27,7 +27,7 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
  * @property Carbon|null $starts_at
  * @property Carbon|null $expires_at
  */
-#[Fillable(['tenant_id', 'code', 'type', 'value', 'starts_at', 'expires_at', 'max_uses', 'uses_count', 'per_customer_limit', 'is_active'])]
+#[Fillable(['code', 'type', 'value', 'starts_at', 'expires_at', 'max_uses', 'uses_count', 'per_customer_limit', 'is_active'])]
 class PromoCode extends Model
 {
     use BelongsToTenant;
