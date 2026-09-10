@@ -1050,11 +1050,6 @@ parameters:
 			count: 2
 			path: app/Services/TemplateRenderer.php
 
-		-
-			message: '#^Parameter \#2 \$replace of function __ expects array\<string, bool\|float\|int\|string\|null\>, array\<string, mixed\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/TemplateRenderer.php
 
 		-
 			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\WaitlistEntry\>\:\:whereDate\(\)\.$#'
