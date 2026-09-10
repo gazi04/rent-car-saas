@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\HostDiagnosticsController;
 use App\Http\Controllers\ResendWebhookController;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,3 +31,15 @@ Route::domain(config('tenancy.central_domain'))->middleware('set-locale')->group
 Route::domain(config('tenancy.central_domain'))
     ->post('webhooks/resend', ResendWebhookController::class)
     ->name('webhooks.resend');
+
+// Deploy-time host probe. DELIBERATELY carries no Route::domain() constraint: it
+// has to answer while tenant resolution is broken, and a load balancer that has
+// rewritten Host is by definition not sending the central domain — pinning it
+// would 404 in exactly the case it exists to diagnose. Domain-less is also what
+// lets the runbook's "hit a tenant subdomain" instruction work.
+//
+// Off by default and gated inside the controller (not by conditional
+// registration, which route:cache would freeze). See docs/deploy-runbook.md.
+Route::get('/_diagnostics/host', HostDiagnosticsController::class)
+    ->name('diagnostics.host')
+    ->middleware('throttle:host-diagnostics');

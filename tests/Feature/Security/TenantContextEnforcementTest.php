@@ -2,10 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Enums\VehicleStatus;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Models\Vehicle;
 
 use function Pest\Laravel\actingAs;
 
@@ -35,21 +33,6 @@ afterEach(fn () => tenancy()->end());
 | share them.
 |
 */
-
-function publicVehicleFor(Tenant $tenant, string $name): Vehicle
-{
-    tenancy()->initialize($tenant);
-
-    $vehicle = Vehicle::factory()->create([
-        'name' => $name,
-        'is_public' => true,
-        'status' => VehicleStatus::Available,
-    ]);
-
-    tenancy()->end();
-
-    return $vehicle;
-}
 
 it('does not leak another tenant vehicles when a storefront snapshot is replayed on the central domain', function () {
     $tenantA = Tenant::factory()->withDomain('leaka')->create();
