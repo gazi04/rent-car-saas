@@ -6,8 +6,8 @@ use App\Enums\BookingStatus;
 use App\Enums\RateType;
 use App\Models\Booking;
 use App\Models\Vehicle;
+use App\Support\BookingReference;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Str;
 
 /**
  * @extends Factory<Booking>
@@ -28,7 +28,7 @@ class BookingFactory extends Factory
 
         return [
             'vehicle_id' => Vehicle::factory(),
-            'reference' => 'BK-'.now()->year.'-'.Str::upper(Str::random(6)),
+            'reference' => BookingReference::generate(),
             'customer_name' => fake()->name(),
             'customer_phone' => fake()->phoneNumber(),
             'customer_email' => fake()->optional(0.7)->safeEmail(),

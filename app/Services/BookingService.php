@@ -20,12 +20,12 @@ use App\Models\Customer;
 use App\Models\PromoCode;
 use App\Models\Tenant;
 use App\Models\Vehicle;
+use App\Support\BookingReference;
 use App\Support\PhoneNumber;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 class BookingService
@@ -402,6 +402,6 @@ class BookingService
 
     private function generateReference(): string
     {
-        return 'BK-'.now()->year.'-'.Str::upper(Str::random(6));
+        return BookingReference::generate();
     }
 }

@@ -44,7 +44,7 @@ it('creates a pending booking with a BK reference and correct totals', function 
     $booking = $this->service->create(bookingData($this->vehicle));
 
     expect($booking->status)->toBe(BookingStatus::Pending)
-        ->and($booking->reference)->toMatch('/^BK-\d{4}-[A-Z0-9]{6}$/')
+        ->and($booking->reference)->toMatch('/^BK-\d{4}-[0-9A-HJKMNP-TV-Z]{8}$/')
         ->and($booking->tenant_id)->toBe($this->tenant->id)
         ->and((float) $booking->total)->toBe(150.0); // 3 days * 50
 });

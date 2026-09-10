@@ -10,6 +10,7 @@ use App\Http\Controllers\DownloadAgreementController;
 use App\Http\Controllers\ShowCancelBookingController;
 use App\Http\Middleware\EnsureTenantIsActive;
 use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\ThrottleBookingReferenceMisses;
 use App\Models\BlockedDate;
 use App\Models\Booking;
 use App\Models\Vehicle;
@@ -51,13 +52,30 @@ Route::middleware([
         ->whereNumber('vehicle')
         ->name('public.vehicle.book');
 
-    // throttle: the only public GETs that hand back another party's booking on a
-    // correct guess. The reference space (62^6) is what really protects them; the
-    // throttle is what makes guessing cost something. 30/min per IP, so a customer
-    // refreshing their confirmation page never notices it.
+    // The only public GETs that hand back another party's booking on a correct
+    // guess (vehicle, dates, total, and whether an email is on file), so both
+    // carry a throttle. 30/min per IP is generous on purpose: a
+    // customer refreshing their confirmation page must never see a 429.
+    //
+    // The reference space is NOT what the 2026-09-03 review believed. It claimed
+    // 62^6, but every reference issued before App\Support\BookingReference came
+    // from Str::upper(Str::random(6)) — a 62-symbol draw folded onto 36
+    // non-uniformly, worth ~30.7 bits (~1.7e9), a 33x overstatement. Those
+    // references are already in customers' inboxes and cannot be reissued, so
+    // ThrottleBookingReferenceMisses budgets failed lookups (10/hour per IP) on
+    // top of the request throttle. New references are 40 bits.
     Route::livewire('/booking/{booking:reference}/confirmation', 'pages::public.booking-confirmation')
         ->name('public.booking.confirmation')
-        ->middleware('throttle:booking-links');
+        ->middleware(['throttle:booking-links', ThrottleBookingReferenceMisses::class])
+        // Binding failure is the miss, and SubstituteBindings resolves bindings
+        // BEFORE the middleware above runs (the tenancy provider's priority
+        // reordering puts it there), so the middleware cannot see one. This hook
+        // can: SubstituteBindings hands a failed binding straight to it.
+        ->missing(function (Request $request) {
+            ThrottleBookingReferenceMisses::recordMiss($request);
+
+            abort(404);
+        });
 
     // Signed cancellation link, valid until the booking's start_date (deep-audit
     // finding 07) — no auth required. Honoured while the booking is Pending or
