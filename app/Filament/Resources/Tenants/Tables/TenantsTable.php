@@ -471,8 +471,12 @@ class TenantsTable
     /**
      * A signup that never became a business: pending or cancelled, older than
      * the abandonment window, and with no bookings to preserve.
+     *
+     * Public because Tenant::autoPurgeable() — what the daily sweep deletes
+     * unattended — must stay a strict subset of this predicate, and a test
+     * asserts exactly that against both.
      */
-    protected static function isAbandoned(Tenant $record): bool
+    public static function isAbandoned(Tenant $record): bool
     {
         if (! in_array($record->status, [TenantStatus::Pending, TenantStatus::Cancelled], true)) {
             return false;

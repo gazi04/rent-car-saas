@@ -11,6 +11,7 @@ use Carbon\CarbonInterface;
 use Database\Factories\TenantFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -45,12 +46,21 @@ class Tenant extends BaseTenant implements HasMedia
     private ?array $settingsCache = null;
 
     /**
+     * Every real column on the tenants table. Anything absent here is diverted
+     * into the `data` JSON blob by stancl's VirtualColumn trait — including
+     * created_at, whose omission meant an explicitly set value silently landed in
+     * `data` while Eloquent's timestamps wrote now() to the actual column. Model
+     * reads decoded the fake value back, so a model-level check (isAbandoned())
+     * and a SQL-level one (autoPurgeable()) disagreed about the same tenant.
+     *
      * @return array<int, string>
      */
     public static function getCustomColumns(): array
     {
         return [
             'id',
+            'created_at',
+            'updated_at',
             'name',
             'email',
             'phone',
@@ -76,8 +86,10 @@ class Tenant extends BaseTenant implements HasMedia
     }
 
     /**
-     * Guarantee the billing invariant: an Active tenant always has a paid_until,
-     * so it is always visible to the daily subscription sweep.
+     * Two model-level invariants, both hooks rather than call-site guards.
+     *
+     * saving() guarantees the billing invariant: an Active tenant always has a
+     * paid_until, so it is always visible to the daily subscription sweep.
      *
      * `status` is written from many places — the admin create/edit form (which
      * lets an admin pick Active directly), approveAction(), reactivateAction(),
@@ -96,6 +108,20 @@ class Tenant extends BaseTenant implements HasMedia
         static::saving(function (Tenant $tenant): void {
             if ($tenant->status === TenantStatus::Active && $tenant->paid_until === null) {
                 $tenant->paid_until = now()->addDays((int) config('billing.trial_days'))->endOfDay();
+            }
+        });
+
+        // users.tenant_id is the one tenant_id FK declared nullOnDelete rather than
+        // cascadeOnDelete, so deleting a tenant leaves its operator/staff rows behind
+        // with tenant_id = NULL and role = 'operator'. Harmless for access (both
+        // User::canAccessPanel() branches fail for them) but users.email is unique, so
+        // the purged operator could never sign up again with that address — the same
+        // permanent-claim harm the purge exists to undo, one table over.
+        //
+        // Deleted per model rather than with a query delete so their passkeys cascade.
+        static::deleting(function (Tenant $tenant): void {
+            foreach ($tenant->users()->get() as $user) {
+                $user->delete();
             }
         });
     }
@@ -159,6 +185,17 @@ class Tenant extends BaseTenant implements HasMedia
     }
 
     /**
+     * This tenant's vehicles, queried from central context — same central-context
+     * caveat as bookings() above.
+     *
+     * @return HasMany<Vehicle, $this>
+     */
+    public function vehicles(): HasMany
+    {
+        return $this->hasMany(Vehicle::class, 'tenant_id');
+    }
+
+    /**
      * @return HasMany<TenantSetting, $this>
      */
     public function tenantSettings(): HasMany
@@ -176,6 +213,49 @@ class Tenant extends BaseTenant implements HasMedia
     public function users(): HasMany
     {
         return $this->hasMany(User::class, 'tenant_id');
+    }
+
+    /**
+     * Signups the daily tenants:purge-abandoned sweep may delete unattended.
+     *
+     * A deliberately strict subset of the manual purge rule
+     * (TenantsTable::isAbandoned()) — everything this scope returns also satisfies
+     * that predicate, pinned by a test, so the two cannot drift apart. The extra
+     * narrowing is what makes deleting without a human in the loop defensible:
+     *
+     *  - Pending only counts when the tenant HAS users and NONE of them verified
+     *    their email. Signup fires Registered → verification mail, and
+     *    User::canAccessPanel() requires hasVerifiedEmail() on both branches, so an
+     *    unverified signup never reached any surface of the product — it was
+     *    abandoned by the visitor, not stalled by an admin who hasn't approved it
+     *    yet. A verified Pending tenant is admin backlog and stays manual-only.
+     *    Requiring at least one user also excludes admin-created tenants, which the
+     *    create form makes without one.
+     *  - Cancelled needs no such test: an admin already rejected it, or the operator
+     *    left.
+     *  - No bookings AND no vehicles: "never operated", not merely "quiet". Zero
+     *    bookings alone would let the sweep destroy an ex-operator's whole uploaded
+     *    fleet and its photos.
+     *
+     * Central-context only: whereDoesntHave() on bookings/vehicles relies on
+     * TenantScope being inert while tenancy is uninitialized (see bookings()).
+     * Artisan always runs central.
+     *
+     * @return Builder<Tenant>
+     */
+    public static function autoPurgeable(): Builder
+    {
+        // <=, not <, to mirror TenantsTable::isAbandoned()'s ! created_at->isAfter(…).
+        return self::query()
+            ->where('created_at', '<=', now()->subDays(Config::integer('tenancy.abandoned_after_days')))
+            ->whereDoesntHave('bookings')
+            ->whereDoesntHave('vehicles')
+            ->where(fn (Builder $status) => $status
+                ->where('status', TenantStatus::Cancelled->value)
+                ->orWhere(fn (Builder $pending) => $pending
+                    ->where('status', TenantStatus::Pending->value)
+                    ->whereHas('users')
+                    ->whereDoesntHave('users', fn (Builder $verified) => $verified->whereNotNull('email_verified_at'))));
     }
 
     /**

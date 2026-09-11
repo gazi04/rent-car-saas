@@ -4,6 +4,7 @@ use App\Console\Commands\ExpireStalePendingBookings;
 use App\Console\Commands\GenerateBusinessSummaries;
 use App\Console\Commands\ProcessTenantSubscriptions;
 use App\Console\Commands\ProcessVehicleMaintenance;
+use App\Console\Commands\PurgeAbandonedTenants;
 use App\Console\Commands\RequestPendingReviews;
 use App\Console\Commands\SweepWaitlist;
 use App\Models\EmailLog;
@@ -47,6 +48,12 @@ Schedule::command('activitylog:clean')->dailyAt('04:15');
 // but every scheduled command is a per-tenant fan-out with $tries = 3, so one
 // systemic outage (AI/mail provider down) writes ~one row per tenant per run.
 Schedule::command('queue:prune-failed', ['--hours' => 720])->dailyAt('04:30');
+
+// Release subdomains held by dead signups. Daily at 04:45, with the other
+// retention sweeps: the window is measured in days (tenancy.abandoned_after_days),
+// so the run only needs to catch each tenant once per day, and doing it before
+// business hours keeps a destructive sweep away from live admin work.
+Schedule::command(PurgeAbandonedTenants::class)->dailyAt('04:45')->withoutOverlapping();
 
 // Age out Pulse's rolling window. Same reasoning as the email log above:
 // diagnostics, not a business record — and the pulse_* tables grow on every

@@ -349,12 +349,6 @@ parameters:
 			path: app/Filament/Resources/Tenants/RelationManagers/UsersRelationManager.php
 
 		-
-			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<Stancl\\Tenancy\\Database\\Models\\Domain\>\:\:exists\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: app/Rules/AvailableSubdomain.php
-
-		-
 			message: '#^Cannot cast mixed to int\.$#'
 			identifier: cast.int
 			count: 3
@@ -787,6 +781,12 @@ parameters:
 			path: app/Models/Tenant.php
 
 		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:whereNotNull\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: app/Models/Tenant.php
+
+		-
 			message: '#^Method App\\Models\\Tenant\:\:operatorLocale\(\) should return string but returns mixed\.$#'
 			identifier: return.type
 			count: 1
@@ -851,6 +851,12 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: app/Providers/TenancyServiceProvider.php
+
+		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<Stancl\\Tenancy\\Database\\Models\\Domain\>\:\:exists\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: app/Rules/AvailableSubdomain.php
 
 		-
 			message: '#^Cannot cast mixed to int\.$#'
@@ -1049,7 +1055,6 @@ parameters:
 			identifier: cast.useless
 			count: 2
 			path: app/Services/TemplateRenderer.php
-
 
 		-
 			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\WaitlistEntry\>\:\:whereDate\(\)\.$#'
