@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Middleware\ForwardedHostTenancyGuard;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\StrictTransportSecurity;
 use App\Http\Middleware\ThrottlePasswordResetRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -56,6 +57,17 @@ return Application::configure(basePath: dirname(__DIR__))
         // already returns the forwarded host, the guard's predicate
         // short-circuits, and it goes inert instead of fighting the framework.
         $middleware->append(ForwardedHostTenancyGuard::class);
+
+        // Tells browsers to never speak plaintext HTTP to this origin, closing
+        // the SSL-stripping window around the parent-domain session cookie.
+        //
+        // Global rather than part of SecurityHeaders: Fortify pins no domain, so
+        // login and password reset resolve on the central host, the admin host
+        // and every tenant subdomain with only the `web` group -- none of which
+        // SecurityHeaders covers. HSTS also belongs on non-HTML responses, which
+        // SecurityHeaders deliberately skips. Inert on plaintext requests by
+        // design (RFC 6797), so local HTTP development is unaffected.
+        $middleware->append(StrictTransportSecurity::class);
 
         // Marker group for stancl/tenancy "universal" routes — routes that must work
         // on both central and tenant domains (e.g. the shared Livewire update endpoint).

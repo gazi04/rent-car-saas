@@ -76,4 +76,39 @@ return [
 
     'host_diagnostics_enabled' => env('HOST_DIAGNOSTICS_ENABLED', false),
 
+    /*
+    |--------------------------------------------------------------------------
+    | HTTP Strict Transport Security
+    |--------------------------------------------------------------------------
+    |
+    | Emitted by App\Http\Middleware\StrictTransportSecurity on every HTTPS
+    | response. It tells the browser to refuse plaintext HTTP for this origin,
+    | which is what removes the SSL-stripping window around the parent-domain
+    | session cookie (SESSION_DOMAIN) and the remember-me cookie that inherits
+    | its settings.
+    |
+    | `max_age` starts deliberately low. HSTS is cached by the browser for the
+    | full duration and cannot be withdrawn early -- a wrong `include_subdomains`
+    | makes every plain-HTTP subdomain unreachable for that long, for every
+    | visitor who already saw the header. Verify in production first, then raise
+    | this to 31536000 (one year), which is the value the header is worth having.
+    | Set it to 0 to stop sending the header at all.
+    |
+    | `include_subdomains` defaults ON precisely because the session cookie is
+    | parent-scoped: without it, a subdomain reachable over plain HTTP can set or
+    | overwrite a cookie that the parent domain will then honour, which is a
+    | session-fixation path that HTTPS on the parent alone does not close.
+    |
+    | `preload` stays OFF. Setting it is a request to be hardcoded into browser
+    | binaries, and removal from that list takes months to reach users. Turn it
+    | on only when every subdomain, forever, is HTTPS-only.
+    |
+    */
+
+    'hsts_max_age' => env('HSTS_MAX_AGE', 86400),
+
+    'hsts_include_subdomains' => env('HSTS_INCLUDE_SUBDOMAINS', true),
+
+    'hsts_preload' => env('HSTS_PRELOAD', false),
+
 ];
