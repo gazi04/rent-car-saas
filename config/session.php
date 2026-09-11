@@ -165,13 +165,29 @@ return [
     | HTTPS Only Cookies
     |--------------------------------------------------------------------------
     |
-    | By setting this option to true, session cookies will only be sent back
-    | to the server if the browser has a HTTPS connection. This will keep
-    | the cookie from being sent to you when it can't be done securely.
+    | Marks the session cookie Secure, so the browser withholds it from any
+    | plaintext HTTP request. This also governs the long-lived remember-me
+    | cookie: CookieServiceProvider seeds the global CookieJar defaults from
+    | this same session config.
+    |
+    | Why an explicit default rather than Laravel's bare env() lookup. Left
+    | null, the flag is still usually correct -- Symfony's Response::prepare()
+    | promotes a null-secure cookie to Secure whenever $request->isSecure().
+    | But that is *derived* from X-Forwarded-Proto surviving the load balancer
+    | and being trusted in bootstrap/app.php. If that ever stops being true,
+    | every cookie silently downgrades to plaintext with no error and no log
+    | line, and the cookie in question is valid on every tenant subdomain
+    | (SESSION_DOMAIN is parent-scoped so impersonation can cross hosts).
+    |
+    | Declaring it makes the failure loud instead: on a non-HTTPS environment
+    | login visibly stops working rather than quietly becoming interceptable.
+    | The env() default is 'production' on purpose -- an unset APP_ENV resolves
+    | to secure. Override with SESSION_SECURE_COOKIE=false only for an
+    | environment deliberately served over plain HTTP.
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    'secure' => env('SESSION_SECURE_COOKIE', ! in_array(env('APP_ENV', 'production'), ['local', 'testing'], true)),
 
     /*
     |--------------------------------------------------------------------------

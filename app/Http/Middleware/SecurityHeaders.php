@@ -28,23 +28,46 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * 'unsafe-inline' on style-src is required by the branding <style> block in
  * layouts/public.blade.php, which injects the tenant's colour variables.
+ *
+ * # Why the admin panel is registered as ':without-csp'
+ *
+ * The storefront emits ZERO inline <script> blocks, which is what makes the
+ * strict script-src safe there — and the storefront is the surface that
+ * actually renders attacker-reachable content, so that is where the policy
+ * earns its keep.
+ *
+ * Filament panels are different: they emit inline scripts of their own
+ * (dark-mode bootstrap, sidebar collapse state, window.filamentData) and
+ * Filament ships no CSP nonce support, so a script-src without 'unsafe-inline'
+ * silently blocks them. The operator panel has been doing exactly that since
+ * the CSP was introduced — see docs/redteam-app-security-2026-09-11.md,
+ * Finding 6. Rather than copy a known-broken policy onto the admin panel for
+ * the sake of symmetry, the admin panel takes the headers that carry no such
+ * cost. The clickjacking protection (X-Frame-Options) was the exploitable gap
+ * there; the CSP was defence in depth on an authenticated, Filament-authored
+ * surface.
  */
 class SecurityHeaders
 {
     /**
      * @param  Closure(Request): Response  $next
+     * @param  'with-csp'|'without-csp'|string  $csp  see the class docblock for why
+     *                                                the admin panel opts out
      */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, string $csp = 'with-csp'): Response
     {
         $response = $next($request);
 
         // Only decorate real HTML pages: streamed file downloads (rental
-        // agreements) and JSON endpoints have no use for a CSP.
+        // agreements) and JSON endpoints have no use for these.
         if (! $this->isHtml($response)) {
             return $response;
         }
 
-        $response->headers->set('Content-Security-Policy', $this->policy());
+        if ($csp !== 'without-csp') {
+            $response->headers->set('Content-Security-Policy', $this->policy());
+        }
+
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('X-Frame-Options', 'DENY');

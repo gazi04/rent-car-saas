@@ -103,6 +103,17 @@ class AppServiceProvider extends ServiceProvider
         // write log lines, so it needs a ceiling of its own.
         RateLimiter::for('csp-report', fn (Request $request) => Limit::perMinute(30)->by((string) $request->ip()));
 
+        // The host diagnostics probe (docs/deploy-runbook.md) is an unauthenticated
+        // GET that reads the domains table. It answers only booleans, so it cannot
+        // enumerate tenants, but it still gets a ceiling.
+        RateLimiter::for('host-diagnostics', fn (Request $request) => Limit::perMinute(10)->by((string) $request->ip()));
+
+        // Booking-reference lookups that MISS are budgeted too, but not from here:
+        // counting only failures is not something a named RateLimiter can express,
+        // so ThrottleBookingReferenceMisses owns that budget. It defends the
+        // confirmation page, whose references predating App\Support\BookingReference
+        // carry only ~30.7 bits — not the 62^6 the 2026-09-03 review assumed.
+
         // Pulse dashboard access. Platform diagnostics span every tenant, so this is
         // Super-Admin-only — reusing User::isAdmin() rather than restating the
         // predicate, so "is a platform admin" has exactly one definition.

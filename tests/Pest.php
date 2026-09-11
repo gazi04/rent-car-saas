@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\VehicleStatus;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vehicle;
@@ -131,6 +132,29 @@ expect()->extend('toBeOne', function () {
 function tenant_domain(string $subdomain): string
 {
     return $subdomain.'.'.config('tenancy.tenant_base_domain');
+}
+
+/**
+ * A bookable, publicly-listed vehicle belonging to $tenant, created with tenancy
+ * initialized and left with tenancy ended — the state a real request starts in.
+ *
+ * Lives here rather than in a test file because a helper declared inside one only
+ * resolves cross-file by Pest's load order, which breaks under --filter. Shared by
+ * TenantContextEnforcementTest and ForwardedHostTenancyTest.
+ */
+function publicVehicleFor(Tenant $tenant, string $name): Vehicle
+{
+    tenancy()->initialize($tenant);
+
+    $vehicle = Vehicle::factory()->create([
+        'name' => $name,
+        'is_public' => true,
+        'status' => VehicleStatus::Available,
+    ]);
+
+    tenancy()->end();
+
+    return $vehicle;
 }
 
 /** A full http:// URL for a tenant subdomain, optionally with a path/query. */

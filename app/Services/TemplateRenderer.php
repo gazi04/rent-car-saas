@@ -20,7 +20,7 @@ class TemplateRenderer
      * The override wording for $overrideKey rendered with the booking's variables,
      * or the translated default when the operator has set nothing.
      *
-     * @param  array<string, mixed>  $defaultReplace  Replacements for the default __() string.
+     * @param  array<string, string>  $defaultReplace  Replacements for the default __() string.
      */
     public function resolve(Booking $booking, string $overrideKey, string $defaultLangKey, array $defaultReplace = []): string
     {

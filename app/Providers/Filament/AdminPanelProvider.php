@@ -6,6 +6,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Widgets\AtRiskTenants;
 use App\Filament\Widgets\TenantStats;
+use App\Http\Middleware\SecurityHeaders;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -58,6 +59,13 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                // The admin panel had NO security headers at all, while being the
+                // surface that approves, suspends and impersonates tenants —
+                // X-Frame-Options DENY is the one that closes a real clickjacking
+                // path there. ':without-csp' because Filament emits inline scripts
+                // it cannot nonce, so a CSP would silently break the panel rather
+                // than protect it; see the SecurityHeaders docblock.
+                SecurityHeaders::class.':without-csp',
             ])
             ->authMiddleware([
                 Authenticate::class,
