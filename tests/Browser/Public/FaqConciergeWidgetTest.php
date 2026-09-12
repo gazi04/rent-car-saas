@@ -27,7 +27,13 @@ it('opens the concierge widget and completes a real question/answer round trip',
     tenancy()->initialize($tenant);
     $tenant->setSetting('faq_content_en', 'Deposit is 200 EUR, refunded on return.');
 
-    FaqConciergeAgent::fake([['answer' => 'The deposit is 200 EUR.', 'confident' => true]]);
+    // source_quote must be a real span of the faq_content_en set above, or
+    // FaqGrounding rejects it and the widget renders the contact line instead.
+    FaqConciergeAgent::fake([[
+        'answer' => 'The deposit is 200 EUR.',
+        'confident' => true,
+        'source_quote' => 'Deposit is 200 EUR, refunded on return.',
+    ]]);
 
     $page = visitAsTenant('browserconcierge');
 

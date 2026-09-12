@@ -17,9 +17,17 @@ use Laravel\Ai\Promptable;
 /**
  * Answers a storefront visitor's question strictly from the FAQ knowledge base
  * the operator wrote — never from outside knowledge. Structured output returns
- * the answer plus a `confident` flag; the calling service discards the answer
- * and substitutes a "contact the operator" line when `confident` is false, so a
- * thin or empty FAQ produces something safe rather than an invented policy.
+ * the answer, a `confident` flag, and the `source_quote` that supports it; the
+ * calling service discards the answer and substitutes a "contact the operator"
+ * line when `confident` is false, so a thin or empty FAQ produces something safe
+ * rather than an invented policy.
+ *
+ * `confident` alone was the whole gate until 2026-09-12, and it is a field the
+ * MODEL fills in — so a jailbreak that set it true shipped a fabricated policy
+ * to a visitor inside the operator's branding. `source_quote` is what makes the
+ * claim checkable: the service verifies the quote really occurs in the FAQ via
+ * App\Support\FaqGrounding before trusting anything. See
+ * docs/redteam-app-security-2026-09-11.md, Finding 5.
  *
  * The first agent in the app to implement Conversational: the SDK splices
  * messages() into the prompt for multi-turn chat (GeneratesText), without the
@@ -55,6 +63,10 @@ class FaqConciergeAgent implements Agent, Conversational, HasStructuredOutput, R
             ."Answer the visitor's question using ONLY the facts in the FAQ text below. "
             .'If the answer is not in that text, do not guess or use outside knowledge — instead set '
             .'"confident" to false and leave a short apology in "answer". '
+            .'In "source_quote", copy the sentence or sentences from the FAQ TEXT that support your '
+            .'answer, character for character, exactly as they appear — do not translate, reword, '
+            .'shorten or summarise them, even when you are answering in another language. If no '
+            .'sentence in the FAQ supports the answer, set "confident" to false. '
             ."Reply in {$this->language}, in 1-3 plain sentences, no headings or lists.\n\n"
             ."=== FAQ TEXT (the only source you may use) ===\n"
             .$this->knowledge;
@@ -83,6 +95,13 @@ class FaqConciergeAgent implements Agent, Conversational, HasStructuredOutput, R
         return [
             'answer' => $schema->string()->required(),
             'confident' => $schema->boolean()->required(),
+            // Plain string(), deliberately: length bounds live in FaqGrounding,
+            // not here. Requests go out with strict => true hard-coded
+            // (BuildsTextRequests.php), and minLength/maxLength are outside the
+            // JSON Schema subset OpenAI strict structured outputs accept — a
+            // bound stated here risks the provider rejecting the whole call,
+            // where a bound checked server-side cannot.
+            'source_quote' => $schema->string()->required(),
         ];
     }
 }
