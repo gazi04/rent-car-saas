@@ -108,8 +108,7 @@ it('sends a script-blocking CSP on the storefront', function () {
 
     // The shared parent-domain session cookie makes storefront XSS an
     // admin-takeover path, so injected inline script must not be executable.
-    expect($csp)->toContain("script-src 'self' 'unsafe-eval'")
-        ->and($csp)->not->toContain("script-src 'self' 'unsafe-inline'")
+    expect(cspDirective($csp, 'script-src'))->toBe("'self' 'unsafe-eval'")
         ->and($csp)->toContain("frame-ancestors 'none'")
         ->and($csp)->toContain("object-src 'none'");
 })->group('security');

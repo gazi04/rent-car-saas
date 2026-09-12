@@ -15,6 +15,7 @@ use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -49,6 +50,10 @@ class AdminPanelProvider extends PanelProvider
                 TenantStats::class,
                 AtRiskTenants::class,
             ])
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => view('filament.partials.theme-bootstrap')->render(),
+            )
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -59,13 +64,18 @@ class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
-                // The admin panel had NO security headers at all, while being the
-                // surface that approves, suspends and impersonates tenants —
-                // X-Frame-Options DENY is the one that closes a real clickjacking
-                // path there. ':without-csp' because Filament emits inline scripts
-                // it cannot nonce, so a CSP would silently break the panel rather
-                // than protect it; see the SecurityHeaders docblock.
-                SecurityHeaders::class.':without-csp',
+                // The admin panel had NO security headers at all until 2026-09-11,
+                // while being the surface that approves, suspends and impersonates
+                // tenants — X-Frame-Options DENY closed a real clickjacking path
+                // there. It was given the headers WITHOUT the CSP at the time, on
+                // the grounds that a CSP would silently break Filament's inline
+                // scripts rather than protect anything. That reasoning no longer
+                // holds: those blocks are pre-paint FOUC guards whose state the
+                // external bundle re-applies at alpine:init, and the one that
+                // mattered is served from 'self' by the HEAD_END hook above. So the
+                // highest-privilege surface takes the full policy. See the
+                // SecurityHeaders docblock.
+                SecurityHeaders::class,
             ])
             ->authMiddleware([
                 Authenticate::class,

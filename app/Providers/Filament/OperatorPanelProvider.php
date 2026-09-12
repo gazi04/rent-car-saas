@@ -67,6 +67,10 @@ class OperatorPanelProvider extends PanelProvider
             ])
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s')
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn (): string => view('filament.partials.theme-bootstrap')->render(),
+            )
             // Always-visible "you've hit your plan's cap" banner at the top of the
             // vehicle/staff list + create pages. Re-evaluated on every render, so
             // it shows the instant the cap is reached — including a direct-URL

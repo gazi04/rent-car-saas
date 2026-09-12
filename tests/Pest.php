@@ -246,6 +246,31 @@ function visitAsTenant(string $subdomain, string $path = '/'): mixed
     return $page;
 }
 
+/**
+ * Pull one directive's value out of a Content-Security-Policy header.
+ *
+ * Substring assertions on the whole policy cannot express "script-src is EXACTLY
+ * this". `toContain("script-src 'self' 'unsafe-eval'")` still passes after
+ * someone appends 'unsafe-inline' to that directive, and the
+ * `not->toContain("script-src 'self' 'unsafe-inline'")` guards written next to
+ * them match a literal that can never occur in a policy that also has
+ * 'unsafe-eval'. Both holes were live in this suite until a mutation run added
+ * 'unsafe-inline' to script-src and every CSP test stayed green. Compare the
+ * directive, not the haystack.
+ */
+function cspDirective(?string $csp, string $directive): ?string
+{
+    foreach (explode(';', (string) $csp) as $part) {
+        $part = trim($part);
+
+        if (str_starts_with($part, $directive.' ')) {
+            return substr($part, strlen($directive) + 1);
+        }
+    }
+
+    return null;
+}
+
 /** Undo visitAsTenant()'s Host pin so it cannot leak into the next test. */
 function tenantHostReset(): void
 {

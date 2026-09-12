@@ -29,30 +29,46 @@ use Symfony\Component\HttpFoundation\Response;
  * 'unsafe-inline' on style-src is required by the branding <style> block in
  * layouts/public.blade.php, which injects the tenant's colour variables.
  *
- * # Why the admin panel is registered as ':without-csp'
+ * # Why the Filament panels keep this policy, and what it costs
  *
- * The storefront emits ZERO inline <script> blocks, which is what makes the
- * strict script-src safe there — and the storefront is the surface that
- * actually renders attacker-reachable content, so that is where the policy
- * earns its keep.
+ * Filament emits raw inline <script> blocks and ships NO CSP nonce support
+ * (there is nothing matching `nonce` anywhere in vendor/filament), so a
+ * script-src without 'unsafe-inline' refuses them. On the operator panel that is
+ * three blocks: the dark-mode bootstrap, its invocation, and
+ * `window.filamentData`. It has been true since this CSP was introduced.
  *
- * Filament panels are different: they emit inline scripts of their own
- * (dark-mode bootstrap, sidebar collapse state, window.filamentData) and
- * Filament ships no CSP nonce support, so a script-src without 'unsafe-inline'
- * silently blocks them. The operator panel has been doing exactly that since
- * the CSP was introduced — see docs/redteam-app-security-2026-09-11.md,
- * Finding 6. Rather than copy a known-broken policy onto the admin panel for
- * the sake of symmetry, the admin panel takes the headers that carry no such
- * cost. The clickjacking protection (X-Frame-Options) was the exploitable gap
- * there; the CSP was defence in depth on an authenticated, Filament-authored
- * surface.
+ * That is accepted deliberately, because all three are PRE-PAINT guards rather
+ * than functionality. filament/filament/dist/index.js — external, so it loads
+ * fine — re-reads localStorage.theme at alpine:init and applies the `dark` class
+ * through an Alpine.effect, and the sidebar block seeds a collapsed-group list
+ * that is empty in this app (neither panel declares navigation groups). The cost
+ * of refusing them was a flash of the light theme on every page load, not a
+ * broken panel. That flash is now gone too: resources/js/filament-theme-bootstrap.js
+ * does the pre-paint pass from 'self', emitted at PanelsRenderHook::HEAD_END by
+ * both panel providers.
+ *
+ * Relaxing script-src for the panels instead would have been a bad trade. The
+ * operator panel is served from operatorname.<domain>/dashboard — the SAME ORIGIN
+ * as that tenant's public storefront. 'unsafe-inline' there is 'unsafe-inline' on
+ * the origin whose XSS is admin-session theft, bought to remove a flash.
+ *
+ * Six further Filament script blocks look inline but are not: Livewire's @script
+ * ships them as an `effects.scripts` JSON payload and runs them through Alpine's
+ * `new Function` evaluator, which is 'unsafe-eval', not 'unsafe-inline'. The same
+ * goes for x-data/x-load (the fullcalendar widget). None of those are affected.
+ *
+ * The ':without-csp' parameter is retained but unused by app code: the admin
+ * panel took the full policy on 2026-09-12, once the above disproved the premise
+ * it had been exempted on. It stays as the lever for a future surface that
+ * genuinely cannot take a CSP.
  */
 class SecurityHeaders
 {
     /**
      * @param  Closure(Request): Response  $next
-     * @param  'with-csp'|'without-csp'|string  $csp  see the class docblock for why
-     *                                                the admin panel opts out
+     * @param  'with-csp'|'without-csp'|string  $csp  the opt-out lever; no app
+     *                                                surface uses it today, see
+     *                                                the class docblock
      */
     public function handle(Request $request, Closure $next, string $csp = 'with-csp'): Response
     {
