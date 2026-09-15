@@ -23,7 +23,7 @@ class ActivitiesTable
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'approved', 'reactivated' => 'success',
-                        'suspended', 'rejected' => 'danger',
+                        'suspended', 'rejected', 'purged', 'auto_purged' => 'danger',
                         'recorded_payment' => 'info',
                         'impersonated' => 'warning',
                         default => 'gray',
@@ -51,6 +51,8 @@ class ActivitiesTable
                         'suspended' => 'Suspended',
                         'reactivated' => 'Reactivated',
                         'rejected' => 'Rejected',
+                        'purged' => 'Purged',
+                        'auto_purged' => 'Purged automatically',
                         'recorded_payment' => 'Recorded payment',
                         'impersonated' => 'Impersonated',
                     ]),

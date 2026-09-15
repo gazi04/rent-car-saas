@@ -4,9 +4,11 @@ Before planning or editing, find the row whose globs match the file's path and r
 
 | Applies to | Rule file |
 | --- | --- |
+| app/Services/Ai/** | .ai/rules/ai.md |
 | app/** | .ai/rules/app.md |
+| app/Providers/Filament/** | .ai/rules/filament.md |
 | app/Http/Middleware/EnsureTenantIsActive.php, app/Http/Middleware/** | .ai/rules/middleware.md |
-| app/Models/*.php | .ai/rules/models.md |
+| app/Models/*.php, app/Models/Tenant.php | .ai/rules/models.md |
 | app/Providers/TenancyServiceProvider.php, app/Providers/** | .ai/rules/providers.md |
 | app/Http/Responses/** | .ai/rules/responses.md |
 | app/Rules/AvailableSubdomain.php | .ai/rules/rules.md |

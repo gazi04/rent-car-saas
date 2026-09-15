@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Http\Middleware\SecurityHeaders;
 use App\Models\Tenant;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Env;
 
 afterEach(fn () => tenancy()->end());
@@ -99,15 +102,97 @@ it('sends clickjacking and sniffing protection on the admin panel', function () 
         ->and($response->headers->get('Referrer-Policy'))->toBe('strict-origin-when-cross-origin');
 })->group('security');
 
-it('deliberately sends no CSP on the admin panel', function () {
-    // Not an oversight — a regression guard. Filament emits inline scripts
-    // (dark-mode bootstrap, sidebar collapse state, window.filamentData) and
-    // ships no nonce support, so a script-src without 'unsafe-inline' silently
-    // blocks them instead of protecting anything. If someone later "fixes" the
-    // asymmetry by dropping ':without-csp', this test explains why not.
-    $response = test()->get('http://'.config('tenancy.admin_domain').'/login')->assertOk();
+it('sends the strict CSP on the admin panel', function () {
+    // Reversal of a deliberate 2026-09-11 decision, recorded because the reason
+    // mattered. The admin panel was given ':without-csp' on the grounds that
+    // Filament's inline scripts, which it cannot nonce, would be silently blocked
+    // — so a CSP would break the panel rather than protect it. Driving a real
+    // browser (tests/Browser/Panel/PanelCspTest.php) showed the blocked blocks are
+    // pre-paint FOUC guards: filament/filament/dist/index.js re-reads
+    // localStorage.theme at alpine:init and re-applies the class itself. The one
+    // that mattered now loads from 'self' instead, so the surface that approves,
+    // suspends and impersonates tenants takes the full policy.
+    $csp = test()->get('http://'.config('tenancy.admin_domain').'/login')->assertOk()
+        ->headers->get('Content-Security-Policy');
 
-    expect($response->headers->get('Content-Security-Policy'))->toBeNull();
+    expect($csp)->toBeString()
+        ->and(cspDirective($csp, 'script-src'))->toBe("'self' 'unsafe-eval'")
+        ->and(cspDirective($csp, 'object-src'))->toBe("'none'")
+        ->and(cspDirective($csp, 'base-uri'))->toBe("'self'");
+})->group('security');
+
+it('sends the strict CSP on the operator panel', function () {
+    // Never asserted before this change, which is how Finding 6 survived from the
+    // day the CSP was introduced. The operator panel is served from the SAME
+    // ORIGIN as the tenant's public storefront, and SESSION_DOMAIN is
+    // parent-scoped, so relaxing script-src for the panel would relax it for the
+    // origin whose XSS is admin-session theft. 'unsafe-inline' must never appear
+    // here, however inconvenient Filament finds that.
+    Tenant::factory()->withDomain('cspop')->create();
+
+    $csp = test()->get(tenant_url('cspop', '/dashboard/login'))->assertOk()
+        ->headers->get('Content-Security-Policy');
+
+    expect($csp)->toBeString()
+        ->and(cspDirective($csp, 'script-src'))->toBe("'self' 'unsafe-eval'")
+        ->and(cspDirective($csp, 'frame-ancestors'))->toBe("'none'");
+})->group('security');
+
+it('ships the pre-paint theme bootstrap as a classic head script on both panels', function (string $url) {
+    // The counterpart to keeping the strict policy: Filament's own pre-paint
+    // dark-mode block is refused, so this external asset does that work. It has to
+    // be a classic, non-deferred <script src> inside <head> — async, defer or
+    // type="module" would each push it past first paint and bring the flash back.
+    $html = test()->get($url)->assertOk()->getContent();
+
+    $head = (string) str($html)->before('</head>');
+
+    expect($head)->toContain('theme-bootstrap');
+
+    preg_match('/<script[^>]*theme-bootstrap[^>]*>/', $head, $tag);
+
+    expect($tag)->toHaveCount(1)
+        ->and($tag[0])->not->toContain('defer')
+        ->and($tag[0])->not->toContain('async')
+        ->and($tag[0])->not->toContain('type="module"')
+        // Filament renders the default mode server-side; the asset is static and
+        // reads it from here, so a dropped attribute silently changes behaviour
+        // for anyone who has never picked a theme.
+        ->and($tag[0])->toContain('data-default-theme-mode=');
+})->with([
+    'admin panel' => [fn (): string => 'http://'.config('tenancy.admin_domain').'/login'],
+    'operator panel' => [function (): string {
+        Tenant::factory()->withDomain('cspboot')->create();
+
+        return tenant_url('cspboot', '/dashboard/login');
+    }],
+])->group('security');
+
+it('still honours the :without-csp opt-out lever', function () {
+    // No app surface passes this any more — the admin panel gave it up on
+    // 2026-09-12. It is kept for a future surface that genuinely cannot take a
+    // CSP, and an unexercised lever is one that has quietly stopped working, so
+    // it is driven directly here rather than through a panel.
+    $middleware = new SecurityHeaders;
+
+    $respond = fn (): Response => response('<html lang="en"></html>')
+        ->header('Content-Type', 'text/html');
+
+    $without = $middleware->handle(Request::create('/'), $respond, 'without-csp');
+    $with = $middleware->handle(Request::create('/'), $respond);
+
+    expect($without->headers->get('Content-Security-Policy'))->toBeNull()
+        // The rest of the headers are not part of the opt-out.
+        ->and($without->headers->get('X-Frame-Options'))->toBe('DENY')
+        ->and($with->headers->get('Content-Security-Policy'))->toBeString();
+})->group('security');
+
+it('has the theme bootstrap published to the public disk', function () {
+    // `php artisan filament:assets` is what copies it there, and public/js/** is
+    // committed. Without this, a forgotten publish ships a panel whose head script
+    // 404s — and every other assertion here still passes, because the tag is
+    // rendered from the registration, not from the file.
+    expect(public_path('js/app/theme-bootstrap.js'))->toBeFile();
 })->group('security');
 
 it('still sends the strict CSP on the storefront', function () {
@@ -121,9 +206,8 @@ it('still sends the strict CSP on the storefront', function () {
         ->headers->get('Content-Security-Policy');
 
     expect($csp)->toBeString()
-        ->and($csp)->toContain("script-src 'self' 'unsafe-eval'")
-        ->and($csp)->not->toContain("'unsafe-inline'; script-src")
-        ->and($csp)->toContain("frame-ancestors 'none'");
+        ->and(cspDirective($csp, 'script-src'))->toBe("'self' 'unsafe-eval'")
+        ->and(cspDirective($csp, 'frame-ancestors'))->toBe("'none'");
 })->group('security');
 
 /**

@@ -8,6 +8,8 @@ use App\Listeners\LogImpersonationStart;
 use App\Models\Plan;
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Filament\Support\Assets\Js;
+use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\View\View as ViewContract;
 use Illuminate\Database\Eloquent\Model;
@@ -39,6 +41,28 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->composeMarketingPricing();
+        $this->registerPanelAssets();
+    }
+
+    /**
+     * Register the panels' pre-paint theme bootstrap.
+     *
+     * Filament emits its own copy of this as a raw inline <script>, which the
+     * CSP refuses (no 'unsafe-inline' in script-src, and Filament ships no nonce
+     * support). Registering it here publishes it to public/js/app/ via
+     * `php artisan filament:assets`, so it loads from 'self' like every other
+     * panel asset.
+     *
+     * loadedOnRequest() keeps it out of @filamentScripts, which renders in the
+     * body — too late to beat first paint. The panel providers emit it
+     * themselves at PanelsRenderHook::HEAD_END instead.
+     */
+    private function registerPanelAssets(): void
+    {
+        FilamentAsset::register([
+            Js::make('theme-bootstrap', resource_path('js/filament-theme-bootstrap.js'))
+                ->loadedOnRequest(),
+        ]);
     }
 
     /**

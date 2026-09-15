@@ -165,6 +165,23 @@ it('purges an abandoned signup and frees its subdomain', function () {
     expect(Tenant::factory()->withDomain('ghostco')->create())->toBeInstanceOf(Tenant::class);
 });
 
+it('deletes the operator account along with the purged tenant', function () {
+    actingAs(User::factory()->admin()->create());
+
+    $tenant = Tenant::factory()->pending()->withDomain('orphanco')->create([
+        'created_at' => now()->subDays(60),
+    ]);
+    $operator = User::factory()->create(['tenant_id' => $tenant->id, 'role' => 'operator']);
+
+    Livewire::test(ListTenants::class)->callTableAction('purge', $tenant);
+
+    // The modal promises "Its users and settings go with it". Settings cascade at
+    // the DB level, but users.tenant_id is nullOnDelete — without Tenant's deleting
+    // hook the row survives with tenant_id NULL, holding its unique email against
+    // the operator ever signing up again. Pins the promise.
+    assertDatabaseMissing('users', ['id' => $operator->id]);
+});
+
 it('records who purged which subdomain before the row disappears', function () {
     $admin = User::factory()->admin()->create();
     actingAs($admin);

@@ -47,10 +47,16 @@ return [
     'tenant_base_domain' => env('TENANT_BASE_DOMAIN', 'localhost'),
 
     /**
-     * How long a signup may sit pending (or cancelled) before the admin panel
-     * offers to purge it. Subdomains are globally unique and are held for as
-     * long as the tenant row exists, so abandoned signups need a release path.
-     * Only affects when the manual Purge action appears — nothing auto-deletes.
+     * How long a signup may sit pending (or cancelled) before it counts as
+     * abandoned. Subdomains are globally unique and are held for as long as the
+     * tenant row exists, so abandoned signups need a release path.
+     *
+     * Two consumers, and the difference between them matters:
+     *  - TenantsTable::isAbandoned() — when the admin panel's manual Purge action
+     *    appears. Broad: pending or cancelled, past this window, no bookings.
+     *  - Tenant::autoPurgeable() — what the daily tenants:purge-abandoned sweep
+     *    DELETES unattended. A strict subset, narrowed to signups no human
+     *    judgement is owed on. Raising this value delays real deletions.
      */
     'abandoned_after_days' => (int) env('TENANT_ABANDONED_AFTER_DAYS', 30),
 
