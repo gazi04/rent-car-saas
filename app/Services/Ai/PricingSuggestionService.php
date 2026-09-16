@@ -33,7 +33,7 @@ class PricingSuggestionService
 
         try {
             /** @var StructuredAgentResponse $response */
-            $response = (new PricingSuggestionAgent($language))->prompt(
+            $response = new PricingSuggestionAgent($language)->prompt(
                 (string) json_encode($this->pricingData($vehicle), JSON_PRETTY_PRINT),
             );
         } catch (Throwable $throwable) {

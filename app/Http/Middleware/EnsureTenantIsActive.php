@@ -24,14 +24,12 @@ class EnsureTenantIsActive
      * Livewire's persistent-middleware allowlist compares on the bare class name
      * (`Str::before($value, ':')`), so the parameterised form still replays on the
      * shared update route — see TenancyServiceProvider.
-     *
-     * @param  'public'|'panel'|string  $audience
      */
     public function handle(Request $request, Closure $next, string $audience = 'public'): Response
     {
         $tenant = Tenant::current();
 
-        if ($tenant !== null && $tenant->status !== TenantStatus::Active) {
+        if ($tenant instanceof Tenant && $tenant->status !== TenantStatus::Active) {
             $view = $audience === 'panel' ? 'tenant.inactive' : 'public.unavailable';
 
             return response()->view($view, [

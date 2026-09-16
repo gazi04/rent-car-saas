@@ -52,7 +52,7 @@ class AvailableSubdomain implements ValidationRule
             return;
         }
 
-        if (in_array($value, self::reserved(), strict: true)) {
+        if (in_array($value, $this->reserved(), strict: true)) {
             $fail(__('This subdomain is reserved.'));
 
             return;
@@ -74,7 +74,7 @@ class AvailableSubdomain implements ValidationRule
     /**
      * @return list<string>
      */
-    private static function reserved(): array
+    private function reserved(): array
     {
         /** @var list<string> $reserved */
         $reserved = config()->array('tenancy.reserved_subdomains', []);

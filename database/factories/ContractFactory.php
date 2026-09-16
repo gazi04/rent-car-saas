@@ -20,7 +20,7 @@ class ContractFactory extends Factory
     {
         return [
             'booking_id' => Booking::factory(),
-            'path' => 'tenants/1/contracts/'.$this->faker->bothify('BK-????##').'.pdf',
+            'path' => 'tenants/1/contracts/'.fake()->bothify('BK-????##').'.pdf',
             'generated_at' => now(),
         ];
     }

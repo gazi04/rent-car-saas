@@ -81,7 +81,7 @@ class FortifyServiceProvider extends ServiceProvider
         // here: Fortify exposes no config lever for these two routes, and its
         // routes cannot be reliably mutated from a booted() callback (see that
         // middleware's docblock).
-        RateLimiter::for('password-reset', fn (Request $request) => [
+        RateLimiter::for('password-reset', fn (Request $request): array => [
             Limit::perHour(5)->by('pw-reset-email:'.Str::transliterate($request->string('email')->lower()->value())),
             Limit::perHour(15)->by('pw-reset-ip:'.$request->ip()),
         ]);

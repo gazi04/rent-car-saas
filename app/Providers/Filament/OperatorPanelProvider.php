@@ -47,7 +47,7 @@ class OperatorPanelProvider extends PanelProvider
             ->brandName(function (): string {
                 $tenant = Tenant::current();
 
-                return $tenant === null ? 'Operator' : $tenant->name;
+                return $tenant instanceof Tenant ? $tenant->name : 'Operator';
             })
             ->colors([
                 'primary' => Color::Indigo,

@@ -38,7 +38,7 @@ class CustomerForm
                             ->tel()
                             ->maxLength(50)
                             ->live(onBlur: true)
-                            ->afterStateUpdated(fn (Set $set, ?string $state) => $set('phone', PhoneNumber::normalize($state)))
+                            ->afterStateUpdated(fn (Set $set, ?string $state): mixed => $set('phone', PhoneNumber::normalize($state)))
                             ->unique(ignoreRecord: true),
                         TextInput::make('email')
                             ->label(__('panel.customer_email'))

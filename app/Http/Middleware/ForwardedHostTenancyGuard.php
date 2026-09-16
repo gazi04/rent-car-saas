@@ -175,7 +175,7 @@ class ForwardedHostTenancyGuard
     private function knownDomains(string $primary, string $forwarded): array
     {
         /** @var list<string> $domains */
-        $domains = Domain::whereIn('domain', [$primary, $forwarded])
+        $domains = Domain::query()->whereIn('domain', [$primary, $forwarded])
             ->pluck('domain')
             ->all();
 

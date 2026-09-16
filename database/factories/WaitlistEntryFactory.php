@@ -19,8 +19,8 @@ class WaitlistEntryFactory extends Factory
     {
         // tenant_id omitted — BelongsToTenant fills it from the active tenant.
         return [
-            'name' => $this->faker->name(),
-            'email' => $this->faker->unique()->safeEmail(),
+            'name' => fake()->name(),
+            'email' => fake()->unique()->safeEmail(),
             'phone' => null,
             'start_date' => now()->addDays(10)->startOfDay(),
             'end_date' => now()->addDays(13)->startOfDay(),

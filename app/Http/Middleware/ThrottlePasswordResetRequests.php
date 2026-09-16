@@ -51,6 +51,6 @@ class ThrottlePasswordResetRequests
             return $next($request);
         }
 
-        return app(ThrottleRequests::class)->handle($request, $next, 'password-reset');
+        return resolve(ThrottleRequests::class)->handle($request, $next, 'password-reset');
     }
 }
