@@ -64,6 +64,7 @@ class WaitlistSlotOpenMail extends Mailable implements ShouldQueue
 
         return new Envelope(
             from: $tenant->senderAddress(),
+            replyTo: array_filter([$tenant->replyToAddress()]),
             subject: __('emails.waitlist_slot_open.subject', ['operator' => $tenant->name]),
         );
     }

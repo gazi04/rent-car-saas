@@ -501,12 +501,28 @@ class Tenant extends BaseTenant implements HasMedia
     /**
      * The From address for customer-facing mail.
      *
-     * tenants.email is nullable, so fall back to the platform address rather
-     * than handing null to Address and breaking every email this tenant sends.
+     * Always the platform's own verified domain, never tenants.email: Resend
+     * (and any real ESP) rejects sending From a domain it hasn't verified, and
+     * operators sign up with whatever inbox they already have — gmail.com,
+     * hotmail.com, their own business domain. Verifying every operator's
+     * domain isn't something the platform controls, so From is pinned to the
+     * one domain it does control. replyToAddress() carries the operator's own
+     * address instead, so customer replies still land in the operator's inbox.
      */
     public function senderAddress(): Address
     {
-        return new Address($this->email ?? Config::string('mail.from.address'), $this->name);
+        return new Address(Config::string('mail.from.address'), $this->name);
+    }
+
+    /**
+     * Where a customer's reply to senderAddress() mail should go.
+     *
+     * Null when the operator hasn't set a contact email — the mail still
+     * sends (senderAddress() never needs it), it just isn't reply-able.
+     */
+    public function replyToAddress(): ?Address
+    {
+        return filled($this->email) ? new Address($this->email, $this->name) : null;
     }
 
     /**

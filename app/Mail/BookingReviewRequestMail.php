@@ -64,6 +64,7 @@ class BookingReviewRequestMail extends Mailable implements ShouldQueue
 
         return new Envelope(
             from: $tenant->senderAddress(),
+            replyTo: array_filter([$tenant->replyToAddress()]),
             subject: __('emails.review_request.subject', ['operator' => $tenant->name]),
         );
     }
