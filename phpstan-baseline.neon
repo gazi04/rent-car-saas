@@ -637,13 +637,13 @@ parameters:
 			path: app/Jobs/RequestReviewsJob.php
 
 		-
-			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:whereNotNull\(\)\.$#'
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\WaitlistEntry\>\:\:whereNotNull\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 1
 			path: app/Jobs/SweepWaitlistJob.php
 
 		-
-			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:whereNull\(\)\.$#'
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\WaitlistEntry\>\:\:whereNull\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 3
 			path: app/Jobs/SweepWaitlistJob.php
@@ -793,7 +793,7 @@ parameters:
 			path: app/Models/Tenant.php
 
 		-
-			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:whereNotNull\(\)\.$#'
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\User\>\:\:whereNotNull\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 1
 			path: app/Models/Tenant.php
@@ -829,6 +829,12 @@ parameters:
 			path: app/Models/Tenant.php
 
 		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Booking\>\:\:whereIn\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: app/Models/Vehicle.php
+
+		-
 			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Review\>\:\:avg\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 1
@@ -836,12 +842,6 @@ parameters:
 
 		-
 			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Review\>\:\:where\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
-			path: app/Models/Vehicle.php
-
-		-
-			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:whereIn\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 1
 			path: app/Models/Vehicle.php
@@ -891,19 +891,13 @@ parameters:
 		-
 			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Booking\>\:\:whereIn\(\)\.$#'
 			identifier: staticMethod.dynamicCall
-			count: 1
+			count: 2
 			path: app/Services/Ai/BusinessSummaryGenerator.php
 
 		-
 			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<App\\Models\\Vehicle\>\:\:count\(\)\.$#'
 			identifier: staticMethod.dynamicCall
 			count: 2
-			path: app/Services/Ai/BusinessSummaryGenerator.php
-
-		-
-			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<Illuminate\\Database\\Eloquent\\Model\>\:\:whereIn\(\)\.$#'
-			identifier: staticMethod.dynamicCall
-			count: 1
 			path: app/Services/Ai/BusinessSummaryGenerator.php
 
 		-
@@ -957,12 +951,6 @@ parameters:
 		-
 			message: '#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\.$#'
 			identifier: foreach.nonIterable
-			count: 1
-			path: app/Services/Ai/VehicleListingWriter.php
-
-		-
-			message: '#^Cannot access offset ''value'' on mixed\.$#'
-			identifier: offsetAccess.nonOffsetAccessible
 			count: 1
 			path: app/Services/Ai/VehicleListingWriter.php
 
@@ -1213,7 +1201,7 @@ parameters:
 			path: routes/tenant.php
 
 		-
-			message: '#^Parameter \#1 \$value of static method Illuminate\\Support\\Facades\\Route\:\:domain\(\) expects BackedEnum\|string, mixed given\.$#'
+			message: '#^Parameter \#1 \$value of static method Illuminate\\Routing\\RouteRegistrar\:\:domain\(\) expects BackedEnum\|string, mixed given\.$#'
 			identifier: argument.type
 			count: 2
 			path: routes/web.php
