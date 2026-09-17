@@ -535,6 +535,12 @@ parameters:
 			path: app/Filament/Widgets/TenantStats.php
 
 		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<Stancl\\Tenancy\\Database\\Models\\Domain\>\:\:whereIn\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: app/Http/Controllers/HostDiagnosticsController.php
+
+		-
 			message: '#^Parameter \#1 \$data of method App\\Http\\Controllers\\ResendWebhookController\:\:extractReason\(\) expects array\<string, mixed\>, array\<mixed\> given\.$#'
 			identifier: argument.type
 			count: 1
@@ -545,6 +551,12 @@ parameters:
 			identifier: return.type
 			count: 1
 			path: app/Http/Middleware/EnsureTenantIsActive.php
+
+		-
+			message: '#^Dynamic call to static method Illuminate\\Database\\Eloquent\\Builder\<Stancl\\Tenancy\\Database\\Models\\Domain\>\:\:whereIn\(\)\.$#'
+			identifier: staticMethod.dynamicCall
+			count: 1
+			path: app/Http/Middleware/ForwardedHostTenancyGuard.php
 
 		-
 			message: '#^Method App\\Http\\Middleware\\ResolveFilamentPanelForSharedRoutes\:\:handle\(\) should return Symfony\\Component\\HttpFoundation\\Response but returns mixed\.$#'

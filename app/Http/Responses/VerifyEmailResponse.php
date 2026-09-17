@@ -49,7 +49,7 @@ class VerifyEmailResponse implements VerifyEmailResponseContract
                 'you will be able to sign in at your subdomain once it is approved.'
             ));
 
-            return redirect()->route('login');
+            return to_route('login');
         }
 
         return redirect()->intended(Fortify::redirects('email-verification').'?verified=1');

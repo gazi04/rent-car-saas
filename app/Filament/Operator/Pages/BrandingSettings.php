@@ -19,6 +19,7 @@ use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
  * @property-read Schema $form
@@ -62,7 +63,7 @@ class BrandingSettings extends Page
         }
 
         $this->form->fill(array_merge($settings, [
-            'logo' => $logoMedia !== null ? [$logoMedia->uuid] : [],
+            'logo' => $logoMedia instanceof Media ? [$logoMedia->uuid] : [],
         ]));
     }
 

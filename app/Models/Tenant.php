@@ -532,9 +532,7 @@ class Tenant extends BaseTenant implements HasMedia
     {
         $tenant = self::current();
 
-        if ($tenant === null) {
-            throw new RuntimeException('No tenant is resolved for the current request.');
-        }
+        throw_if(! $tenant instanceof Tenant, RuntimeException::class, 'No tenant is resolved for the current request.');
 
         return $tenant;
     }

@@ -76,9 +76,7 @@ class ThrottleBookingReferenceMisses
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (RateLimiter::tooManyAttempts(self::key($request), self::MAX_MISSES)) {
-            abort(404);
-        }
+        abort_if(RateLimiter::tooManyAttempts(self::key($request), self::MAX_MISSES), 404);
 
         $response = $next($request);
 

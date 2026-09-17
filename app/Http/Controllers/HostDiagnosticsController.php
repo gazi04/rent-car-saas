@@ -57,7 +57,7 @@ class HostDiagnosticsController extends Controller
         $candidates = $forwarded === null ? [$host] : [$host, $forwarded];
 
         /** @var list<string> $resolves */
-        $resolves = Domain::whereIn('domain', $candidates)->pluck('domain')->all();
+        $resolves = Domain::query()->whereIn('domain', $candidates)->pluck('domain')->all();
 
         return response()->json([
             'host' => $host,

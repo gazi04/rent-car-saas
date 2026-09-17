@@ -68,6 +68,7 @@ jobs:
         with:
           flux-username: ${{ secrets.FLUX_USERNAME }}
           flux-license-key: ${{ secrets.FLUX_LICENSE_KEY }}
+          coverage: pcov
       - name: Prepare environment
         run: |
           cp .env.example .env

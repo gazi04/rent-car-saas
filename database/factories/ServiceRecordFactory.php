@@ -20,10 +20,10 @@ class ServiceRecordFactory extends Factory
     {
         return [
             'vehicle_id' => Vehicle::factory(),
-            'service_type' => $this->faker->randomElement(config('maintenance.service_types')),
+            'service_type' => fake()->randomElement(config('maintenance.service_types')),
             'performed_on' => now()->subMonth()->startOfDay(),
-            'odometer' => $this->faker->numberBetween(10000, 100000),
-            'cost' => $this->faker->randomFloat(2, 20, 300),
+            'odometer' => fake()->numberBetween(10000, 100000),
+            'cost' => fake()->randomFloat(2, 20, 300),
             'notes' => null,
             'next_due_on' => null,
             'next_due_odometer' => null,

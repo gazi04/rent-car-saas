@@ -58,7 +58,7 @@ class FaqConciergeService
 
         try {
             /** @var StructuredAgentResponse $response */
-            $response = (new FaqConciergeAgent($knowledge, $language, $history))->prompt($question);
+            $response = new FaqConciergeAgent($knowledge, $language, $history)->prompt($question);
         } catch (Throwable $throwable) {
             throw AiRequestFailedException::wrap($throwable);
         }

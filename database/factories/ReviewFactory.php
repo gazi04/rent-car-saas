@@ -24,9 +24,9 @@ class ReviewFactory extends Factory
             'booking_id' => Booking::factory(),
             'vehicle_id' => Vehicle::factory(),
             'customer_id' => null,
-            'reviewer_name' => $this->faker->name(),
-            'rating' => $this->faker->numberBetween(1, 5),
-            'comment' => $this->faker->optional()->sentence(),
+            'reviewer_name' => fake()->name(),
+            'rating' => fake()->numberBetween(1, 5),
+            'comment' => fake()->optional()->sentence(),
             'is_approved' => false,
             'submitted_at' => now(),
         ];

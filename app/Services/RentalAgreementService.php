@@ -36,9 +36,9 @@ class RentalAgreementService
         $current = Tenant::current();
 
         throw_unless(
-            $current !== null && $current->id === $booking->tenant_id,
+            $current instanceof Tenant && $current->id === $booking->tenant_id,
             RuntimeException::class,
-            'Rental agreements must be generated inside the owning tenant\'s context.',
+            "Rental agreements must be generated inside the owning tenant's context.",
         );
 
         $contract = $booking->contract;
@@ -83,7 +83,7 @@ class RentalAgreementService
 
     private function logoDataUri(Booking $booking): ?string
     {
-        $media = Tenant::find($booking->tenant_id)?->getFirstMedia('logo');
+        $media = Tenant::query()->find($booking->tenant_id)?->getFirstMedia('logo');
 
         if ($media === null) {
             return null;

@@ -71,7 +71,7 @@ Route::middleware([
         // BEFORE the middleware above runs (the tenancy provider's priority
         // reordering puts it there), so the middleware cannot see one. This hook
         // can: SubstituteBindings hands a failed binding straight to it.
-        ->missing(function (Request $request) {
+        ->missing(function (Request $request): void {
             ThrottleBookingReferenceMisses::recordMiss($request);
 
             abort(404);

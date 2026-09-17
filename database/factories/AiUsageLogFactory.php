@@ -19,12 +19,12 @@ class AiUsageLogFactory extends Factory
      */
     public function definition(): array
     {
-        $prompt = $this->faker->numberBetween(200, 4000);
-        $completion = $this->faker->numberBetween(50, 1000);
+        $prompt = fake()->numberBetween(200, 4000);
+        $completion = fake()->numberBetween(50, 1000);
 
         return [
             'tenant_id' => null,
-            'feature' => $this->faker->randomElement(['listing', 'summary', 'pricing']),
+            'feature' => fake()->randomElement(['listing', 'summary', 'pricing']),
             'provider' => 'openai',
             'model' => 'gpt-5-mini',
             'prompt_tokens' => $prompt,

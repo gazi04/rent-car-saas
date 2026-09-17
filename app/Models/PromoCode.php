@@ -117,7 +117,7 @@ class PromoCode extends Model
             return false;
         }
 
-        if ($this->per_customer_limit === null || $customer === null) {
+        if ($this->per_customer_limit === null || ! $customer instanceof Customer) {
             return true;
         }
 

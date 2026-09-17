@@ -24,9 +24,9 @@ class EmailLogFactory extends Factory
     {
         return [
             'tenant_id' => null,
-            'message_id' => $this->faker->uuid(),
-            'to_email' => $this->faker->safeEmail(),
-            'subject' => $this->faker->sentence(),
+            'message_id' => fake()->uuid(),
+            'to_email' => fake()->safeEmail(),
+            'subject' => fake()->sentence(),
             'mailable' => BookingConfirmedMail::class,
             'status' => EmailStatus::Sent,
             'error' => null,

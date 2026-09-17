@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 use App\Console\Commands\ExpireStalePendingBookings;
 use App\Console\Commands\GenerateBusinessSummaries;
 use App\Console\Commands\ProcessTenantSubscriptions;

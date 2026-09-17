@@ -11,6 +11,9 @@ inputs:
   php-extensions:
     description: Extra PHP extensions to load (comma separated), e.g. `sockets`.
     default: ""
+  coverage:
+    description: Coverage driver to install (`none`, `pcov`, `xdebug`). Needed by Pest mutation testing.
+    default: "none"
   flux-username:
     description: Flux UI Pro Composer username (pass `secrets.FLUX_USERNAME`).
     required: true
@@ -25,7 +28,7 @@ runs:
       with:
         php-version: "8.5"
         tools: composer:v2
-        coverage: none
+        coverage: ${{ inputs.coverage }}
         extensions: ${{ inputs.php-extensions }}
 
     - name: Configure Flux Pro credentials

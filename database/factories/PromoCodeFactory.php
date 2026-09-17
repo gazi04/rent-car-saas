@@ -19,7 +19,7 @@ class PromoCodeFactory extends Factory
     {
         // tenant_id omitted — BelongsToTenant fills it from the active tenant.
         return [
-            'code' => strtoupper($this->faker->unique()->bothify('SAVE##??')),
+            'code' => strtoupper(fake()->unique()->bothify('SAVE##??')),
             'type' => 'percentage',
             'value' => 10,
             'starts_at' => null,
