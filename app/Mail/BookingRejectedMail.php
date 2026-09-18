@@ -27,6 +27,7 @@ class BookingRejectedMail extends Mailable implements ShouldQueue
 
         return new Envelope(
             from: $tenant->senderAddress(),
+            replyTo: array_filter([$tenant->replyToAddress()]),
             subject: resolve(TemplateRenderer::class)->resolve(
                 $this->booking,
                 'tmpl_email_rejected_subject',

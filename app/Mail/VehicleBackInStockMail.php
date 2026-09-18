@@ -67,6 +67,7 @@ class VehicleBackInStockMail extends Mailable implements ShouldQueue
 
         return new Envelope(
             from: $tenant->senderAddress(),
+            replyTo: array_filter([$tenant->replyToAddress()]),
             subject: __('emails.vehicle_back_in_stock.subject', [
                 'vehicle' => $this->entry->vehicle->name,
                 'operator' => $tenant->name,

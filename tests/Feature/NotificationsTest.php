@@ -63,6 +63,25 @@ test('public booking queues customer received mail and operator alert mail', fun
     Mail::assertQueued(NewBookingAlertMail::class, fn ($m) => $m->hasTo($this->operator->email));
 });
 
+test('customer mail is sent from the platform address, with the operator as reply-to', function () {
+    // Resend (and any real ESP) 403s a From on a domain it hasn't verified.
+    // Operators sign up with whatever inbox they already have (gmail.com,
+    // hotmail.com, ...), so the platform's own verified domain must be the
+    // From address on every customer-facing mail — the operator's address
+    // only ever belongs on Reply-To.
+    Mail::fake();
+
+    $booking = $this->service->create(notifBookingData($this->vehicle));
+
+    $listener = new SendBookingReceivedNotifications;
+    $listener->handle(new BookingCreated($booking));
+
+    Mail::assertQueued(BookingReceivedMail::class, function ($m) {
+        return $m->hasFrom(config()->string('mail.from.address'))
+            && $m->hasReplyTo($this->tenant->email);
+    });
+});
+
 test('public booking listener sends operator dashboard bell notification', function () {
     Mail::fake();
 
